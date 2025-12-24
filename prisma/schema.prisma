@@ -1,0 +1,55 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tabulka pro produkty
+model Product {
+  id          Int      @id @default(autoincrement())
+  title       String // Název produktu
+  slug        String   @unique // Část URL (např. 'modre-tricko')
+  description String? // Popis (může být prázdný)
+  price       Int // Cena v haléřích/korunách (lepší je ukládat celé číslo, např 10000 = 100.00 Kč)
+  image       String? // URL obrázku
+  stock       Int      @default(0) // Skladová zásoba
+  category    String? // Např. "Bizuterie", "Obrazy"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Vazba na objednávky (co se prodalo)
+  orderItems OrderItem[]
+}
+
+// Tabulka pro objednávky
+model Order {
+  id              Int      @id @default(autoincrement())
+  customerName    String
+  customerEmail   String
+  customerPhone   String?
+  customerAddress String? // Nebo Zásilkovna ID
+  totalPrice      Int
+  status          String   @default("PENDING") // PENDING, PAID, SHIPPED
+  createdAt       DateTime @default(now())
+
+  // Vazba: Jedna objednávka má mnoho položek
+  items OrderItem[]
+}
+
+// Položka v objednávce (např. 2x Modré tričko)
+model OrderItem {
+  id       Int @id @default(autoincrement())
+  quantity Int // Kolik kusů
+  price    Int // Cena v době nákupu (kdyby se později změnila)
+
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id])
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+}
