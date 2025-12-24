@@ -1,2 +1,42 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+:root {
+  --color-primary-50: #f0f9f4;
+  --color-primary-100: #e2f3e9;
+  --color-primary-200: #c5e7d4;
+  --color-primary-300: #a8dbbf;
+  --color-primary-400: #8bcfab;
+  --color-primary-500: #6dc995;
+  --color-primary-600: #57a177;
+  --color-primary-700: #417959;
+  --color-primary-800: #2b513b;
+  --color-primary-900: #15291d;
+  --color-primary-DEFAULT: #6dc995;
+
+  --color-secondary-50: #eef7f9;
+  --color-secondary-100: #deeff3;
+  --color-secondary-200: #bde0e8;
+  --color-secondary-300: #9cd0dd;
+  --color-secondary-400: #7bc0d2;
+  --color-secondary-500: #3a91aa;
+  --color-secondary-600: #2e7488;
+  --color-secondary-700: #225766;
+  --color-secondary-800: #163a44;
+  --color-secondary-900: #0b1d22;
+  --color-secondary-DEFAULT: #3a91aa;
+
+  --color-button-50: #f2eff6;
+  --color-button-100: #e5e0ed;
+  --color-button-200: #cbc1da;
+  --color-button-300: #b1a2c8;
+  --color-button-400: #9783b5;
+  --color-button-500: #6b4897;
+  --color-button-600: #563a79;
+  --color-button-700: #412c5b;
+  --color-button-800: #2c1e3d;
+  --color-button-900: #170f1e;
+  --color-button-DEFAULT: #6b4897;
+
+  --ui-bg: #906387;
+}
