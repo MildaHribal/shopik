@@ -10,7 +10,7 @@ defineEmits<{
 </script>
 
 <template>
-  <aside class="w-64 flex-shrink-0 pr-8 border-r border-gray-200 dark:border-gray-700">
+  <aside class="w-64 flex-shrink-0 pr-8 border-r border-gray-200 dark:border-gray-700 pl-6">
     <h3 class="font-bold text-xl mb-6 text-gray-900 dark:text-white">Kategorie</h3>
     <nav>
       <ul class="space-y-2">
