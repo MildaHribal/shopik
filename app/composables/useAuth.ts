@@ -1,5 +1,5 @@
-import { ref, onMounted } from 'vue'
-import { authClient } from '~~/lib/auth'
+import { ref } from 'vue'
+import { supabase } from '~~/lib/auth'
 
 // Shared reactive state across components
 const currentUser = ref<{ id: string; name: string; email: string } | null>(null)
@@ -9,12 +9,11 @@ let initialized = false
 
 async function refreshSession() {
   try {
-    const result = await authClient.getSession()
-    const session = 'data' in result ? result.data : result
+    const { data: { session } } = await supabase.auth.getSession()
     if (session?.user) {
       currentUser.value = {
         id: session.user.id,
-        name: session.user.name || '',
+        name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
         email: session.user.email || '',
       }
     } else {
@@ -31,10 +30,23 @@ export function useAuth() {
   if (!initialized && import.meta.client) {
     initialized = true
     refreshSession()
+
+    // Listen for auth state changes (login, logout, token refresh)
+    supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        currentUser.value = {
+          id: session.user.id,
+          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
+          email: session.user.email || '',
+        }
+      } else {
+        currentUser.value = null
+      }
+    })
   }
 
   const signOut = async () => {
-    await authClient.signOut()
+    await supabase.auth.signOut()
     currentUser.value = null
   }
 
@@ -43,5 +55,6 @@ export function useAuth() {
     isAuthLoading,
     signOut,
     refreshSession,
+    supabase,
   }
 }

@@ -1,7 +1,6 @@
-import { createAuthClient } from '@neondatabase/neon-js/auth';
+import { createClient } from '@supabase/supabase-js'
 
-const baseURL = import.meta.env.SSR
-    ? (import.meta.env.BETTER_AUTH_URL || 'http://localhost:3000') + '/auth'
-    : '/auth'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || ''
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || process.env.SUPABASE_KEY || ''
 
-export const authClient = createAuthClient(baseURL)
+export const supabase = createClient(supabaseUrl, supabaseKey)

@@ -1,8 +1,7 @@
-import { createAuthClient } from '@neondatabase/neon-js/auth';
+import { createClient } from '@supabase/supabase-js'
 
-// Na serveru musíme vždy použít absolutní URL
-const neonAuthUrl = process.env.VITE_NEON_AUTH_URL || 'http://localhost:3000/auth';
+const supabaseUrl = process.env.SUPABASE_URL || ''
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || ''
 
-export const serverAuth = createAuthClient(
-  neonAuthUrl
-);
+// Server-side Supabase client with service role key for admin operations
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)

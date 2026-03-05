@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
 import { getRequestHeaders } from 'h3'
-import { serverAuth } from './auth'
+import { createClient } from '@supabase/supabase-js'
 
-type NeonSession = {
+type SupabaseSession = {
   user?: {
     id?: string
     name?: string | null
@@ -10,21 +10,48 @@ type NeonSession = {
   }
 } | null
 
-async function fetchNeonSession(event: H3Event): Promise<NeonSession> {
-  const headers = getRequestHeaders(event) as HeadersInit
-  const sessionData = await serverAuth.getSession({
-    fetchOptions: { headers }
-  })
+async function fetchSupabaseSession(event: H3Event): Promise<SupabaseSession> {
+  const headers = getRequestHeaders(event)
+  const authHeader = headers['authorization'] || headers['Authorization']
 
-  // Neon Auth client sometimes wraps payload in { data }
-  return (sessionData as any && 'data' in (sessionData as any))
-    ? (sessionData as any).data
-    : (sessionData as any)
+  // Try to get token from Authorization header or cookie
+  let token = ''
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.slice(7)
+  } else {
+    // Parse sb-access-token from cookies
+    const cookieHeader = headers['cookie'] || ''
+    const cookies = Object.fromEntries(
+      cookieHeader.split(';').map(c => {
+        const [key, ...val] = c.trim().split('=')
+        return [key, val.join('=')]
+      })
+    )
+    token = cookies['sb-access-token'] || ''
+  }
+
+  if (!token) return null
+
+  const supabaseUrl = process.env.SUPABASE_URL || ''
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || ''
+  const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+
+  if (error || !user) return null
+
+  return {
+    user: {
+      id: user.id,
+      name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+      email: user.email || null,
+    }
+  }
 }
 
-export async function getOptionalSession(event: H3Event): Promise<NeonSession> {
+export async function getOptionalSession(event: H3Event): Promise<SupabaseSession> {
   try {
-    return await fetchNeonSession(event)
+    return await fetchSupabaseSession(event)
   } catch {
     return null
   }
@@ -51,4 +78,3 @@ export async function requireSession(event: H3Event): Promise<AuthenticatedSessi
     }
   }
 }
-

@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { authClient } from '~~/lib/auth'
 import { useAuth } from '~/composables/useAuth'
 import { Icon } from '@iconify/vue'
 
-const { refreshSession } = useAuth()
+const { refreshSession, supabase } = useAuth()
 const router = useRouter()
 
 const email = ref('')
@@ -30,17 +29,21 @@ const handleRegister = async () => {
   }
 
   try {
-    const result = await authClient.signUp.email({
+    const { error: authError } = await supabase.auth.signUp({
       email: email.value,
       password: password.value,
-      name: email.value.split('@')[0] ?? email.value,
+      options: {
+        data: {
+          full_name: email.value.split('@')[0] ?? email.value,
+        },
+      },
     })
 
-    if (result.error) {
-      if (result.error.message?.includes('already')) {
+    if (authError) {
+      if (authError.message?.includes('already')) {
         error.value = 'Uživatel s tímto emailem již existuje.'
       } else {
-        error.value = result.error.message || 'Nastala chyba při registraci.'
+        error.value = authError.message || 'Nastala chyba při registraci.'
       }
     } else {
       await refreshSession()
@@ -48,11 +51,7 @@ const handleRegister = async () => {
     }
   } catch (e: any) {
     console.error(e)
-    if (e.message?.includes('Invalid URL')) {
-        error.value = 'Chyba konfigurace serveru (Invalid URL). Zkuste to prosím později.'
-    } else {
-        error.value = 'Nastala chyba při registraci: ' + (e.message || 'Neznámá chyba')
-    }
+    error.value = 'Nastala chyba při registraci: ' + (e.message || 'Neznámá chyba')
   } finally {
     loading.value = false
   }
@@ -63,10 +62,15 @@ const handleGoogleRegister = async () => {
   error.value = ''
 
   try {
-    await authClient.signIn.social({
+    const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      callbackURL: '/',
+      options: {
+        redirectTo: window.location.origin,
+      },
     })
+    if (authError) {
+      error.value = 'Chyba při registraci přes Google: ' + authError.message
+    }
   } catch (e: any) {
     console.error(e)
     error.value = 'Chyba při registraci přes Google: ' + e.message

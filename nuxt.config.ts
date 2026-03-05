@@ -34,7 +34,6 @@ export default defineNuxtConfig({
 
     runtimeConfig: {
         public: {
-            neonAuthUrl: process.env.VITE_NEON_AUTH_URL,
             supabaseUrl: process.env.SUPABASE_URL,
             supabaseKey: process.env.SUPABASE_KEY,
             siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
@@ -76,8 +75,5 @@ export default defineNuxtConfig({
         '/product/**': {
             swr: 300,
         },
-        '/auth/**': {
-            proxy: process.env.VITE_NEON_AUTH_URL + '/**'
-        }
     },
 })

@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   // --- GET: Načtení profilu ---
   if (method === 'GET') {
     const user = await db.query.users.findFirst({
-      where: eq(users.neonAuthId, userId),
+      where: eq(users.supabaseAuthId, userId),
     });
 
     if (user) return user;
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
       id: null,
       name: userName,
       email: userEmail,
-      neonAuthId: userId,
+      supabaseAuthId: userId,
       phone: null,
       street: null,
       city: null,
@@ -47,13 +47,13 @@ export default defineEventHandler(async (event) => {
     const email = userEmail || `${userId}@no-email.local`
 
     const existing = await db.query.users.findFirst({
-      where: eq(users.neonAuthId, userId),
+      where: eq(users.supabaseAuthId, userId),
     });
 
     if (existing) {
       const [updated] = await db.update(users)
         .set({ name, phone, street, city, zip, updatedAt: new Date() })
-        .where(eq(users.neonAuthId, userId))
+        .where(eq(users.supabaseAuthId, userId))
         .returning();
       return updated;
     }
@@ -62,7 +62,7 @@ export default defineEventHandler(async (event) => {
       .values({
         name,
         email,
-        neonAuthId: userId,
+        supabaseAuthId: userId,
         phone,
         street,
         city,
@@ -71,7 +71,7 @@ export default defineEventHandler(async (event) => {
       .onConflictDoUpdate({
         target: users.email,
         set: {
-          neonAuthId: userId,
+          supabaseAuthId: userId,
           name,
           phone,
           street,

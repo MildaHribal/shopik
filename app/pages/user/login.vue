@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { authClient } from '~~/lib/auth'
 import { useAuth } from '~/composables/useAuth'
 import { Icon } from '@iconify/vue'
 
-const { refreshSession } = useAuth()
+const { refreshSession, supabase } = useAuth()
 const router = useRouter()
 
 const email = ref('')
@@ -17,13 +16,13 @@ const handleLogin = async () => {
   error.value = ''
 
   try {
-    const result = await authClient.signIn.email({
+    const { error: authError } = await supabase.auth.signInWithPassword({
       email: email.value,
       password: password.value,
     })
 
-    if (result.error) {
-      error.value = result.error.message || 'Nesprávný email nebo heslo.'
+    if (authError) {
+      error.value = authError.message || 'Nesprávný email nebo heslo.'
     } else {
       await refreshSession()
       await router.push('/')
@@ -41,10 +40,15 @@ const handleGoogleLogin = async () => {
   error.value = ''
 
   try {
-    await authClient.signIn.social({
+    const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      callbackURL: '/',
+      options: {
+        redirectTo: window.location.origin,
+      },
     })
+    if (authError) {
+      error.value = 'Chyba při přihlašování přes Google: ' + authError.message
+    }
   } catch (e: any) {
     console.error(e)
     error.value = 'Chyba při přihlašování přes Google: ' + e.message

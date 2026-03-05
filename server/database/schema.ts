@@ -28,7 +28,7 @@ export const products = pgTable('products', {
 // ── Orders ──────────────────────────────────────────────────────────────────────
 export const orders = pgTable('orders', {
   id: serial('id').primaryKey(),
-  userId: text('user_id'), // Reference to neonAuthId
+  userId: text('user_id'), // Reference to supabaseAuthId
   customerName: text('customer_name').notNull(),
   customerEmail: text('customer_email').notNull(),
   shippingAddress: text('shipping_address').notNull(),
@@ -55,7 +55,7 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
-  neonAuthId: text('neon_auth_id').unique(),
+  supabaseAuthId: text('supabase_auth_id').unique(),
   phone: text('phone'),
   street: text('street'),
   city: text('city'),
@@ -68,7 +68,7 @@ export const users = pgTable('users', {
 export const reviews = pgTable('reviews', {
   id: serial('id').primaryKey(),
   productId: integer('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
-  userId: text('user_id').notNull(), // neonAuthId
+  userId: text('user_id').notNull(), // supabaseAuthId
   userName: text('user_name').notNull(),
   rating: integer('rating').notNull(), // 1-5
   comment: text('comment'),
@@ -78,7 +78,7 @@ export const reviews = pgTable('reviews', {
 // ── Favorites ───────────────────────────────────────────────────────────────────
 export const favorites = pgTable('favorites', {
   id: serial('id').primaryKey(),
-  userId: text('user_id').notNull(), // neonAuthId
+  userId: text('user_id').notNull(), // supabaseAuthId
   productId: integer('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at').defaultNow(),
 });
@@ -92,7 +92,7 @@ export const ordersRelations = relations(orders, ({ many, one }) => ({
   items: many(orderItems),
   user: one(users, {
     fields: [orders.userId],
-    references: [users.neonAuthId],
+    references: [users.supabaseAuthId],
   }),
 }));
 
@@ -109,7 +109,7 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
   }),
   user: one(users, {
     fields: [reviews.userId],
-    references: [users.neonAuthId],
+    references: [users.supabaseAuthId],
   }),
 }));
 
@@ -120,7 +120,7 @@ export const favoritesRelations = relations(favorites, ({ one }) => ({
   }),
   user: one(users, {
     fields: [favorites.userId],
-    references: [users.neonAuthId],
+    references: [users.supabaseAuthId],
   }),
 }));
 
