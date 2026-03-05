@@ -1,45 +1,547 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
 
 @theme {
-  --color-primary-50: #f0f9f4;
-  --color-primary-100: #e2f3e9;
-  --color-primary-200: #c5e7d4;
-  --color-primary-300: #a8dbbf;
-  --color-primary-400: #8bcfab;
-  --color-primary-500: #6dc995;
-  --color-primary-600: #57a177;
-  --color-primary-700: #417959;
-  --color-primary-800: #2b513b;
-  --color-primary-900: #15291d;
-  --color-primary-DEFAULT: #6dc995;
+  /* ── Cosmic Purple (Primary) ──────────────────────────────── */
+  --color-primary-50: #f5f0ff;
+  --color-primary-100: #ede5ff;
+  --color-primary-200: #daccff;
+  --color-primary-300: #c4a8ff;
+  --color-primary-400: #a87dff;
+  --color-primary-500: #8b5cf6;
+  --color-primary-600: #7c3aed;
+  --color-primary-700: #6d28d9;
+  --color-primary-800: #5b21b6;
+  --color-primary-900: #4c1d95;
+  --color-primary-DEFAULT: #8b5cf6;
 
-  --color-secondary-50: #eef7f9;
-  --color-secondary-100: #deeff3;
-  --color-secondary-200: #bde0e8;
-  --color-secondary-300: #9cd0dd;
-  --color-secondary-400: #7bc0d2;
-  --color-secondary-500: #3a91aa;
-  --color-secondary-600: #2e7488;
-  --color-secondary-700: #225766;
-  --color-secondary-800: #163a44;
-  --color-secondary-900: #0b1d22;
-  --color-secondary-DEFAULT: #3a91aa;
+  /* ── Nebula Magenta (Secondary) ───────────────────────────── */
+  --color-secondary-50: #fff0f7;
+  --color-secondary-100: #ffe0ef;
+  --color-secondary-200: #ffc2df;
+  --color-secondary-300: #ff8dc2;
+  --color-secondary-400: #ff50a0;
+  --color-secondary-500: #ec4899;
+  --color-secondary-600: #db2777;
+  --color-secondary-700: #be185d;
+  --color-secondary-800: #9d174d;
+  --color-secondary-900: #831843;
+  --color-secondary-DEFAULT: #ec4899;
 
-  --color-button-50: #f2eff6;
-  --color-button-100: #e5e0ed;
-  --color-button-200: #cbc1da;
-  --color-button-300: #b1a2c8;
-  --color-button-400: #9783b5;
-  --color-button-500: #6b4897;
-  --color-button-600: #563a79;
-  --color-button-700: #412c5b;
-  --color-button-800: #2c1e3d;
-  --color-button-900: #170f1e;
-  --color-button-DEFAULT: #6b4897;
+  /* ── Cosmic Cyan (Accent) ─────────────────────────────────── */
+  --color-accent-50: #ecfeff;
+  --color-accent-100: #cffafe;
+  --color-accent-200: #a5f3fc;
+  --color-accent-300: #67e8f9;
+  --color-accent-400: #22d3ee;
+  --color-accent-500: #06b6d4;
+  --color-accent-600: #0891b2;
+  --color-accent-700: #0e7490;
+  --color-accent-800: #155e75;
+  --color-accent-900: #164e63;
+  --color-accent-DEFAULT: #06b6d4;
+
+  /* ── Starlight Gold (Button) ──────────────────────────────── */
+  --color-button-50: #fffbeb;
+  --color-button-100: #fef3c7;
+  --color-button-200: #fde68a;
+  --color-button-300: #fcd34d;
+  --color-button-400: #fbbf24;
+  --color-button-500: #f59e0b;
+  --color-button-600: #d97706;
+  --color-button-700: #b45309;
+  --color-button-800: #92400e;
+  --color-button-900: #78350f;
+  --color-button-DEFAULT: #f59e0b;
+
+  --font-sans: "Space Grotesk", system-ui, sans-serif;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   BASE BODY — Deep cosmic gradient with hippie undertones
+   ══════════════════════════════════════════════════════════════ */
 body {
-  background: linear-gradient(90deg, var(--color-secondary-600) 0%, var(--color-button-600) 50%, var(--color-button-700) 100%);
+  background: linear-gradient(
+    160deg,
+    #050008 0%,
+    #0d0020 20%,
+    #1a0035 40%,
+    #0f0025 60%,
+    #08001a 80%,
+    #030008 100%
+  );
   min-height: 100vh;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  color: #e2d9f3;
+  overflow-x: hidden;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COSMIC STARFIELD BACKGROUND
+   ══════════════════════════════════════════════════════════════ */
+.cosmic-bg {
+  position: relative;
+}
+
+.cosmic-bg::before,
+.cosmic-bg::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cosmic-bg::before {
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(2px 2px at 40% 70%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 60% 20%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(2px 2px at 80% 50%, rgba(139, 92, 246, 0.7), transparent),
+    radial-gradient(1px 1px at 10% 80%, rgba(236, 72, 153, 0.6), transparent),
+    radial-gradient(1px 1px at 70% 90%, rgba(6, 182, 212, 0.7), transparent),
+    radial-gradient(2px 2px at 50% 10%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 30% 50%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 90% 15%, rgba(139, 92, 246, 0.5), transparent),
+    radial-gradient(2px 2px at 15% 55%, rgba(6, 182, 212, 0.4), transparent),
+    radial-gradient(1px 1px at 55% 45%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 85% 75%, rgba(236, 72, 153, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 5% 10%, rgba(251, 191, 36, 0.5), transparent),
+    radial-gradient(1px 1px at 75% 5%, rgba(251, 191, 36, 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 45% 85%, rgba(167, 139, 250, 0.6), transparent);
+  background-size: 300px 300px;
+  animation: twinkle 8s ease-in-out infinite alternate;
+}
+
+.cosmic-bg::after {
+  background-image:
+    radial-gradient(1px 1px at 25% 25%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(2px 2px at 75% 35%, rgba(139, 92, 246, 0.4), transparent),
+    radial-gradient(1px 1px at 45% 65%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 95% 85%, rgba(6, 182, 212, 0.5), transparent),
+    radial-gradient(2px 2px at 35% 95%, rgba(236, 72, 153, 0.4), transparent),
+    radial-gradient(1px 1px at 65% 5%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 5% 45%, rgba(139, 92, 246, 0.3), transparent),
+    radial-gradient(2px 2px at 55% 55%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 88% 42%, rgba(251, 191, 36, 0.3), transparent),
+    radial-gradient(1px 1px at 22% 72%, rgba(244, 114, 182, 0.4), transparent);
+  background-size: 400px 400px;
+  animation: twinkle 12s ease-in-out 2s infinite alternate-reverse;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.5; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NEBULA GLOW BLOBS
+   ══════════════════════════════════════════════════════════════ */
+.nebula-glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.nebula-glow--purple {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.18), transparent 70%);
+  top: -150px;
+  right: -150px;
+  animation: float-nebula 20s ease-in-out infinite;
+}
+
+.nebula-glow--pink {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.14), transparent 70%);
+  bottom: -100px;
+  left: -100px;
+  animation: float-nebula 25s ease-in-out 5s infinite reverse;
+}
+
+.nebula-glow--cyan {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.12), transparent 70%);
+  top: 40%;
+  left: 50%;
+  animation: float-nebula 18s ease-in-out 3s infinite;
+}
+
+.nebula-glow--gold {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.08), transparent 70%);
+  top: 20%;
+  left: 10%;
+  animation: float-nebula 22s ease-in-out 7s infinite reverse;
+}
+
+@keyframes float-nebula {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.1); }
+  66% { transform: translate(-20px, 15px) scale(0.95); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NEON TEXT GLOWS
+   ══════════════════════════════════════════════════════════════ */
+.neon-text {
+  text-shadow:
+    0 0 10px rgba(139, 92, 246, 0.5),
+    0 0 40px rgba(139, 92, 246, 0.2);
+}
+
+.neon-text-pink {
+  text-shadow:
+    0 0 10px rgba(236, 72, 153, 0.5),
+    0 0 40px rgba(236, 72, 153, 0.2);
+}
+
+.neon-text-cyan {
+  text-shadow:
+    0 0 10px rgba(6, 182, 212, 0.5),
+    0 0 40px rgba(6, 182, 212, 0.2);
+}
+
+.neon-text-gold {
+  text-shadow:
+    0 0 10px rgba(251, 191, 36, 0.5),
+    0 0 40px rgba(251, 191, 36, 0.2);
+}
+
+.neon-text-rainbow {
+  background: linear-gradient(90deg, #8b5cf6, #ec4899, #06b6d4, #fbbf24, #8b5cf6);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow-shift 4s linear infinite;
+}
+
+@keyframes rainbow-shift {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GLASS CARDS
+   ══════════════════════════════════════════════════════════════ */
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+}
+
+.glass-card-strong {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.5rem;
+}
+
+.glass-card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card-hover:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow:
+    0 8px 32px rgba(139, 92, 246, 0.15),
+    0 0 0 1px rgba(139, 92, 246, 0.1);
+  transform: translateY(-4px);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GRADIENT BORDER
+   ══════════════════════════════════════════════════════════════ */
+.gradient-border {
+  position: relative;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.5),
+    rgba(236, 72, 153, 0.5),
+    rgba(6, 182, 212, 0.5)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COSMIC BUTTONS
+   ══════════════════════════════════════════════════════════════ */
+.btn-cosmic {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  color: white;
+  font-weight: 700;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-cosmic::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #a78bfa, #f472b6);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-cosmic:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 30px rgba(139, 92, 246, 0.5),
+    0 0 60px rgba(236, 72, 153, 0.3);
+}
+
+.btn-cosmic:hover::before {
+  opacity: 1;
+}
+
+.btn-cosmic span,
+.btn-cosmic > * {
+  position: relative;
+  z-index: 1;
+}
+
+.btn-cosmic:active {
+  transform: scale(0.97);
+}
+
+.btn-cosmic-outline {
+  background: transparent;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  cursor: pointer;
+}
+
+.btn-cosmic-outline:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.8);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+}
+
+.btn-cosmic-cyan {
+  background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+  color: white;
+  font-weight: 700;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+  border: none;
+  cursor: pointer;
+}
+
+.btn-cosmic-cyan:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 30px rgba(6, 182, 212, 0.5),
+    0 0 60px rgba(139, 92, 246, 0.3);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COSMIC INPUTS
+   ══════════════════════════════════════════════════════════════ */
+.input-cosmic {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: white;
+  font-family: "Space Grotesk", sans-serif;
+  transition: all 0.3s ease;
+}
+
+.input-cosmic:focus {
+  outline: none;
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow:
+    0 0 0 3px rgba(139, 92, 246, 0.15),
+    0 0 20px rgba(139, 92, 246, 0.1);
+}
+
+.input-cosmic::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COSMIC SECTION DIVIDER
+   ══════════════════════════════════════════════════════════════ */
+.cosmic-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.5), rgba(6, 182, 212, 0.5), transparent);
+  border: none;
+  margin: 2rem 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HIPPIE PEACE SYMBOL FLOAT
+   ══════════════════════════════════════════════════════════════ */
+.hippie-float {
+  animation: hippie-float 6s ease-in-out infinite;
+}
+
+@keyframes hippie-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-10px) rotate(5deg); }
+  50% { transform: translateY(-5px) rotate(-3deg); }
+  75% { transform: translateY(-12px) rotate(2deg); }
+}
+
+.hippie-float-delayed {
+  animation: hippie-float 6s ease-in-out 2s infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MANDALA SPIN
+   ══════════════════════════════════════════════════════════════ */
+.mandala-spin {
+  animation: mandala-rotate 30s linear infinite;
+}
+
+@keyframes mandala-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COSMIC BADGE
+   ══════════════════════════════════════════════════════════════ */
+.cosmic-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #c4b5fd;
+  backdrop-filter: blur(10px);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SHIMMER / PULSE ANIMATION
+   ══════════════════════════════════════════════════════════════ */
+.cosmic-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.cosmic-shimmer::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(139, 92, 246, 0.05) 50%,
+    transparent 70%
+  );
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+.cosmic-pulse {
+  animation: cosmic-pulse 2s ease-in-out infinite;
+}
+
+@keyframes cosmic-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ══════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 0, 21, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #8b5cf6, #ec4899);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #a78bfa, #f472b6);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SELECTION
+   ══════════════════════════════════════════════════════════════ */
+::selection {
+  background: rgba(139, 92, 246, 0.4);
+  color: white;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COSMIC FOOTER
+   ══════════════════════════════════════════════════════════════ */
+.cosmic-footer {
+  background: rgba(5, 0, 15, 0.8);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(139, 92, 246, 0.15);
+  position: relative;
+}
+
+.cosmic-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.5), rgba(6, 182, 212, 0.5), transparent);
 }

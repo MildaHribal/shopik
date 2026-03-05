@@ -7,7 +7,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "seed": "tsx server/database/seed.ts",
+    "seed:test": "tsx server/database/seed-test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -15,13 +17,20 @@
   "dependencies": {
     "@iconify-json/lucide": "^1.2.82",
     "@iconify-json/simple-icons": "^1.2.64",
+    "@neondatabase/auth": "^0.2.0-beta.1",
+    "@neondatabase/neon-js": "^0.2.0-beta.1",
     "@nuxt/icon": "^2.1.1",
     "@nuxt/ui": "^4.3.0",
     "@pinia/nuxt": "^0.11.3",
     "@prisma/client": "^5.17.0",
+    "@supabase/supabase-js": "^2.98.0",
+    "better-auth": "^1.5.3",
     "bootstrap": "^5.3.8",
+    "drizzle-orm": "^0.45.1",
     "nuxt": "^4.2.2",
     "pinia": "^3.0.4",
+    "postgres": "^3.4.8",
+    "react-router-dom": "^7.13.1",
     "supabase": "^2.67.3",
     "tsx": "^4.21.0",
     "vue": "^3.5.25",
@@ -30,7 +39,8 @@
   "devDependencies": {
     "@iconify/vue": "^5.0.0",
     "@types/node": "^25.0.3",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.3.1",
+    "drizzle-kit": "^0.31.9",
     "prisma": "^5.22.0"
   }
 }

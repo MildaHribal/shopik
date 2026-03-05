@@ -2,9 +2,7 @@
 import ProductCard from "~/components/products/ProductCard.vue";
 import ProductCarousel from "~/components/ProductCarousel.vue";
 import { Icon } from "@iconify/vue";
-import type { Product } from '~/types/product';
-import mira from '../../public/mira.jpg'
-
+import type { Product } from '~~/types';
 
 const {data: rawProducts, pending, error} = await useFetch<Product[]>('/api/products')
 
@@ -12,7 +10,7 @@ const productsWithIds = computed(() => {
   if (!rawProducts.value) return [];
   return rawProducts.value.map((p, index) => ({
     ...p,
-    id: p.id || `${p.name.replace(/\s+/g, '-')}-${index}`
+    id: p.id || `${(p.title || 'product').replace(/\s+/g, '-')}-${index}`
   }));
 });
 
@@ -22,6 +20,7 @@ const categories = computed(() => {
 })
 
 const selectedCategory = ref<string | null>(null)
+const showMobileFilters = ref(false)
 
 const filteredProducts = computed(() => {
   if (!productsWithIds.value) return []
@@ -30,97 +29,186 @@ const filteredProducts = computed(() => {
 })
 
 const carouselRef = ref<InstanceType<typeof ProductCarousel> | null>(null);
+
+const selectCategory = (cat: string | null) => {
+  selectedCategory.value = cat
+  showMobileFilters.value = false
+}
 </script>
 
 <template>
   <div class="w-full overflow-x-hidden">
-    <div v-if="pending" class="text-center py-8">
-      Loading...
+    <div v-if="pending" class="flex items-center justify-center min-h-[60vh]">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto mb-4"></div>
+        <p class="text-white/40">Načítání kosmického zboží...</p>
+      </div>
     </div>
-    <div v-else-if="error" class="text-red-500 text-center py-8">
-      {{ error.message }}
+    <div v-else-if="error" class="glass-card mx-4 md:mx-8 mt-8 p-6 md:p-8 text-center">
+      <p class="text-red-400 text-lg">{{ error.message }}</p>
     </div>
     <template v-else>
 
+      <!-- Hero -->
       <PageHero/>
 
-      <div class="py-12 text-center flex items-center justify-between px-14">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">Nase nejprodavanejsi vytvory🔥</h1>
-        <div class="flex space-x-2">
-          <button
-            @click="carouselRef?.prev()"
-            class="p-2 rounded-full bg-gray-800/50 hover:bg-gray-800/75 text-white transition-colors"
-            aria-label="Předchozí"
-          >
-            <Icon icon="ep:arrow-left-bold" height="24" />
-          </button>
-          <button
-            @click="carouselRef?.next()"
-            class="p-2 rounded-full bg-gray-800/50 hover:bg-gray-800/75 text-white transition-colors"
-            aria-label="Další"
-          >
-            <Icon icon="ep:arrow-right-bold" height="24" />
-          </button>
+      <!-- Best Sellers Section -->
+      <section class="py-10 md:py-16 px-4 md:px-14">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
+          <div>
+            <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-tight neon-text">
+              Naše nejprodávanější výtvory 🔥
+            </h2>
+            <p class="text-white/30 mt-1 md:mt-2 text-xs md:text-sm">Hvězdné kusy, které letí jako komety</p>
+          </div>
+          <div class="flex gap-2">
+            <button
+              @click="carouselRef?.prev()"
+              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
+              aria-label="Předchozí"
+            >
+              <Icon icon="ep:arrow-left-bold" height="18" />
+            </button>
+            <button
+              @click="carouselRef?.next()"
+              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
+              aria-label="Další"
+            >
+              <Icon icon="ep:arrow-right-bold" height="18" />
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div class="px-12">
         <ProductCarousel
-            v-if="productsWithIds && productsWithIds.length > 0"
-            :products="productsWithIds"
-            ref="carouselRef"
+          v-if="productsWithIds && productsWithIds.length > 0"
+          :products="productsWithIds"
+          ref="carouselRef"
         />
-      </div>
+      </section>
 
-      <section class="relative w-full h-screen max-h-150 flex items-center justify-center bg-gray-900 text-white mt-15">
-        <div class="absolute inset-0 z-0">
-          <img
-              :src="mira"
-              alt="Hero Background"
-              class="w-full h-full object-cover opacity-50"
-          />
-        </div>
+      <!-- Cosmic Divider -->
+      <div class="cosmic-divider mx-4 md:mx-14"></div>
 
-        <div class="relative z-10 container mx-auto px-4 ">
-          <h1 class="text-4xl font-bold mb-6">
-            Nejvetsi vyber gadgetu pro fetaky v Cesku
-          </h1>
-          <h2 class="text-2xl">Novinka: Buchna pleskacka</h2>
-          <button class="mt-5 bg-secondary-800 hover:bg-secondary-700 text-white font-bold py-2 px-5 rounded-lg shadow-lg transition duration-300 ease-in-out flex items-center gap-2 group">
-            Prohlednout si kolekci
-            <span class="transition-transform duration-300 ease-in-out group-hover:translate-x-1">
-          <Icon icon="ep:right" height="24" />
-        </span>
-          </button>
+      <!-- Banner Section -->
+      <section class="relative mx-4 md:mx-14 rounded-2xl md:rounded-3xl overflow-hidden my-8 md:my-10">
+        <div class="relative min-h-[280px] md:h-[350px] flex items-center">
+          <div class="absolute inset-0 bg-gradient-to-br from-primary-900/50 via-secondary-900/30 to-accent-900/40"></div>
+          <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>
+
+          <div class="relative z-10 px-6 md:px-16 py-8 max-w-2xl">
+            <span class="cosmic-badge mb-3 md:mb-4">🍄 Novinka</span>
+            <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 md:mb-4 neon-text-pink">
+              Největší výběr gadgetů v Česku
+            </h2>
+            <p class="text-white/50 text-sm md:text-lg mb-5 md:mb-6">Objevte nové dimenze zábavy s naší kosmickou kolekcí</p>
+            <button class="btn-cosmic flex items-center gap-2 group text-sm md:text-base px-6 py-3 md:px-8 md:py-3">
+              <span>Prohlédnout kolekci</span>
+              <Icon icon="ep:right" height="18" class="transition-transform group-hover:translate-x-1" />
+            </button>
+          </div>
+
+          <!-- Floating decorations - hidden on very small screens -->
+          <div class="hidden sm:block absolute right-10 top-10 text-5xl hippie-float opacity-20">🌌</div>
+          <div class="hidden sm:block absolute right-32 bottom-10 text-4xl hippie-float-delayed opacity-15">🔮</div>
         </div>
       </section>
 
-        <div class="flex items-center justify-baseline m-5">
-          <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">Vsechny produkty</h1>
+      <!-- Cosmic Divider -->
+      <div class="cosmic-divider mx-4 md:mx-14"></div>
+
+      <!-- All Products Section -->
+      <section class="py-8 md:py-12 px-4 md:px-8">
+        <div class="flex items-center justify-between gap-3 mb-6 md:mb-8 px-2 md:px-6">
+          <div class="flex items-center gap-3">
+            <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-tight neon-text-cyan">
+              Všechny produkty
+            </h2>
+            <span class="text-xl md:text-2xl hippie-float">✨</span>
+          </div>
+
+          <!-- Mobile filter button -->
+          <button
+            @click="showMobileFilters = !showMobileFilters"
+            class="lg:hidden flex items-center gap-2 px-3 py-2 glass-card text-white/60 hover:text-white text-sm transition-all"
+          >
+            <Icon icon="mdi:filter-variant" height="18" />
+            <span class="hidden sm:inline">Filtry</span>
+          </button>
         </div>
 
-      <div class="flex mt-8">
-        <Sidebar
-            :categories="categories"
-            :selected-category="selectedCategory"
-            @select="selectedCategory = $event"
-        />
-        <div class="flex-1 pl-8 mr-10">
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-            <NuxtLink
+        <!-- Mobile category filter (collapsible) -->
+        <Transition name="expand">
+          <div v-if="showMobileFilters" class="lg:hidden mx-2 mb-6">
+            <div class="glass-card p-4">
+              <div class="flex flex-wrap gap-2">
+                <button
+                  @click="selectCategory(null)"
+                  class="px-3 py-2 rounded-xl text-xs font-medium transition-all"
+                  :class="selectedCategory === null
+                    ? 'bg-gradient-to-r from-primary-500/30 to-secondary-500/30 text-white border border-primary-500/30'
+                    : 'text-white/50 hover:text-white bg-white/5'"
+                >
+                  ✨ Vše
+                </button>
+                <button
+                  v-for="category in categories"
+                  :key="category"
+                  @click="selectCategory(category)"
+                  class="px-3 py-2 rounded-xl text-xs font-medium transition-all"
+                  :class="selectedCategory === category
+                    ? 'bg-gradient-to-r from-primary-500/30 to-secondary-500/30 text-white border border-primary-500/30'
+                    : 'text-white/50 hover:text-white bg-white/5'"
+                >
+                  {{ category }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+
+        <div class="flex mt-4">
+          <!-- Desktop Sidebar -->
+          <div class="hidden lg:block">
+            <Sidebar
+              :categories="categories"
+              :selected-category="selectedCategory"
+              @select="selectedCategory = $event"
+            />
+          </div>
+          <div class="flex-1 lg:pl-8 lg:pr-4">
+            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+              <NuxtLink
                 v-for="product in filteredProducts"
                 :key="product.id"
                 :to="`/product/${product.id}`"
                 class="block h-full"
-            >
-              <ProductCard :product="product"/>
-            </NuxtLink>
+              >
+                <ProductCard :product="product"/>
+              </NuxtLink>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
+
     </template>
   </div>
 </template>
 
 <style scoped>
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  max-height: 0;
+  margin-bottom: 0;
+}
+.expand-enter-to,
+.expand-leave-from {
+  opacity: 1;
+  max-height: 200px;
+}
 </style>

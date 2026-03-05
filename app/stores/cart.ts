@@ -24,5 +24,9 @@ export const useCartStore = defineStore('cart', () => {
         items.value.splice(index, 1)
     }
     
-    return { items, totalPrice, itemCount, addToCart, removeFromCart }
+    function clearCart() {
+        items.value = []
+    }
+    
+    return { items, totalPrice, itemCount, addToCart, removeFromCart, clearCart }
 })

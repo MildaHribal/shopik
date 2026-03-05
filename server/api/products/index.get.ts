@@ -1,18 +1,27 @@
-import { products as localProducts } from '../../../app/data/products'
+import { db } from '../../utils/db';
+import { products, categories } from '../../database/schema';
+import { eq } from 'drizzle-orm';
 
-export default defineEventHandler(async (event) => {
-  const products = localProducts.map((p, index) => ({
-    id: index + 1,
-    title: p.name,
-    slug: p.name.toLowerCase().replace(/ /g, '-'),
-    description: `Popis pro ${p.name}`,
-    price: p.price,
-    image: p.image,
-    stock: 10,
-    category: p.category,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }))
+export default defineEventHandler(async () => {
+  const result = await db
+    .select({
+      id: products.id,
+      title: products.name,
+      name: products.name,
+      slug: products.slug,
+      description: products.description,
+      price: products.price,
+      image: products.image,
+      images: products.images,
+      stock: products.stock,
+      category: categories.name,
+      categoryId: products.categoryId,
+      createdAt: products.createdAt,
+      updatedAt: products.updatedAt,
+    })
+    .from(products)
+    .leftJoin(categories, eq(products.categoryId, categories.id))
+    .orderBy(products.id);
 
-  return products
-})
+  return result;
+});

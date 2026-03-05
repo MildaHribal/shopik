@@ -1,109 +1,113 @@
 <script setup lang="ts">
 import { useCartStore } from "~/stores/cart";
+import { Icon } from "@iconify/vue";
 
 const cart = useCartStore()
 </script>
 
 <template>
-  <div class="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
-    <div class="p-6 bg-gray-50 border-b border-gray-100">
-      <h2 class="text-2xl font-bold text-gray-800">Váš nákupní košík</h2>
+  <div class="max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-12">
+    <!-- Header -->
+    <div class="flex items-center gap-3 mb-6 md:mb-8">
+      <NuxtLink to="/" class="text-white/30 hover:text-white transition-colors">
+        <Icon icon="ep:arrow-left-bold" height="18" />
+      </NuxtLink>
+      <h1 class="text-2xl md:text-3xl font-extrabold text-white neon-text">Váš košík 🛒</h1>
     </div>
 
-    <div v-if="cart.items.length === 0" class="p-12 text-center">
-      <div class="inline-block p-4 rounded-full bg-gray-100 mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      </div>
-      <p class="text-xl text-gray-500 mb-6">Váš košík je zatím prázdný.</p>
-      <NuxtLink to="/" class="inline-block px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">
-        Pokračovat v nákupu
+    <!-- Empty Cart -->
+    <div v-if="cart.items.length === 0" class="glass-card-strong p-10 md:p-16 text-center">
+      <div class="text-5xl md:text-6xl mb-4 md:mb-6">🌑</div>
+      <p class="text-lg md:text-xl text-white/50 mb-6 md:mb-8">Váš košík je zatím prázdný.</p>
+      <NuxtLink to="/" class="btn-cosmic inline-flex items-center gap-2 text-sm md:text-base">
+        <span>Pokračovat v nákupu</span>
+        <Icon icon="ep:right" height="18" />
       </NuxtLink>
     </div>
 
-    <div v-else class="flex flex-col md:flex-row">
-      <div class="flex-grow">
-        <ul class="divide-y divide-gray-100">
-          <li v-for="(item, index) in cart.items" :key="index" class="p-6 flex items-center hover:bg-gray-50 transition-colors">
-            <div class="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-white">
+    <!-- Cart with items -->
+    <div v-else class="flex flex-col lg:flex-row gap-4 md:gap-6">
+      <!-- Items -->
+      <div class="flex-grow glass-card overflow-hidden">
+        <div class="divide-y divide-white/5">
+          <div
+            v-for="(item, index) in cart.items"
+            :key="index"
+            class="p-4 md:p-5 flex items-center hover:bg-white/[0.02] transition-colors"
+          >
+            <!-- Image -->
+            <div class="h-16 w-16 md:h-20 md:w-20 flex-shrink-0 overflow-hidden rounded-lg md:rounded-xl bg-white/5 border border-white/10">
               <img
                 v-if="item.image"
-                :src="`/${item.image}`"
+                :src="item.image.startsWith('http') ? item.image : `/${item.image}`"
                 :alt="item.title"
-                class="h-full w-full object-cover object-center"
+                class="h-full w-full object-cover"
               >
-              <div v-else class="h-full w-full flex items-center justify-center bg-gray-100 text-gray-400 text-xs">No image</div>
+              <div v-else class="h-full w-full flex items-center justify-center text-white/20">
+                <Icon icon="mdi:image-off-outline" height="20" />
+              </div>
             </div>
 
-            <div class="ml-4 flex flex-1 flex-col">
-              <div>
-                <div class="flex justify-between text-base font-medium text-gray-900">
-                  <h3>
-                    <NuxtLink :to="`/product/${item.id}`" class="hover:text-indigo-600">{{ item.title }}</NuxtLink>
+            <!-- Info -->
+            <div class="ml-3 md:ml-5 flex flex-1 flex-col min-w-0">
+              <div class="flex justify-between items-start gap-2">
+                <div class="min-w-0">
+                  <h3 class="font-bold text-white text-xs md:text-sm truncate">
+                    <NuxtLink :to="`/product/${item.id}`" class="hover:text-primary-300 transition-colors">
+                      {{ item.title }}
+                    </NuxtLink>
                   </h3>
-                  <p class="ml-4">{{ item.price }} Kč</p>
+                  <p class="text-[10px] md:text-xs text-white/30 mt-0.5">{{ item.category }}</p>
                 </div>
-                <p class="mt-1 text-sm text-gray-500">{{ item.category }}</p>
+                <span class="text-white font-bold text-xs md:text-sm neon-text flex-shrink-0">{{ item.price }} Kč</span>
               </div>
-              <div class="flex flex-1 items-end justify-between text-sm">
-                <p class="text-gray-500">Množství: 1</p>
-
-                <div class="flex">
-                  <button
-                    @click="cart.removeFromCart(index)"
-                    type="button"
-                    class="font-medium text-red-600 hover:text-red-500 flex items-center transition-colors"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Odstranit
-                  </button>
-                </div>
+              <div class="flex items-end justify-between mt-2 md:mt-3">
+                <span class="text-[10px] md:text-xs text-white/30">Množství: 1</span>
+                <button
+                  @click="cart.removeFromCart(index)"
+                  type="button"
+                  class="text-[10px] md:text-xs text-red-400/60 hover:text-red-400 transition-colors flex items-center gap-1"
+                >
+                  <Icon icon="mdi:trash-can-outline" height="12" />
+                  <span class="hidden sm:inline">Odstranit</span>
+                </button>
               </div>
             </div>
-          </li>
-        </ul>
+          </div>
+        </div>
       </div>
 
-      <div class="md:w-1/3 bg-gray-50 p-6 border-l border-gray-100">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Souhrn objednávky</h3>
+      <!-- Order Summary -->
+      <div class="lg:w-80 flex-shrink-0">
+        <div class="glass-card-strong p-5 md:p-6 lg:sticky lg:top-6 gradient-border">
+          <h3 class="text-base md:text-lg font-bold text-white mb-4 md:mb-6 neon-text-cyan">Souhrn objednávky</h3>
 
-        <div class="flow-root">
-          <dl class="-my-4 divide-y divide-gray-200 text-sm">
-            <div class="flex items-center justify-between py-4">
-              <dt class="text-gray-600">Mezisoučet</dt>
-              <dd class="font-medium text-gray-900">{{ cart.totalPrice }} Kč</dd>
+          <dl class="space-y-3 md:space-y-4 text-sm">
+            <div class="flex justify-between">
+              <dt class="text-white/40">Mezisoučet</dt>
+              <dd class="font-medium text-white">{{ cart.totalPrice }} Kč</dd>
             </div>
-            <div class="flex items-center justify-between py-4">
-              <dt class="text-gray-600">Doprava</dt>
-              <dd class="font-medium text-gray-900">Zdarma</dd>
+            <div class="flex justify-between">
+              <dt class="text-white/40">Doprava</dt>
+              <dd class="font-medium text-green-400">Zdarma</dd>
             </div>
-            <div class="flex items-center justify-between py-4 border-t border-gray-200">
-              <dt class="text-base font-bold text-gray-900">Celkem</dt>
-              <dd class="text-xl font-bold text-indigo-600">{{ cart.totalPrice }} Kč</dd>
+            <div class="cosmic-divider !my-3 md:!my-4"></div>
+            <div class="flex items-center justify-between">
+              <dt class="text-sm md:text-base font-bold text-white">Celkem</dt>
+              <dd class="text-xl md:text-2xl font-black neon-text-rainbow">{{ cart.totalPrice }} Kč</dd>
             </div>
           </dl>
-        </div>
 
-        <div class="mt-6">
-          <button
-            type="button"
-            class="w-full rounded-md border border-transparent bg-indigo-600 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all"
-          >
+          <NuxtLink to="/checkout" class="btn-cosmic w-full mt-6 md:mt-8 py-3.5 md:py-4 text-sm md:text-base flex items-center justify-center gap-2">
+            <Icon icon="mdi:credit-card-outline" height="18" />
             Přejít k pokladně
-          </button>
-        </div>
+          </NuxtLink>
 
-        <div class="mt-6 flex justify-center text-center text-sm text-gray-500">
-          <p>
-            nebo
-            <NuxtLink to="/" class="font-medium text-indigo-600 hover:text-indigo-500">
-              Pokračovat v nákupu
-              <span aria-hidden="true"> &rarr;</span>
+          <div class="mt-3 md:mt-4 text-center">
+            <NuxtLink to="/" class="text-xs md:text-sm text-white/30 hover:text-primary-400 transition-colors">
+              nebo pokračovat v nákupu →
             </NuxtLink>
-          </p>
+          </div>
         </div>
       </div>
     </div>
