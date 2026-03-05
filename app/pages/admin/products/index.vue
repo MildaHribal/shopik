@@ -6,6 +6,7 @@ definePageMeta({
 })
 
 const { data: products, pending, refresh } = await useFetch<any[]>('/api/admin/products')
+const toast = useToast()
 
 // Search & filter
 const searchQuery = ref('')
@@ -150,7 +151,9 @@ async function saveProduct() {
     }
     showModal.value = false
     await refresh()
-  } catch (e) {
+    toast.success('Uloženo', isEditing.value ? 'Produkt byl upraven.' : 'Produkt byl vytvořen.')
+  } catch (e: any) {
+    toast.error('Uložení selhalo', e?.data?.statusMessage || e?.message || 'Produkt se nepodařilo uložit.')
     console.error('Chyba při ukládání:', e)
   } finally {
     saving.value = false
@@ -158,16 +161,28 @@ async function saveProduct() {
 }
 
 const deletingId = ref<number | null>(null)
+const pendingDeleteId = ref<number | null>(null)
+const deleteConfirmUntil = ref(0)
 
 async function deleteProduct(id: number) {
-  if (!confirm('Opravdu chcete smazat tento produkt?')) return
+  const now = Date.now()
+  if (pendingDeleteId.value !== id || now > deleteConfirmUntil.value) {
+    pendingDeleteId.value = id
+    deleteConfirmUntil.value = now + 5000
+    toast.info('Potvrďte smazání', 'Klikněte znovu do 5 sekund.')
+    return
+  }
   deletingId.value = id
   try {
     await $fetch(`/api/admin/products/${id}`, { method: 'DELETE' })
     await refresh()
-  } catch (e) {
+    toast.success('Smazáno', 'Produkt byl odstraněn.')
+  } catch (e: any) {
+    toast.error('Mazání selhalo', e?.data?.statusMessage || e?.message || 'Produkt se nepodařilo smazat.')
     console.error('Chyba při mazání:', e)
   } finally {
+    pendingDeleteId.value = null
+    deleteConfirmUntil.value = 0
     deletingId.value = null
   }
 }

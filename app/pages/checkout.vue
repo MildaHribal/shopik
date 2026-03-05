@@ -285,7 +285,15 @@ function selectedStyle(active: boolean) {
           <div class="space-y-3 mb-5 max-h-72 overflow-y-auto pr-1">
             <div v-for="item in cart.items" :key="item.id" class="flex items-center gap-3">
               <div class="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0" style="background:rgba(255,255,255,0.05);">
-                <img v-if="item.image" :src="item.image.startsWith('http') ? item.image : `/${item.image}`" class="w-full h-full object-cover" />
+                <NuxtImg
+                  v-if="item.image"
+                  :src="item.image.startsWith('http') ? item.image : `/${item.image}`"
+                  class="w-full h-full object-cover"
+                  width="80"
+                  height="80"
+                  format="webp"
+                  loading="lazy"
+                />
                 <div v-else class="w-full h-full flex items-center justify-center text-white/20">
                   <Icon icon="mdi:image-off" height="14" />
                 </div>

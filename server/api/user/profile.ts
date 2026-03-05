@@ -5,13 +5,18 @@ import { requireSession } from '../../utils/session';
 
 export default defineEventHandler(async (event) => {
   const session = await requireSession(event)
-
-  const method = event.method;
+  const userId = session.user?.id
+  if (!userId) {
+    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+  }
+  const userName = session.user?.name || ''
+  const userEmail = session.user?.email || ''
+  const method = getMethod(event)
 
   // --- GET: Načtení profilu ---
   if (method === 'GET') {
     const user = await db.query.users.findFirst({
-      where: eq(users.neonAuthId, session.user.id),
+      where: eq(users.neonAuthId, userId),
     });
 
     if (user) return user;
@@ -19,9 +24,9 @@ export default defineEventHandler(async (event) => {
     // Uživatel v DB ještě není – vrátíme základní data ze session
     return {
       id: null,
-      name: session.user.name || '',
-      email: session.user.email || '',
-      neonAuthId: session.user.id,
+      name: userName,
+      email: userEmail,
+      neonAuthId: userId,
       phone: null,
       street: null,
       city: null,
@@ -34,29 +39,46 @@ export default defineEventHandler(async (event) => {
   // --- PATCH: Uložení profilu ---
   if (method === 'PATCH') {
     const body = await readBody(event);
-    const { name, phone, street, city, zip } = body;
+    const name = String(body?.name || userName || 'Uživatel').trim()
+    const phone = body?.phone ? String(body.phone).trim() : null
+    const street = body?.street ? String(body.street).trim() : null
+    const city = body?.city ? String(body.city).trim() : null
+    const zip = body?.zip ? String(body.zip).trim() : null
+    const email = userEmail || `${userId}@no-email.local`
 
     const existing = await db.query.users.findFirst({
-      where: eq(users.neonAuthId, session.user.id),
+      where: eq(users.neonAuthId, userId),
     });
 
     if (existing) {
       const [updated] = await db.update(users)
         .set({ name, phone, street, city, zip, updatedAt: new Date() })
-        .where(eq(users.neonAuthId, session.user.id))
+        .where(eq(users.neonAuthId, userId))
         .returning();
       return updated;
     }
 
     const [created] = await db.insert(users)
       .values({
-        name: name || session.user.name || 'Uživatel',
-        email: session.user.email || '',
-        neonAuthId: session.user.id,
-        phone: phone || null,
-        street: street || null,
-        city: city || null,
-        zip: zip || null,
+        name,
+        email,
+        neonAuthId: userId,
+        phone,
+        street,
+        city,
+        zip,
+      })
+      .onConflictDoUpdate({
+        target: users.email,
+        set: {
+          neonAuthId: userId,
+          name,
+          phone,
+          street,
+          city,
+          zip,
+          updatedAt: new Date(),
+        },
       })
       .returning();
     return created;

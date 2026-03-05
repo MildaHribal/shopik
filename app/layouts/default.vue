@@ -7,8 +7,6 @@ import Navbar from "~/components/Navbar.vue";
     <!-- Nebula glow blobs -->
     <div class="nebula-glow nebula-glow--purple"></div>
     <div class="nebula-glow nebula-glow--pink"></div>
-    <div class="nebula-glow nebula-glow--cyan"></div>
-    <div class="nebula-glow nebula-glow--gold"></div>
 
     <!-- Main content -->
     <div class="relative z-10">

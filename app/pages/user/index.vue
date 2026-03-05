@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '~~/app/composables/useAuth'
+
+definePageMeta({
+  middleware: 'auth'
+})
 
 const { currentUser, signOut } = useAuth()
 const router = useRouter()
@@ -25,6 +29,17 @@ const formData = ref({
   city: profile.value?.city || '',
   zip: profile.value?.zip || '',
 })
+
+watch(profile, (value) => {
+  if (!value) return
+  formData.value = {
+    name: value.name || '',
+    phone: value.phone || '',
+    street: value.street || '',
+    city: value.city || '',
+    zip: value.zip || '',
+  }
+}, { immediate: true })
 
 async function saveProfile() {
   isSaving.value = true
@@ -174,7 +189,15 @@ const statusClass = (status: string) => {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div v-for="item in order.items" :key="item.id" class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-md bg-white/5 overflow-hidden flex-shrink-0">
-                      <img v-if="item.image" :src="item.image.startsWith('http') ? item.image : `/${item.image}`" class="w-full h-full object-cover">
+                      <NuxtImg
+                        v-if="item.image"
+                        :src="item.image.startsWith('http') ? item.image : `/${item.image}`"
+                        class="w-full h-full object-cover"
+                        width="80"
+                        height="80"
+                        format="webp"
+                        loading="lazy"
+                      />
                     </div>
                     <div class="min-w-0">
                       <div class="text-sm text-white truncate">{{ item.title }}</div>
@@ -204,7 +227,16 @@ const statusClass = (status: string) => {
           <div v-if="favorites && favorites.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <NuxtLink v-for="product in favorites" :key="product.id" :to="`/product/${product.slug}`" class="group relative rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-primary-500/50 transition-all flex flex-col">
               <div class="aspect-square bg-black/20 relative">
-                <img v-if="product.image" :src="product.image.startsWith('http') ? product.image : `/${product.image}`" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                <NuxtImg
+                  v-if="product.image"
+                  :src="product.image.startsWith('http') ? product.image : `/${product.image}`"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  width="500"
+                  height="500"
+                  format="webp"
+                  sizes="(max-width: 640px) 50vw, 33vw"
+                  loading="lazy"
+                />
               </div>
               <div class="p-3">
                 <h3 class="text-sm font-medium text-white truncate">{{ product.name }}</h3>
@@ -229,7 +261,15 @@ const statusClass = (status: string) => {
             <div v-for="review in reviews" :key="review.id" class="p-5 rounded-xl border border-white/10 bg-white/5">
               <div class="flex gap-4">
                 <NuxtLink :to="`/product/${review.productSlug}`" class="w-16 h-16 rounded-lg bg-black/20 overflow-hidden flex-shrink-0 border border-white/10 hover:border-primary-400">
-                  <img v-if="review.productImage" :src="review.productImage.startsWith('http') ? review.productImage : `/${review.productImage}`" class="w-full h-full object-cover">
+                  <NuxtImg
+                    v-if="review.productImage"
+                    :src="review.productImage.startsWith('http') ? review.productImage : `/${review.productImage}`"
+                    class="w-full h-full object-cover"
+                    width="128"
+                    height="128"
+                    format="webp"
+                    loading="lazy"
+                  />
                 </NuxtLink>
                 <div class="flex-grow">
                   <div class="flex items-start justify-between mb-1">
