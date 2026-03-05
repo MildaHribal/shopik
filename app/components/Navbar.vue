@@ -8,9 +8,12 @@ const cart = useCartStore();
 const isScrolled = ref(false);
 const isSearchOpen = ref(false);
 const isMobileMenuOpen = ref(false);
-const isUserMenuOpen = ref(false);
 
-const { currentUser, signOut: authSignOut } = useAuth();
+const { currentUser, signOut } = useAuth();
+
+const logout = async () => {
+  await signOut();
+};
 
 const navLinks = [
   { label: 'emzáci', link: '#' },
@@ -21,13 +24,8 @@ const navLinks = [
 ];
 
 const handleScroll = () => {
-  isScrolled.value = window.scrollY > 100
+  isScrolled.value = window.scrollY > 20
 }
-
-const logout = async () => {
-  await authSignOut();
-  isUserMenuOpen.value = false;
-};
 
 watch(isSearchOpen, (val) => {
   if (val) {
@@ -88,61 +86,11 @@ onUnmounted(() => {
       </button>
 
       <div class="flex items-center gap-1.5 md:gap-2 relative">
-        <div v-if="currentUser" class="relative">
-          <button 
-            @click="isUserMenuOpen = !isUserMenuOpen" 
-            class="nav-action-btn" 
-            title="User Menu"
-          >
-            <Icon icon="bxs:user" height="20" />
-          </button>
-          
-          <!-- Custom User Dropdown -->
-          <Transition name="fade">
-            <div 
-              v-if="isUserMenuOpen"
-              class="absolute top-full right-0 mt-2 w-48 bg-[#0d0020] border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-xl z-50"
-            >
-              <div class="p-3 border-b border-white/5">
-                <p class="text-sm font-bold text-white truncate">{{ currentUser.name }}</p>
-                <p class="text-[10px] text-white/50 truncate">{{ currentUser.email }}</p>
-              </div>
-              <div class="p-1">
-                <NuxtLink 
-                  to="/user" 
-                  @click="isUserMenuOpen = false"
-                  class="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-                >
-                  <Icon icon="mdi:account-circle-outline" height="18" />
-                  Můj profil
-                </NuxtLink>
-                <NuxtLink 
-                  to="/admin" 
-                  @click="isUserMenuOpen = false"
-                  class="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-                >
-                  <Icon icon="mdi:cog-outline" height="18" />
-                  Admin panel
-                </NuxtLink>
-                <button 
-                  @click="logout"
-                  class="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors text-left"
-                >
-                  <Icon icon="mdi:logout" height="18" />
-                  Odhlásit se
-                </button>
-              </div>
-            </div>
-          </Transition>
-          
-          <!-- Backdrop to close menu -->
-          <div 
-            v-if="isUserMenuOpen" 
-            @click="isUserMenuOpen = false"
-            class="fixed inset-0 z-40 bg-transparent cursor-default"
-          ></div>
-        </div>
-        <NuxtLink v-else to="/user/login" class="nav-action-btn" title="Login">
+        <NuxtLink 
+          :to="currentUser ? '/user' : '/user/login'" 
+          class="nav-action-btn" 
+          title="Můj profil"
+        >
           <Icon icon="bxs:user" height="20" />
         </NuxtLink>
       </div>
@@ -243,13 +191,12 @@ onUnmounted(() => {
       </button>
 
       <div class="pointer-events-auto">
-        <UDropdownMenu v-if="currentUser" :items="userMenuItems" :content="{ align: 'end' }">
-          <button class="floating-btn" title="User Menu">
-            <Icon icon="bx:user" height="18" />
-          </button>
-        </UDropdownMenu>
-        <NuxtLink v-else to="/user/login" class="floating-btn" title="Login">
-          <Icon icon="bx:user" height="18" />
+        <NuxtLink 
+          :to="currentUser ? '/user' : '/user/login'" 
+          class="floating-btn" 
+          title="Můj profil"
+        >
+          <Icon icon="bxs:user" height="18" />
         </NuxtLink>
       </div>
 

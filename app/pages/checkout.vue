@@ -5,7 +5,7 @@ import { useAuth } from "~/composables/useAuth";
 
 const cart = useCartStore();
 const { currentUser } = useAuth();
-const toast = useToast()
+const toast = useCosmicToast()
 
 const step = ref<'details' | 'payment' | 'success'>('details');
 const orderId = ref<number | null>(null);
@@ -31,12 +31,12 @@ watch(
   [userProfile, currentUser],
   ([profile, user]) => {
     if (profile) {
-      form.value.customerName = profile.name ?? '';
-      form.value.customerEmail = user?.email ?? profile.email ?? '';
-      form.value.phone = profile.phone ?? '';
-      form.value.street = profile.street ?? '';
-      form.value.city = profile.city ?? '';
-      form.value.zip = profile.zip ?? '';
+      form.value.customerName = (profile as any).name ?? '';
+      form.value.customerEmail = user?.email ?? (profile as any).email ?? '';
+      form.value.phone = (profile as any).phone ?? '';
+      form.value.street = (profile as any).street ?? '';
+      form.value.city = (profile as any).city ?? '';
+      form.value.zip = (profile as any).zip ?? '';
     } else if (user?.email && !form.value.customerEmail) {
       form.value.customerEmail = user.email;
     }

@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '~~/app/composables/useAuth'
 
 definePageMeta({
-  middleware: 'auth'
+  middleware: []
 })
 
 const { currentUser, signOut } = useAuth()
@@ -14,7 +14,7 @@ const router = useRouter()
 const activeTab = ref('profile')
 
 // Fetch User Data
-const toast = useToast()
+const toast = useCosmicToast()
 const { data: profile, refresh: refreshProfile } = await useFetch('/api/user/profile')
 const { data: orders } = await useFetch('/api/user/orders')
 const { data: favorites } = await useFetch('/api/user/favorites')
@@ -99,21 +99,21 @@ const statusClass = (status: string) => {
           <p class="text-sm text-white/50 break-all">{{ currentUser?.email }}</p>
         </div>
 
-        <nav class="glass-card-strong p-2 overflow-hidden flex flex-row md:flex-col gap-2 overflow-x-auto">
-          <button @click="activeTab = 'profile'" :class="['flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-left whitespace-nowrap', activeTab === 'profile' ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white']">
-            <Icon icon="mdi:account-outline" height="20" /> Osobní údaje
+        <nav class="glass-card-strong p-2 flex flex-row flex-wrap md:flex-col gap-2 justify-center md:justify-start">
+          <button @click="activeTab = 'profile'" :class="['flex items-center gap-2 px-3 py-2 md:px-4 md:py-3 rounded-lg text-sm font-medium transition-colors text-left whitespace-nowrap flex-grow md:flex-grow-0', activeTab === 'profile' ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white']">
+            <Icon icon="mdi:account-outline" height="20" /> <span class="hidden sm:inline">Osobní údaje</span><span class="sm:hidden">Profil</span>
           </button>
-          <button @click="activeTab = 'orders'" :class="['flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-left whitespace-nowrap', activeTab === 'orders' ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white']">
-            <Icon icon="mdi:shopping-outline" height="20" /> Moje objednávky
+          <button @click="activeTab = 'orders'" :class="['flex items-center gap-2 px-3 py-2 md:px-4 md:py-3 rounded-lg text-sm font-medium transition-colors text-left whitespace-nowrap flex-grow md:flex-grow-0', activeTab === 'orders' ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white']">
+            <Icon icon="mdi:shopping-outline" height="20" /> <span class="hidden sm:inline">Moje objednávky</span><span class="sm:hidden">Objednávky</span>
           </button>
-          <button @click="activeTab = 'favorites'" :class="['flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-left whitespace-nowrap', activeTab === 'favorites' ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white']">
-            <Icon icon="mdi:heart-outline" height="20" /> Oblíbené
+          <button @click="activeTab = 'favorites'" :class="['flex items-center gap-2 px-3 py-2 md:px-4 md:py-3 rounded-lg text-sm font-medium transition-colors text-left whitespace-nowrap flex-grow md:flex-grow-0', activeTab === 'favorites' ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white']">
+            <Icon icon="mdi:heart-outline" height="20" /> <span class="hidden sm:inline">Oblíbené</span><span class="sm:hidden">Oblíbené</span>
           </button>
-          <button @click="activeTab = 'reviews'" :class="['flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-left whitespace-nowrap', activeTab === 'reviews' ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white']">
-            <Icon icon="mdi:star-outline" height="20" /> Moje recenze
+          <button @click="activeTab = 'reviews'" :class="['flex items-center gap-2 px-3 py-2 md:px-4 md:py-3 rounded-lg text-sm font-medium transition-colors text-left whitespace-nowrap flex-grow md:flex-grow-0', activeTab === 'reviews' ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white']">
+            <Icon icon="mdi:star-outline" height="20" /> <span class="hidden sm:inline">Moje recenze</span><span class="sm:hidden">Recenze</span>
           </button>
-          <div class="w-px md:w-full md:h-px bg-white/10 my-1 flex-shrink-0"></div>
-          <button @click="handleSignOut" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors text-left whitespace-nowrap">
+          <div class="w-full h-px bg-white/10 my-1 md:block hidden"></div>
+          <button @click="handleSignOut" class="flex items-center gap-2 px-3 py-2 md:px-4 md:py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors text-left whitespace-nowrap flex-grow md:flex-grow-0 w-full md:w-auto justify-center md:justify-start mt-2 md:mt-0 border md:border-none border-red-500/20">
             <Icon icon="mdi:logout" height="20" /> Odhlásit se
           </button>
         </nav>
@@ -174,7 +174,7 @@ const statusClass = (status: string) => {
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div>
                   <div class="font-mono text-primary-400 font-bold mb-1">Objednávka #{{ order.id }}</div>
-                  <div class="text-sm text-white/50">{{ new Date(order.createdAt).toLocaleDateString('cs-CZ') }}</div>
+                  <div class="text-sm text-white/50">{{ order.createdAt ? new Date(order.createdAt).toLocaleDateString('cs-CZ') : '' }}</div>
                 </div>
                 <div class="flex items-center gap-3">
                   <span class="text-lg font-black text-white">{{ order.totalPrice }} Kč</span>
@@ -276,7 +276,7 @@ const statusClass = (status: string) => {
                     <NuxtLink :to="`/product/${review.productSlug}`" class="text-white font-medium hover:text-primary-300 transition-colors">
                       {{ review.productName }}
                     </NuxtLink>
-                    <div class="text-xs text-white/40">{{ new Date(review.createdAt).toLocaleDateString('cs-CZ') }}</div>
+                    <div class="text-xs text-white/40">{{ review.createdAt ? new Date(review.createdAt).toLocaleDateString('cs-CZ') : '' }}</div>
                   </div>
                   <div class="flex text-yellow-500 mb-2">
                     <Icon v-for="n in 5" :key="n" :icon="n <= review.rating ? 'mdi:star' : 'mdi:star-outline'" height="16" />

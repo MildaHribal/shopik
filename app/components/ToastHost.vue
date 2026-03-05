@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { toasts, remove } = useToast()
+const { toasts, remove } = useCosmicToast()
 
 const variantClasses = (variant: string) => {
   switch (variant) {

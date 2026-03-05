@@ -1,6 +1,8 @@
 import { createAuthClient } from '@neondatabase/neon-js/auth';
 
-// Server-side Neon Auth client for session verification
+// Na serveru musíme vždy použít absolutní URL
+const neonAuthUrl = process.env.VITE_NEON_AUTH_URL || 'http://localhost:3000/auth';
+
 export const serverAuth = createAuthClient(
-    process.env.VITE_NEON_AUTH_URL!
+  neonAuthUrl
 );

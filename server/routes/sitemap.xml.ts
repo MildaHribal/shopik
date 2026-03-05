@@ -24,8 +24,8 @@ export default defineEventHandler(async (event) => {
     .from(products)
 
   const baseUrls = [
-    { loc: `${origin}/`, changefreq: 'daily', priority: '1.0' },
-    { loc: `${origin}/product`, changefreq: 'daily', priority: '0.8' },
+    { loc: `${origin}/`, changefreq: 'daily', priority: '1.0', lastmod: undefined as string | undefined },
+    { loc: `${origin}/product`, changefreq: 'daily', priority: '0.8', lastmod: undefined as string | undefined },
   ]
 
   const productUrls = rows

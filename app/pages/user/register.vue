@@ -17,6 +17,12 @@ const handleRegister = async () => {
   loading.value = true
   error.value = ''
 
+  if (password.value.length < 8) {
+    error.value = 'Heslo musí mít alespoň 8 znaků.'
+    loading.value = false
+    return
+  }
+
   if (password.value !== confirmPassword.value) {
     error.value = 'Hesla se neshodují.'
     loading.value = false
@@ -42,7 +48,11 @@ const handleRegister = async () => {
     }
   } catch (e: any) {
     console.error(e)
-    error.value = 'Nastala chyba při registraci: ' + (e.message || 'Neznámá chyba')
+    if (e.message?.includes('Invalid URL')) {
+        error.value = 'Chyba konfigurace serveru (Invalid URL). Zkuste to prosím později.'
+    } else {
+        error.value = 'Nastala chyba při registraci: ' + (e.message || 'Neznámá chyba')
+    }
   } finally {
     loading.value = false
   }

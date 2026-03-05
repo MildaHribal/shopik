@@ -5,7 +5,7 @@ import { Icon } from "@iconify/vue";
 const route = useRoute();
 const { data: product, pending, error } = await useFetch(`/api/products/${route.params.id}`);
 const cart = useCartStore();
-const toast = useToast()
+const toast = useCosmicToast()
 const config = useRuntimeConfig()
 const siteUrl = config.public.siteUrl || useRequestURL().origin
 
@@ -23,7 +23,15 @@ const { data: favoriteStatus, refresh: refreshFavorite } = useFetch(
 );
 
 // Fetch reviews
-const { data: productReviews, refresh: refreshReviews } = useFetch(
+interface Review {
+  id: number;
+  userName: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+}
+
+const { data: productReviews, refresh: refreshReviews } = useFetch<Review[]>(
   () => (productId.value ? `/api/products/${productId.value}/reviews` : null),
   { default: () => [] }
 );
@@ -320,7 +328,7 @@ const submitReview = async () => {
               </div>
             </div>
             <p v-if="rev.comment" class="text-sm text-white/70">&bdquo;{{ rev.comment }}&ldquo;</p>
-            <div class="text-[11px] text-white/40 mt-2">{{ new Date(rev.createdAt).toLocaleDateString('cs-CZ') }}</div>
+            <div class="text-[11px] text-white/40 mt-2">{{ rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('cs-CZ') : '' }}</div>
           </div>
         </div>
         <div v-else class="text-center py-8 text-white/50 text-sm">Zatím zde nejsou žádné recenze.</div>

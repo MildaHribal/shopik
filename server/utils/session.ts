@@ -11,7 +11,7 @@ type NeonSession = {
 } | null
 
 async function fetchNeonSession(event: H3Event): Promise<NeonSession> {
-  const headers = getRequestHeaders(event)
+  const headers = getRequestHeaders(event) as HeadersInit
   const sessionData = await serverAuth.getSession({
     fetchOptions: { headers }
   })
@@ -30,11 +30,25 @@ export async function getOptionalSession(event: H3Event): Promise<NeonSession> {
   }
 }
 
-export async function requireSession(event: H3Event): Promise<NonNullable<NeonSession>> {
+export type AuthenticatedSession = {
+  user: {
+    id: string
+    name: string | null
+    email: string | null
+  }
+}
+
+export async function requireSession(event: H3Event): Promise<AuthenticatedSession> {
   const session = await getOptionalSession(event)
   if (!session?.user?.id) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
   }
-  return session as NonNullable<NeonSession>
+  return {
+    user: {
+      id: session.user.id,
+      name: session.user.name ?? null,
+      email: session.user.email ?? null,
+    }
+  }
 }
 

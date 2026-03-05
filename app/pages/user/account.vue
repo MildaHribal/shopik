@@ -14,7 +14,7 @@ const router = useRouter()
 const activeTab = ref('profile')
 
 // Fetch User Data
-const toast = useToast()
+const toast = useCosmicToast()
 const { data: profile, refresh: refreshProfile } = await useFetch('/api/user/profile')
 const { data: orders } = await useFetch('/api/user/orders')
 const { data: favorites } = await useFetch('/api/user/favorites')
@@ -174,7 +174,7 @@ const statusClass = (status: string) => {
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div>
                   <div class="font-mono text-primary-400 font-bold mb-1">Objednávka #{{ order.id }}</div>
-                  <div class="text-sm text-white/50">{{ new Date(order.createdAt).toLocaleDateString('cs-CZ') }}</div>
+                  <div class="text-sm text-white/50">{{ order.createdAt ? new Date(order.createdAt).toLocaleDateString('cs-CZ') : '' }}</div>
                 </div>
                 <div class="flex items-center gap-3">
                   <span class="text-lg font-black text-white">{{ order.totalPrice }} Kč</span>
@@ -276,7 +276,7 @@ const statusClass = (status: string) => {
                     <NuxtLink :to="`/product/${review.productSlug}`" class="text-white font-medium hover:text-primary-300 transition-colors">
                       {{ review.productName }}
                     </NuxtLink>
-                    <div class="text-xs text-white/40">{{ new Date(review.createdAt).toLocaleDateString('cs-CZ') }}</div>
+                    <div class="text-xs text-white/40">{{ review.createdAt ? new Date(review.createdAt).toLocaleDateString('cs-CZ') : '' }}</div>
                   </div>
                   <div class="flex text-yellow-500 mb-2">
                     <Icon v-for="n in 5" :key="n" :icon="n <= review.rating ? 'mdi:star' : 'mdi:star-outline'" height="16" />

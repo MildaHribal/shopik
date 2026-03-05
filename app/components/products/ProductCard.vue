@@ -20,7 +20,7 @@ defineProps<{
       <div class="relative w-full aspect-[3/4] overflow-hidden rounded-t-[1.1rem] bg-white/5">
         <NuxtImg
           v-if="product.image"
-          :src="product.image.startsWith('http') ? product.image : `/${product.image}`"
+          :src="product.image.startsWith('http') || product.image.startsWith('/') ? product.image : `/${product.image}`"
           :alt="product.title"
           class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
           width="600"

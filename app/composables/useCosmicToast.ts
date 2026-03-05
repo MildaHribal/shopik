@@ -13,14 +13,14 @@ function uid() {
   return Math.random().toString(16).slice(2) + Date.now().toString(16)
 }
 
-export function useToast() {
+export function useCosmicToast() {
   const toasts = useState<ToastItem[]>('toast-items', () => [])
 
   function remove(id: string) {
     toasts.value = toasts.value.filter(t => t.id !== id)
   }
 
-  function push(input: Omit<ToastItem, 'id' | 'createdAt'> & { timeoutMs?: number }) {
+  function push(input: Omit<ToastItem, 'id' | 'createdAt' | 'timeoutMs'> & { timeoutMs?: number }) {
     const item: ToastItem = {
       id: uid(),
       createdAt: Date.now(),

@@ -6,7 +6,7 @@ definePageMeta({
 })
 
 const { data: products, pending, refresh } = await useFetch<any[]>('/api/admin/products')
-const toast = useToast()
+const toast = useCosmicToast()
 
 // Search & filter
 const searchQuery = ref('')

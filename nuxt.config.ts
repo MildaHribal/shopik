@@ -76,5 +76,8 @@ export default defineNuxtConfig({
         '/product/**': {
             swr: 300,
         },
+        '/auth/**': {
+            proxy: process.env.VITE_NEON_AUTH_URL + '/**'
+        }
     },
 })
