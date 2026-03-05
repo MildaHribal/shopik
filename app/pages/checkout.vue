@@ -24,8 +24,12 @@ const form = ref({
 
 // Předvyplnění z profilu pro přihlášené uživatele
 const { data: userProfile } = await useFetch(
-  () => (currentUser.value ? '/api/user/profile' : null),
-  { default: () => null }
+  () => (currentUser.value ? '/api/user/profile' : ''),
+  { 
+    immediate: !!currentUser.value,
+    watch: [currentUser],
+    default: () => null 
+  }
 );
 watch(
   [userProfile, currentUser],
@@ -143,7 +147,7 @@ function selectedStyle(active: boolean) {
 
         <!-- Header -->
         <div class="flex items-center gap-3 mb-7">
-          <NuxtLink to="/cart" class="text-white/30 hover:text-white transition-colors">
+          <NuxtLink to="/cart" class="text-white/30 hover:text-white transition-colors" aria-label="Zpět do košíku">
             <Icon icon="ep:arrow-left-bold" height="18" />
           </NuxtLink>
           <h1 class="text-2xl md:text-3xl font-extrabold text-white neon-text">Pokladna 🛒</h1>

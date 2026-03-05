@@ -4,10 +4,10 @@ export default defineNuxtConfig({
     devtools: { enabled: process.env.NODE_ENV === 'development' },
 
     modules: [
-        '@nuxt/ui',
-        '@pinia/nuxt',
-        '@nuxt/icon',
-        '@nuxt/image',
+      '@nuxt/ui',
+      '@pinia/nuxt',
+      '@nuxt/icon',
+      '@nuxt/image',
     ],
 
     app: {
@@ -40,10 +40,23 @@ export default defineNuxtConfig({
         }
     },
 
+    site: {
+        url: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+        name: 'Shopik — kosmický shop',
+        description: 'Kosmické zboží, gadgety a doplňky.',
+        defaultLocale: 'cs',
+    },
+
+    robots: {
+        disallow: ['/admin', '/user'],
+    },
+
     css: ['~~/assets/css/main.css'],
 
     image: {
         provider: 'ipx',
+        format: ['webp'],
+        quality: 80,
         screens: {
             xs: 320,
             sm: 640,
@@ -55,25 +68,12 @@ export default defineNuxtConfig({
     },
 
     nitro: {
-        compressPublicAssets: true,
+        compressPublicAssets: { gzip: true, brotli: true },
+        minify: true,
     },
 
-    routeRules: {
-        '/_nuxt/**': {
-            headers: {
-                'cache-control': 'public, max-age=31536000, immutable',
-            }
-        },
-        '/assets/**': {
-            headers: {
-                'cache-control': 'public, max-age=31536000, immutable',
-            }
-        },
-        '/': {
-            swr: 300,
-        },
-        '/product/**': {
-            swr: 300,
-        },
+    linkChecker: {
+        failOnError: false,
     },
+
 })

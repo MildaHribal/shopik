@@ -16,10 +16,14 @@ const isSubmittingReview = ref(false);
 const isTogglingFavorite = ref(false);
 
 // Fetch favorite status (API returns isFavorite: false when not logged in)
-const productId = computed(() => product.value?.id);
-const { data: favoriteStatus, refresh: refreshFavorite } = useFetch(
-  () => (productId.value ? `/api/products/${productId.value}/favorite` : null),
-  { default: () => ({ isFavorite: false }) }
+interface FavoriteStatus { isFavorite: boolean }
+const { data: favoriteStatus, refresh: refreshFavorite } = useFetch<FavoriteStatus>(
+  () => product.value?.id ? `/api/products/${product.value.id}/favorite` : '',
+  { 
+    immediate: !!product.value?.id,
+    watch: [product],
+    default: () => ({ isFavorite: false }) 
+  }
 );
 
 // Fetch reviews
@@ -32,8 +36,12 @@ interface Review {
 }
 
 const { data: productReviews, refresh: refreshReviews } = useFetch<Review[]>(
-  () => (productId.value ? `/api/products/${productId.value}/reviews` : null),
-  { default: () => [] }
+  () => product.value?.id ? `/api/products/${product.value.id}/reviews` : '',
+  { 
+    immediate: !!product.value?.id,
+    watch: [product],
+    default: () => [] 
+  }
 );
 
 const isFavorite = computed(() => favoriteStatus.value?.isFavorite ?? false);
@@ -71,7 +79,7 @@ useSeoMeta({
     const desc = p?.shortDescription || p?.description || ''
     return desc ? String(desc).slice(0, 200) : 'Detail produktu v Shopik.'
   },
-  ogType: 'product',
+  ogType: 'website',
   ogUrl: () => canonicalUrl.value,
   ogImage: () => selectedImage.value || undefined,
   twitterCard: 'summary_large_image',

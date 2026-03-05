@@ -9,7 +9,7 @@ const cart = useCartStore()
   <div class="max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-12">
     <!-- Header -->
     <div class="flex items-center gap-3 mb-6 md:mb-8">
-      <NuxtLink to="/" class="text-white/30 hover:text-white transition-colors">
+      <NuxtLink to="/" class="text-white/30 hover:text-white transition-colors" aria-label="Zpět k nakupování">
         <Icon icon="ep:arrow-left-bold" height="18" />
       </NuxtLink>
       <h1 class="text-2xl md:text-3xl font-extrabold text-white neon-text">Váš košík 🛒</h1>

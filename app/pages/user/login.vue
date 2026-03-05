@@ -91,11 +91,8 @@ const handleGoogleLogin = async () => {
           </div>
 
           <div>
-            <div class="flex items-center justify-between mb-2">
+            <div class="mb-2">
               <label for="password" class="block text-sm font-medium text-white/60">Heslo</label>
-              <NuxtLink to="/user/reset-password" class="text-xs text-primary-400 hover:text-primary-300 transition-colors">
-                Zapomenuté heslo?
-              </NuxtLink>
             </div>
             <input
               id="password"

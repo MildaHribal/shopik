@@ -5,8 +5,9 @@ import type { Product } from "~~/types";
 
 const cart = useCartStore();
 
-defineProps<{
-  product: Product
+const props = defineProps<{
+  product: Product,
+  isPriority?: boolean
 }>()
 </script>
 
@@ -27,7 +28,9 @@ defineProps<{
           height="800"
           format="webp"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-          loading="lazy"
+          :loading="isPriority ? 'eager' : 'lazy'"
+          :preload="isPriority || undefined"
+          :fetchpriority="isPriority ? 'high' : 'auto'"
         />
         <div v-else class="w-full h-full flex flex-col items-center justify-center text-white/20 bg-white/5">
           <Icon icon="mdi:image-off-outline" height="48" />

@@ -198,6 +198,7 @@ const selectCategory = (cat: string | null) => {
                 :to="`/product/${product.slug || product.id}`"
                 :prefetch="false"
                 class="block h-full"
+                :aria-label="product.title"
               >
                 <ProductCard :product="product"/>
               </NuxtLink>

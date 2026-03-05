@@ -1,8 +1,19 @@
 import { db } from '../../utils/db';
 import { products, categories } from '../../database/schema';
-import { eq } from 'drizzle-orm';
+import { eq, ilike, or } from 'drizzle-orm';
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  const query = getQuery(event);
+  const search = typeof query.search === 'string' ? query.search.trim() : '';
+
+  let whereClause = undefined;
+  if (search) {
+    whereClause = or(
+      ilike(products.name, `%${search}%`),
+      ilike(products.description, `%${search}%`)
+    );
+  }
+
   const result = await db
     .select({
       id: products.id,
@@ -21,6 +32,7 @@ export default defineEventHandler(async () => {
     })
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))
+    .where(whereClause)
     .orderBy(products.id);
 
   return result;

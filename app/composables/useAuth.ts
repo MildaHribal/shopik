@@ -7,6 +7,16 @@ const isAuthLoading = ref(true)
 
 let initialized = false
 
+function updateTokenCookie(token: string | null) {
+  if (import.meta.client) {
+    if (token) {
+      document.cookie = `sb-access-token=${token}; path=/; max-age=604800; SameSite=Lax`
+    } else {
+      document.cookie = 'sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    }
+  }
+}
+
 async function refreshSession() {
   try {
     const { data: { session } } = await supabase.auth.getSession()
@@ -16,11 +26,14 @@ async function refreshSession() {
         name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
         email: session.user.email || '',
       }
+      updateTokenCookie(session.access_token)
     } else {
       currentUser.value = null
+      updateTokenCookie(null)
     }
   } catch {
     currentUser.value = null
+    updateTokenCookie(null)
   } finally {
     isAuthLoading.value = false
   }
@@ -39,8 +52,10 @@ export function useAuth() {
           name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
           email: session.user.email || '',
         }
+        updateTokenCookie(session.access_token)
       } else {
         currentUser.value = null
+        updateTokenCookie(null)
       }
     })
   }
@@ -48,6 +63,7 @@ export function useAuth() {
   const signOut = async () => {
     await supabase.auth.signOut()
     currentUser.value = null
+    updateTokenCookie(null)
   }
 
   return {
