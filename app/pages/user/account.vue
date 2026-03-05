@@ -14,7 +14,8 @@ const router = useRouter()
 const activeTab = ref('profile')
 
 // Fetch User Data
-const { data: profile } = await useFetch('/api/user/profile')
+const toast = useToast()
+const { data: profile, refresh: refreshProfile } = await useFetch('/api/user/profile')
 const { data: orders } = await useFetch('/api/user/orders')
 const { data: favorites } = await useFetch('/api/user/favorites')
 const { data: reviews } = await useFetch('/api/user/reviews')
@@ -36,9 +37,10 @@ async function saveProfile() {
       method: 'PATCH',
       body: formData.value
     })
-    alert('Údaje byly úspěšně uloženy!')
+    await refreshProfile()
+    toast.success('Uloženo', 'Údaje byly úspěšně uloženy.')
   } catch (err: any) {
-    alert('Chyba při ukládání údajů: ' + err.message)
+    toast.error('Uložení se nezdařilo', err?.data?.statusMessage || err?.message || 'Zkuste to prosím znovu.')
   } finally {
     isSaving.value = false
   }

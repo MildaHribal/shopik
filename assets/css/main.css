@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
 
 @theme {
   /* ── Cosmic Purple (Primary) ──────────────────────────────── */
@@ -75,6 +74,25 @@ body {
   font-family: "Space Grotesk", system-ui, sans-serif;
   color: #e2d9f3;
   overflow-x: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Mobile performance: reduce heavy animated backgrounds */
+@media (max-width: 640px) {
+  .cosmic-bg::before,
+  .cosmic-bg::after {
+    animation: none !important;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════

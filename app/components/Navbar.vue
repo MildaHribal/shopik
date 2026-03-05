@@ -32,7 +32,7 @@ const userMenuItems = [
     {
       label: 'Můj profil',
       icon: 'i-heroicons-user',
-      to: '/user/account'
+      to: '/user'
     },
     {
       label: 'Admin panel',
@@ -105,7 +105,11 @@ onUnmounted(() => {
         <Icon icon="iconamoon:search-fill" height="20" />
       </button>
 
-      <div>
+      <div class="flex items-center gap-1.5 md:gap-2">
+        <NuxtLink v-if="currentUser" to="/user" class="flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 md:py-2 rounded-full text-[10px] md:text-xs font-bold text-white/80 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-primary-500/40 transition-all duration-300" title="Můj účet">
+          <Icon icon="mdi:account-circle-outline" class="text-sm md:text-base" />
+          <span class="hidden sm:inline">Můj účet</span>
+        </NuxtLink>
         <UDropdownMenu v-if="currentUser" :items="userMenuItems" :content="{ align: 'end' }">
           <button class="nav-action-btn" title="User Menu">
             <Icon icon="bxs:user" height="20" />
@@ -180,7 +184,7 @@ onUnmounted(() => {
                 <span>Přihlásit se</span>
               </NuxtLink>
               <template v-else>
-                <NuxtLink to="/user/account" @click="isMobileMenuOpen = false" class="flex items-center px-4 py-3 rounded-xl text-white/70 hover:bg-white/5">
+                <NuxtLink to="/user" @click="isMobileMenuOpen = false" class="flex items-center px-4 py-3 rounded-xl text-white/70 hover:bg-white/5">
                   <Icon icon="mdi:account-circle" class="mr-3 text-lg" />
                   <span>Můj profil</span>
                 </NuxtLink>

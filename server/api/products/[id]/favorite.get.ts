@@ -1,14 +1,10 @@
 import { db } from '../../../utils/db';
 import { favorites } from '../../../database/schema';
-import { serverAuth } from '../../../utils/auth';
 import { eq, and } from 'drizzle-orm';
+import { getOptionalSession } from '../../../utils/session';
 
 export default defineEventHandler(async (event) => {
-  const sessionData = await serverAuth.api.getSession({
-      headers: event.headers
-  });
-  const session = 'data' in sessionData ? sessionData.data : sessionData;
-
+  const session = await getOptionalSession(event)
   if (!session?.user?.id) {
     return { isFavorite: false };
   }

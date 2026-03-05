@@ -1,9 +1,14 @@
 import { db } from '../../utils/db';
 import { orders, orderItems, products } from '../../database/schema';
 import { eq } from 'drizzle-orm';
+import { getOptionalSession } from '../../utils/session';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
+
+  let userId: string | null = null;
+  const session = await getOptionalSession(event)
+  userId = session?.user?.id ?? null
 
   // Validate required fields
   const { customerName, customerEmail, phone, street, city, zip, paymentMethod, shippingMethod, items } = body;
@@ -78,6 +83,7 @@ export default defineEventHandler(async (event) => {
       totalPrice,
       status,
       paymentStatus,
+      userId: userId ?? undefined,
     })
     .returning();
 

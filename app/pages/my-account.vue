@@ -1,7 +1,4 @@
-<template>
-  <MyAccount />
-</template>
-
 <script setup>
-import MyAccount from '~/components/MyAccount.vue';
+// Přesměrování na hlavní profil uživatele
+await navigateTo('/user', { replace: true })
 </script>

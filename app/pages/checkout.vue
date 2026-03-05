@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { useCartStore } from "~/stores/cart";
 import { Icon } from "@iconify/vue";
+import { useAuth } from "~/composables/useAuth";
 
 const cart = useCartStore();
+const { currentUser } = useAuth();
+const toast = useToast()
 
 const step = ref<'details' | 'payment' | 'success'>('details');
 const orderId = ref<number | null>(null);
@@ -18,6 +21,28 @@ const form = ref({
   paymentMethod: 'card',
   shippingMethod: 'zasilkovna',
 });
+
+// Předvyplnění z profilu pro přihlášené uživatele
+const { data: userProfile } = await useFetch(
+  () => (currentUser.value ? '/api/user/profile' : null),
+  { default: () => null }
+);
+watch(
+  [userProfile, currentUser],
+  ([profile, user]) => {
+    if (profile) {
+      form.value.customerName = profile.name ?? '';
+      form.value.customerEmail = user?.email ?? profile.email ?? '';
+      form.value.phone = profile.phone ?? '';
+      form.value.street = profile.street ?? '';
+      form.value.city = profile.city ?? '';
+      form.value.zip = profile.zip ?? '';
+    } else if (user?.email && !form.value.customerEmail) {
+      form.value.customerEmail = user.email;
+    }
+  },
+  { immediate: true }
+);
 
 const paymentMethods = [
   { value: 'card',      label: 'Platební karta', note: 'Visa, Mastercard, Maestro', icon: 'mdi:credit-card-outline' },
@@ -92,7 +117,7 @@ async function placeOrder() {
     cart.clearCart();
     step.value = 'success';
   } catch (err: any) {
-    alert(err?.data?.statusMessage || 'Objednávku se nepodařilo odeslat, zkuste to znovu.');
+    toast.error('Objednávku se nepodařilo odeslat', err?.data?.statusMessage || 'Zkuste to znovu.');
   } finally {
     isSubmitting.value = false;
   }
@@ -359,9 +384,14 @@ function selectedStyle(active: boolean) {
         Vaše objednávka <span class="text-primary-400 font-mono font-bold">#{{ orderId }}</span> byla přijata.
       </p>
       <div class="glass-card p-5 mb-8 text-left text-sm text-white/50">
-        Objednávku vidíte v
-        <NuxtLink to="/admin/orders" class="text-primary-400 hover:underline">Admin panelu → Objednávky</NuxtLink>.
-        Stav objednávky lze tam libovolně měnit.
+        <template v-if="currentUser">
+          Objednávku vidíte v
+          <NuxtLink to="/user" class="text-primary-400 hover:underline">Můj profil → Moje objednávky</NuxtLink>.
+        </template>
+        <template v-else>
+          Objednávku vidíte v
+          <NuxtLink to="/admin/orders" class="text-primary-400 hover:underline">Admin panelu → Objednávky</NuxtLink>.
+        </template>
       </div>
       <NuxtLink to="/" class="btn-cosmic px-10 py-4 text-lg inline-flex items-center gap-3">
         <Icon icon="mdi:store-outline" height="22" />

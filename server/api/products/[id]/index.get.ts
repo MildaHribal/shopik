@@ -3,14 +3,19 @@ import { products, categories } from '../../../database/schema';
 import { eq } from 'drizzle-orm';
 
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, 'id');
+  const idOrSlug = getRouterParam(event, 'id');
 
-  if (!id) {
+  if (!idOrSlug) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Product ID is required',
     });
   }
+
+  const numericId = Number(idOrSlug)
+  const whereClause = Number.isFinite(numericId)
+    ? eq(products.id, numericId)
+    : eq(products.slug, idOrSlug)
 
   const result = await db
     .select({
@@ -31,7 +36,7 @@ export default defineEventHandler(async (event) => {
     })
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))
-    .where(eq(products.id, parseInt(id)));
+    .where(whereClause);
 
   if (result.length === 0) {
     throw createError({

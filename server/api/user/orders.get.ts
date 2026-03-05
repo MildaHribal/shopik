@@ -1,17 +1,10 @@
 import { db } from '../../utils/db';
 import { orders, orderItems } from '../../database/schema';
 import { eq, desc } from 'drizzle-orm';
-import { serverAuth } from '../../utils/auth';
+import { requireSession } from '../../utils/session';
 
 export default defineEventHandler(async (event) => {
-  const sessionData = await serverAuth.api.getSession({
-      headers: event.headers
-  });
-  const session = 'data' in sessionData ? sessionData.data : sessionData;
-
-  if (!session?.user?.id) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
-  }
+  const session = await requireSession(event)
 
   const userOrdersRaw = await db
     .select()

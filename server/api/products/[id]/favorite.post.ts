@@ -1,17 +1,10 @@
 import { db } from '../../../utils/db';
 import { favorites } from '../../../database/schema';
-import { serverAuth } from '../../../utils/auth';
 import { eq, and } from 'drizzle-orm';
+import { requireSession } from '../../../utils/session';
 
 export default defineEventHandler(async (event) => {
-  const sessionData = await serverAuth.api.getSession({
-      headers: event.headers
-  });
-  const session = 'data' in sessionData ? sessionData.data : sessionData;
-
-  if (!session?.user?.id) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
-  }
+  const session = await requireSession(event)
 
   const productId = parseInt(event.context.params?.id || '0');
   if (!productId) throw createError({ statusCode: 400 });

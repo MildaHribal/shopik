@@ -2,10 +2,9 @@
 </script>
 <template>
   <UApp>
-    <UApp>
-      <NuxtLayout>
-        <NuxtPage/>
-      </NuxtLayout>
-    </UApp>
+    <ToastHost />
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
   </UApp>
 </template>

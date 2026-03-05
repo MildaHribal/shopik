@@ -4,6 +4,20 @@ import ProductCarousel from "~/components/ProductCarousel.vue";
 import { Icon } from "@iconify/vue";
 import type { Product } from '~~/types';
 
+const url = useRequestURL()
+useSeoMeta({
+  title: 'Shopik — kosmický shop',
+  description: 'Kosmické zboží, gadgety a doplňky. Prohlédněte si nejprodávanější produkty a objevte nové dimenze zábavy.',
+  ogTitle: 'Shopik — kosmický shop',
+  ogDescription: 'Kosmické zboží, gadgety a doplňky. Prohlédněte si nejprodávanější produkty a objevte nové dimenze zábavy.',
+  ogType: 'website',
+  ogUrl: url.origin + '/',
+  twitterCard: 'summary_large_image',
+})
+useHead({
+  link: [{ rel: 'canonical', href: url.origin + '/' }]
+})
+
 const {data: rawProducts, pending, error} = await useFetch<Product[]>('/api/products')
 
 const productsWithIds = computed(() => {
@@ -180,7 +194,7 @@ const selectCategory = (cat: string | null) => {
               <NuxtLink
                 v-for="product in filteredProducts"
                 :key="product.id"
-                :to="`/product/${product.id}`"
+                :to="`/product/${product.slug || product.id}`"
                 class="block h-full"
               >
                 <ProductCard :product="product"/>

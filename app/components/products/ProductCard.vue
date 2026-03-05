@@ -18,12 +18,17 @@ defineProps<{
     <div class="relative z-10 flex flex-col h-full glass-card overflow-hidden">
       <!-- Image -->
       <div class="relative w-full aspect-[3/4] overflow-hidden rounded-t-[1.1rem] bg-white/5">
-        <img
+        <NuxtImg
           v-if="product.image"
           :src="product.image.startsWith('http') ? product.image : `/${product.image}`"
           :alt="product.title"
           class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-        >
+          width="600"
+          height="800"
+          format="webp"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+          loading="lazy"
+        />
         <div v-else class="w-full h-full flex flex-col items-center justify-center text-white/20 bg-white/5">
           <Icon icon="mdi:image-off-outline" height="48" />
         </div>

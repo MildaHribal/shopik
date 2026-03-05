@@ -7,7 +7,30 @@ export default defineNuxtConfig({
         '@nuxt/ui',
         '@pinia/nuxt',
         '@nuxt/icon',
+        '@nuxt/image',
     ],
+
+    app: {
+        head: {
+            htmlAttrs: { lang: 'cs' },
+            meta: [
+                { charset: 'utf-8' },
+                { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+                { name: 'theme-color', content: '#0d0020' },
+            ],
+            link: [
+                { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+                { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+                // Load fonts asynchronously (avoid render-blocking @import)
+                {
+                    rel: 'stylesheet',
+                    href: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap',
+                    media: 'print',
+                    onload: "this.media='all'",
+                },
+            ],
+        }
+    },
 
     runtimeConfig: {
         public: {
@@ -18,4 +41,18 @@ export default defineNuxtConfig({
     },
 
     css: ['~~/assets/css/main.css'],
+
+    image: {
+        // Use built-in IPX (local) for responsive images
+        provider: 'ipx',
+        formats: ['webp', 'avif', 'png', 'jpeg'],
+        screens: {
+            xs: 320,
+            sm: 640,
+            md: 768,
+            lg: 1024,
+            xl: 1280,
+            xxl: 1536,
+        }
+    },
 })
