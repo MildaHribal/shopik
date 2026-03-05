@@ -43,7 +43,7 @@ import { Icon } from "@iconify/vue";
         </h1>
 
         <p class="text-sm sm:text-base md:text-xl text-white/50 max-w-lg mb-6 md:mb-10 leading-relaxed">
-          Hvězdný výběr pro osvícené duše z jiné dimenze. 🌌
+          Hvězdný výběr pro osvícené duše. Ponořte se do kosmického zboží z jiné dimenze. 🌌
         </p>
 
         <div class="flex flex-col sm:flex-row gap-3 md:gap-4">
