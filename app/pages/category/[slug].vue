@@ -5,6 +5,10 @@ import Sidebar from "~/components/Sidebar.vue"
 import { Icon } from "@iconify/vue"
 import type { Product } from '~~/types'
 
+definePageMeta({
+  pageTransition: false,
+})
+
 const route = useRoute()
 const currentSlug = computed(() => route.params.slug as string || 'vsechny')
 
