@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useCartStore } from "~/stores/cart";
-import { Icon } from "@iconify/vue";
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useAuth } from '~/composables/useAuth';
 
@@ -36,11 +35,11 @@ const logout = async () => {
 };
 
 const navLinks = [
-  { label: 'emzáci', link: '#' },
-  { label: 'devky', link: '#' },
-  { label: 'anime/hentai', link: '#' },
-  { label: 'zvířátka', link: '#' },
-  { label: 'ostatní', link: '#' }
+  { label: 'Moda', link: '#' },
+  { label: 'Bizuterie', link: '#' },
+  { label: 'Doplnky', link: '#' },
+  { label: 'Obrazy', link: '#' },
+  { label: 'Ostatni', link: '#' }
 ];
 
 const handleScroll = () => {
@@ -102,7 +101,7 @@ onUnmounted(() => {
     <!-- Right Actions -->
     <div class="flex items-center space-x-3 md:space-x-4">
       <button @click="isSearchOpen = true" class="nav-action-btn" title="Hledat">
-        <Icon icon="iconamoon:search-fill" height="20" />
+        <Icon name="iconamoon:search-fill" height="20" />
       </button>
 
       <div class="flex items-center gap-1.5 md:gap-2 relative">
@@ -112,20 +111,20 @@ onUnmounted(() => {
           title="Můj profil"
           aria-label="Můj profil"
         >
-          <Icon icon="bxs:user" height="20" />
+          <Icon name="bxs:user" height="20" />
         </NuxtLink>
       </div>
 
       <NuxtLink to="/cart" class="nav-action-btn relative" title="Košík" aria-label="Košík">
-        <Icon icon="mdi:cart" height="20" />
+        <Icon name="mdi:cart" height="20" />
         <span v-if="cart.itemCount > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full shadow-lg shadow-primary-500/30">
           {{ cart.itemCount }}
         </span>
       </NuxtLink>
 
       <!-- Mobile menu toggle -->
-      <button @click="isMobileMenuOpen = !isMobileMenuOpen" class="nav-action-btn flex md:hidden" title="Menu">
-        <Icon :icon="isMobileMenuOpen ? 'mdi:close' : 'mdi:menu'" height="26" />
+      <button @click="isMobileMenuOpen = !isMobileMenuOpen" class="nav-action-btn flex md:!hidden" title="Menu">
+        <Icon :name="isMobileMenuOpen ? 'mdi:close' : 'mdi:menu'" height="26" />
       </button>
     </div>
   </nav>
@@ -151,7 +150,7 @@ onUnmounted(() => {
             <span class="text-xl font-bold neon-text-rainbow">Shopik</span>
           </div>
           <button @click="isMobileMenuOpen = false" class="text-white/40">
-            <Icon icon="mdi:close" height="24" />
+            <Icon name="mdi:close" height="24" />
           </button>
         </div>
 
@@ -176,20 +175,20 @@ onUnmounted(() => {
             <h3 class="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-4 ml-4">Můj účet</h3>
             <div class="space-y-1">
               <NuxtLink v-if="!currentUser" to="/user/login" @click="isMobileMenuOpen = false" class="flex items-center px-4 py-3 rounded-xl text-white/70 hover:bg-white/5">
-                <Icon icon="mdi:login" class="mr-3 text-lg" />
+                <Icon name="mdi:login" class="mr-3 text-lg" />
                 <span>Přihlásit se</span>
               </NuxtLink>
               <template v-else>
                 <NuxtLink to="/user" @click="isMobileMenuOpen = false" class="flex items-center px-4 py-3 rounded-xl text-white/70 hover:bg-white/5">
-                  <Icon icon="mdi:account-circle" class="mr-3 text-lg" />
+                  <Icon name="mdi:account-circle" class="mr-3 text-lg" />
                   <span>Můj profil</span>
                 </NuxtLink>
                 <NuxtLink to="/admin" @click="isMobileMenuOpen = false" class="flex items-center px-4 py-3 rounded-xl text-white/70 hover:bg-white/5">
-                  <Icon icon="mdi:cog" class="mr-3 text-lg" />
+                  <Icon name="mdi:cog" class="mr-3 text-lg" />
                   <span>Admin Panel</span>
                 </NuxtLink>
                 <button @click="logout(); isMobileMenuOpen = false" class="w-full flex items-center px-4 py-3 rounded-xl text-red-400 hover:bg-red-400/10">
-                  <Icon icon="mdi:logout" class="mr-3 text-lg" />
+                  <Icon name="mdi:logout" class="mr-3 text-lg" />
                   <span>Odhlásit se</span>
                 </button>
               </template>
@@ -208,7 +207,7 @@ onUnmounted(() => {
   <Transition name="navbar">
     <div v-if="isScrolled" class="fixed top-4 right-4 z-40 flex items-center space-x-2 md:space-x-3 pointer-events-none">
       <button @click="isSearchOpen = true" class="pointer-events-auto floating-btn" title="Search">
-        <Icon icon="iconamoon:search-fill" height="18" />
+        <Icon name="iconamoon:search-fill" height="18" />
       </button>
 
       <div class="pointer-events-auto">
@@ -218,12 +217,12 @@ onUnmounted(() => {
           title="Můj profil"
           aria-label="Můj profil"
         >
-          <Icon icon="bxs:user" height="18" />
+          <Icon name="bxs:user" height="18" />
         </NuxtLink>
       </div>
 
       <NuxtLink to="/cart" class="pointer-events-auto floating-btn relative" title="Košík" aria-label="Košík">
-        <Icon icon="mdi:cart-outline" height="18" />
+        <Icon name="mdi:cart-outline" height="18" />
         <span v-if="cart.itemCount > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full">
           {{ cart.itemCount }}
         </span>
@@ -252,14 +251,14 @@ onUnmounted(() => {
             @click="isSearchOpen = false"
             class="p-2 text-white/40 hover:text-white hover:bg-white/5 rounded-full transition-all"
           >
-            <Icon icon="mdi:close" height="24" />
+            <Icon name="mdi:close" height="24" />
           </button>
         </div>
 
         <div class="p-5 md:p-6 flex-grow flex flex-col">
           <div class="relative group">
             <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-              <Icon icon="iconamoon:search-fill" class="text-white/30 group-focus-within:text-primary-400 transition-colors" height="20" />
+              <Icon name="iconamoon:search-fill" class="text-white/30 group-focus-within:text-primary-400 transition-colors" height="20" />
             </div>
             <input
               v-model="searchQuery"
@@ -274,7 +273,7 @@ onUnmounted(() => {
           <div v-if="searchQuery.length > 1" class="mt-6 flex flex-col gap-2 overflow-y-auto max-h-[60vh] scrollbar-hide">
             
             <div v-if="isSearching" class="text-center text-white/50 py-8 flex flex-col items-center">
-              <Icon icon="lucide:loader-2" class="animate-spin text-3xl mb-2 text-primary-400" />
+              <Icon name="lucide:loader-2" class="animate-spin text-3xl mb-2 text-primary-400" />
               <span>Hledám ve hvězdách...</span>
             </div>
             
@@ -308,7 +307,7 @@ onUnmounted(() => {
           </div>
 
           <div v-else class="mt-12 text-center text-white/20 flex flex-col items-center">
-            <Icon icon="solar:planet-3-line-duotone" height="64" class="mb-4 opacity-50" />
+            <Icon name="solar:planet-3-line-duotone" height="64" class="mb-4 opacity-50" />
             <p>Napište název produktu...</p>
           </div>
         </div>

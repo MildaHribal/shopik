@@ -19,7 +19,7 @@ useHead({
   link: [{ rel: 'canonical', href: `${siteUrl}/` }]
 })
 
-const {data: rawProducts, pending, error} = await useFetch<Product[]>('/api/products')
+const {data: rawProducts, pending, error} = await useFetch<Product[]>('/api/products?random=true&limit=12')
 
 const productsWithIds = computed(() => {
   if (!rawProducts.value) return [];

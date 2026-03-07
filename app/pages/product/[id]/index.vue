@@ -3,7 +3,12 @@ import { useCartStore } from "~/stores/cart";
 import { Icon } from "@iconify/vue";
 
 const route = useRoute();
-const { data: product, pending, error } = await useFetch(`/api/products/${route.params.id}`);
+const { data: asyncProduct, pending, error } = useLazyAsyncData(`product-${route.params.id}`, () =>
+  Promise.all([
+    $fetch<any>(`/api/products/${route.params.id}`)
+  ])
+);
+const product = computed(() => asyncProduct.value?.[0] || null);
 const cart = useCartStore();
 const toast = useCosmicToast()
 const config = useRuntimeConfig()
@@ -17,7 +22,7 @@ const isTogglingFavorite = ref(false);
 
 // Fetch favorite status (API returns isFavorite: false when not logged in)
 interface FavoriteStatus { isFavorite: boolean }
-const { data: favoriteStatus, refresh: refreshFavorite } = useFetch<FavoriteStatus>(
+const { data: favoriteStatus, refresh: refreshFavorite } = useLazyFetch<FavoriteStatus>(
   () => product.value?.id ? `/api/products/${product.value.id}/favorite` : '',
   { 
     immediate: !!product.value?.id,
@@ -35,7 +40,7 @@ interface Review {
   createdAt: string;
 }
 
-const { data: productReviews, refresh: refreshReviews } = useFetch<Review[]>(
+const { data: productReviews, refresh: refreshReviews, pending: reviewsPending } = useLazyFetch<Review[]>(
   () => product.value?.id ? `/api/products/${product.value.id}/reviews` : '',
   { 
     immediate: !!product.value?.id,
@@ -140,11 +145,48 @@ const submitReview = async () => {
 
 <template>
   <div class="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-12">
-    <!-- Loading -->
-    <div v-if="pending" class="flex justify-center items-center min-h-[400px]">
-      <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto mb-4"></div>
-        <p class="text-white/40">Načítání produktu...</p>
+    <!-- Loading Skeleton -->
+    <div v-if="pending" class="relative">
+      <div class="inline-flex items-center gap-2 text-white/40 mb-4 md:mb-8">
+        <Icon icon="ep:arrow-left-bold" height="16" />
+        <span class="text-sm">Zpět na úvod</span>
+      </div>
+
+      <div class="glass-card-strong overflow-hidden animate-pulse">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
+          
+          <!-- Image Skeleton -->
+          <div class="p-4 md:p-8 bg-white/[0.02]">
+            <div class="w-full aspect-square rounded-xl md:rounded-2xl bg-white/5 mb-3 md:mb-4"></div>
+            <div class="flex gap-2 md:gap-3 overflow-hidden h-16 md:h-20">
+              <div class="w-16 md:w-20 rounded-lg md:rounded-xl bg-white/5 flex-shrink-0"></div>
+              <div class="w-16 md:w-20 rounded-lg md:rounded-xl bg-white/5 flex-shrink-0"></div>
+              <div class="w-16 md:w-20 rounded-lg md:rounded-xl bg-white/5 flex-shrink-0"></div>
+            </div>
+          </div>
+
+          <!-- Content Skeleton -->
+          <div class="flex flex-col justify-center p-5 md:p-8 lg:p-12">
+            <div class="h-6 w-24 bg-white/10 rounded-full mb-3 md:mb-5"></div>
+            <div class="h-10 md:h-12 w-4/5 bg-white/10 rounded mb-3 md:mb-5"></div>
+            <div class="h-10 w-32 bg-white/10 rounded mb-5 md:mb-8"></div>
+            
+            <div class="space-y-3 mb-6 md:mb-10 pl-4 border-l-2 border-white/5">
+              <div class="h-4 w-full bg-white/10 rounded"></div>
+              <div class="h-4 w-11/12 bg-white/10 rounded"></div>
+              <div class="h-4 w-4/5 bg-white/10 rounded"></div>
+            </div>
+
+            <div class="border-t border-white/10 pt-5 md:pt-8">
+              <div class="flex justify-between items-center mb-5 md:mb-8">
+                <div class="h-10 w-32 bg-white/10 rounded-xl"></div>
+                <div class="h-4 w-16 bg-white/10 rounded"></div>
+              </div>
+              <div class="h-14 md:h-16 w-full bg-white/10 rounded-xl md:rounded-2xl"></div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
 
@@ -290,7 +332,7 @@ const submitReview = async () => {
       </div>
 
       <!-- Recenze -->
-      <div class="glass-card-strong p-6 md:p-8 mt-8">
+      <div class="glass-card-strong p-6 md:p-8 mt-8 min-h-[500px]">
         <h2 class="text-xl font-bold text-white mb-6 pb-4 border-b border-white/10 flex items-center gap-2">
           <Icon icon="mdi:star-outline" class="text-primary-400" height="24" />
           Recenze ({{ productReviews?.length ?? 0 }})
@@ -327,7 +369,10 @@ const submitReview = async () => {
         </div>
 
         <!-- Seznam recenzí -->
-        <div v-if="productReviews && productReviews.length > 0" class="space-y-4">
+        <div v-if="reviewsPending" class="space-y-4">
+          <div v-for="i in 3" :key="i" class="p-4 rounded-xl bg-white/5 border border-white/10 animate-pulse h-28"></div>
+        </div>
+        <div v-else-if="productReviews && productReviews.length > 0" class="space-y-4">
           <div v-for="rev in productReviews" :key="rev.id" class="p-4 rounded-xl bg-white/5 border border-white/10">
             <div class="flex items-center justify-between mb-2">
               <span class="font-medium text-white">{{ rev.userName }}</span>

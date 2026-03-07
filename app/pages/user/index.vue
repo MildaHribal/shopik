@@ -15,10 +15,19 @@ const activeTab = ref('profile')
 
 // Fetch User Data
 const toast = useCosmicToast()
-const { data: profile, refresh: refreshProfile } = await useFetch('/api/user/profile')
-const { data: orders } = await useFetch('/api/user/orders')
-const { data: favorites } = await useFetch('/api/user/favorites')
-const { data: reviews } = await useFetch('/api/user/reviews')
+
+// Změněno na useLazyAsyncData BEZ "await". Komponenta se hned vykreslí a placeholders poběží, dokud nepřijedou data.
+const { data: asyncProfile, refresh: refreshProfile, pending: profilePending } = useLazyAsyncData(
+  'user-profile-data', 
+  () => $fetch<any>('/api/user/profile'),
+  { default: () => null }
+)
+const profile = computed(() => asyncProfile.value || null)
+
+// Zbytek "Lazy" - načtení proběhne asynchronně a neblokuje první vykreslení
+const { data: orders, pending: ordersPending } = useLazyFetch('/api/user/orders')
+const { data: favorites, pending: favoritesPending } = useLazyFetch('/api/user/favorites')
+const { data: reviews, pending: reviewsPending } = useLazyFetch('/api/user/reviews')
 
 // Profile Form
 const isSaving = ref(false)
@@ -123,9 +132,42 @@ const statusClass = (status: string) => {
       <div class="flex-grow min-w-0">
 
         <!-- ── PROFILE ── -->
-        <div v-if="activeTab === 'profile'" class="glass-card-strong p-6 md:p-8 animate-fade-in">
+        <div v-if="activeTab === 'profile'" class="glass-card-strong p-6 md:p-8 animate-fade-in min-h-[500px]">
           <h2 class="text-2xl font-bold text-white mb-6 pb-4 border-b border-white/10">Osobní údaje</h2>
-          <form @submit.prevent="saveProfile" class="space-y-6 max-w-2xl">
+          
+          <div v-if="profilePending" class="space-y-6 max-w-2xl animate-pulse">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <div class="h-4 w-20 bg-white/10 rounded"></div>
+                <div class="h-12 w-full bg-white/5 rounded-xl border border-white/5"></div>
+              </div>
+              <div class="space-y-2">
+                <div class="h-4 w-20 bg-white/10 rounded"></div>
+                <div class="h-12 w-full bg-white/5 rounded-xl border border-white/5"></div>
+              </div>
+            </div>
+            
+            <div class="h-6 w-40 bg-white/10 rounded mt-8 mb-4"></div>
+            
+            <div class="space-y-4">
+              <div class="space-y-2">
+                <div class="h-4 w-32 bg-white/10 rounded"></div>
+                <div class="h-12 w-full bg-white/5 rounded-xl border border-white/5"></div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <div class="h-4 w-20 bg-white/10 rounded"></div>
+                  <div class="h-12 w-full bg-white/5 rounded-xl border border-white/5"></div>
+                </div>
+                <div class="space-y-2">
+                  <div class="h-4 w-16 bg-white/10 rounded"></div>
+                  <div class="h-12 w-full bg-white/5 rounded-xl border border-white/5"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <form v-else @submit.prevent="saveProfile" class="space-y-6 max-w-2xl">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label class="block text-sm text-white/50 mb-2">Celé jméno</label>
@@ -166,10 +208,13 @@ const statusClass = (status: string) => {
         </div>
 
         <!-- ── ORDERS ── -->
-        <div v-else-if="activeTab === 'orders'" class="glass-card-strong p-6 md:p-8 animate-fade-in">
+        <div v-else-if="activeTab === 'orders'" class="glass-card-strong p-6 md:p-8 animate-fade-in min-h-[500px]">
           <h2 class="text-2xl font-bold text-white mb-6 pb-4 border-b border-white/10">Moje objednávky</h2>
 
-          <div v-if="orders && orders.length > 0" class="space-y-4">
+          <div v-if="ordersPending" class="space-y-4">
+            <div v-for="i in 3" :key="i" class="p-5 rounded-xl border border-white/10 bg-white/5 animate-pulse h-32"></div>
+          </div>
+          <div v-else-if="orders && orders.length > 0" class="space-y-4">
             <div v-for="order in orders" :key="order.id" class="p-5 rounded-xl border border-white/10 bg-white/5 transition-all hover:bg-white/10">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div>
@@ -219,12 +264,15 @@ const statusClass = (status: string) => {
         </div>
 
         <!-- ── FAVORITES ── -->
-        <div v-else-if="activeTab === 'favorites'" class="glass-card-strong p-6 md:p-8 animate-fade-in">
+        <div v-else-if="activeTab === 'favorites'" class="glass-card-strong p-6 md:p-8 animate-fade-in min-h-[500px]">
           <h2 class="text-2xl font-bold text-white mb-6 pb-4 border-b border-white/10 flex items-center gap-2">
             <Icon icon="mdi:heart" class="text-secondary-500" /> Oblíbené produkty
           </h2>
 
-          <div v-if="favorites && favorites.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div v-if="favoritesPending" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div v-for="i in 3" :key="i" class="rounded-xl border border-white/10 bg-white/5 animate-pulse aspect-square"></div>
+          </div>
+          <div v-else-if="favorites && favorites.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <NuxtLink v-for="product in favorites" :key="product.id" :to="`/product/${product.slug}`" class="group relative rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-primary-500/50 transition-all flex flex-col">
               <div class="aspect-square bg-black/20 relative">
                 <NuxtImg
@@ -254,10 +302,13 @@ const statusClass = (status: string) => {
         </div>
 
         <!-- ── REVIEWS ── -->
-        <div v-else-if="activeTab === 'reviews'" class="glass-card-strong p-6 md:p-8 animate-fade-in">
+        <div v-else-if="activeTab === 'reviews'" class="glass-card-strong p-6 md:p-8 animate-fade-in min-h-[500px]">
           <h2 class="text-2xl font-bold text-white mb-6 pb-4 border-b border-white/10">Moje recenze</h2>
 
-          <div v-if="reviews && reviews.length > 0" class="space-y-4">
+          <div v-if="reviewsPending" class="space-y-4">
+            <div v-for="i in 3" :key="i" class="p-5 rounded-xl border border-white/10 bg-white/5 animate-pulse h-24"></div>
+          </div>
+          <div v-else-if="reviews && reviews.length > 0" class="space-y-4">
             <div v-for="review in reviews" :key="review.id" class="p-5 rounded-xl border border-white/10 bg-white/5">
               <div class="flex gap-4">
                 <NuxtLink :to="`/product/${review.productSlug}`" class="w-16 h-16 rounded-lg bg-black/20 overflow-hidden flex-shrink-0 border border-white/10 hover:border-primary-400">

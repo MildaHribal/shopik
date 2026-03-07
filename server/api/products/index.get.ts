@@ -1,6 +1,6 @@
 import { db } from '../../utils/db';
 import { products, categories } from '../../database/schema';
-import { eq, ilike, or } from 'drizzle-orm';
+import { eq, ilike, or, sql, desc } from 'drizzle-orm';
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     );
   }
 
-  const result = await db
+  let queryBuilder = db
     .select({
       id: products.id,
       title: products.name,
@@ -33,7 +33,17 @@ export default defineEventHandler(async (event) => {
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))
     .where(whereClause)
-    .orderBy(products.id);
+    .$dynamic();
 
-  return result;
+  if (query.random === 'true') {
+    queryBuilder = queryBuilder.orderBy(sql`RANDOM()`);
+  } else {
+    queryBuilder = queryBuilder.orderBy(desc(products.id));
+  }
+
+  if (query.limit && !isNaN(Number(query.limit))) {
+    queryBuilder = queryBuilder.limit(Number(query.limit));
+  }
+
+  return await queryBuilder;
 });
