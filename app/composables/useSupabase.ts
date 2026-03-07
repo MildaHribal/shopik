@@ -1,11 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-export const useSupabase = () => {
+export const useSupabase = (): SupabaseClient => {
   const config = useRuntimeConfig();
-  const supabaseUrl = config.public.supabaseUrl as string;
-  const supabaseKey = config.public.supabaseKey as string;
+  let supabaseUrl = config.public.supabaseUrl as string;
+  let supabaseKey = config.public.supabaseKey as string;
 
-  const client = createClient(supabaseUrl, supabaseKey);
+  // Last resort fallback on server side if runtimeConfig isn't overriden by NUXT_ prefix
+  if (import.meta.server && (!supabaseUrl || !supabaseKey)) {
+    supabaseUrl = supabaseUrl || process.env.SUPABASE_URL || '';
+    supabaseKey = supabaseKey || process.env.SUPABASE_KEY || '';
+  }
 
-  return client;
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Supabase configuration missing (supabaseUrl or supabaseKey). Provide NUXT_PUBLIC_SUPABASE_URL/SUPABASE_URL.');
+  }
+
+  return createClient(supabaseUrl, supabaseKey);
 };

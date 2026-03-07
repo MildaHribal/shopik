@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { getRequestHeaders } from 'h3'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from './auth'
 
 type SupabaseSession = {
   user?: {
@@ -32,20 +32,22 @@ async function fetchSupabaseSession(event: H3Event): Promise<SupabaseSession> {
 
   if (!token) return null
 
-  const supabaseUrl = process.env.SUPABASE_URL || ''
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || ''
-  const supabase = createClient(supabaseUrl, supabaseServiceKey)
+  try {
+    const supabase = getSupabaseAdmin()
+    const { data: { user }, error } = await supabase.auth.getUser(token)
 
-  const { data: { user }, error } = await supabase.auth.getUser(token)
+    if (error || !user) return null
 
-  if (error || !user) return null
-
-  return {
-    user: {
-      id: user.id,
-      name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-      email: user.email || null,
+    return {
+      user: {
+        id: user.id,
+        name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+        email: user.email || null,
+      }
     }
+  } catch (err) {
+    console.error('Session error:', err)
+    return null
   }
 }
 
