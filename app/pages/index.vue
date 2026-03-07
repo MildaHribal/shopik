@@ -15,7 +15,7 @@ useSeoMeta({
   ogUrl: `${siteUrl}/`,
   twitterCard: 'summary_large_image',
 })
-const { data: rawProducts, pending, error } = await useFetch<Product[]>('/api/products?limit=30&random=true')
+const { data: rawProducts, pending, error } = useLazyFetch<Product[]>('/api/products?limit=30&random=true')
 
 // Split the random products into three distinct sliders
 const bestSellers = computed(() => {

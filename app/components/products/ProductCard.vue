@@ -153,10 +153,22 @@ const handleAddToCart = (event: MouseEvent) => {
 
 <style scoped>
 .product-card {
-  filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+  transition: transform 0.4s var(--ease-snappy), opacity 0.4s var(--ease-snappy);
+  contain: paint;
+}
+
+:where(html.is-low-end, html.is-mid-end, html.is-view-transitioning) .product-card {
+  filter: none !important;
+  box-shadow: none !important;
 }
 
 .product-card:hover {
-  filter: drop-shadow(0 8px 30px rgba(139, 92, 246, 0.15));
+  filter: drop-shadow(0 8px 25px rgba(139, 92, 246, 0.2));
+  transform: translateY(-4px);
+}
+
+:where(html.is-low-end, html.is-mid-end) .product-card:hover {
+  transform: none !important;
 }
 </style>

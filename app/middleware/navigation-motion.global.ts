@@ -9,6 +9,9 @@ export default defineNuxtRouteMiddleware((to, from) => {
     return
   }
 
+  // Early signal for CSS to disable blurs/shadows BEFORE snapshot capture
+  document.documentElement.classList.add('is-view-transitioning')
+
   const viewTransitionType = useState<MotionType>('view-transition-type', () => 'shop-fade')
 
   const fromHome = from.path === '/'

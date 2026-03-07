@@ -6,7 +6,7 @@ import { Icon } from "@iconify/vue"
 import type { Product } from '~~/types'
 
 definePageMeta({
-  pageTransition: false,
+  pageTransition: true,
 })
 
 const route = useRoute()
@@ -22,10 +22,11 @@ useSeoMeta({
   ogUrl: `${siteUrl}/category/${currentSlug.value}`,
 })
 
-const [{ data: rawProducts, pending, error }, { data: categoriesData }] = await Promise.all([
-  useFetch<Product[]>('/api/products?limit=100'),
-  useFetch<any[]>('/api/categories')
-])
+const { data: rawProducts, pending: productsPending, error: productsError } = useLazyFetch<Product[]>('/api/products?limit=100')
+const { data: categoriesData, pending: categoriesPending, error: categoriesError } = useLazyFetch<any[]>('/api/categories')
+
+const pending = computed(() => productsPending.value || categoriesPending.value)
+const error = computed(() => productsError.value || categoriesError.value)
 
 const productsWithIds = computed(() => {
   if (!rawProducts.value) return [];

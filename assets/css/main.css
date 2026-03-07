@@ -55,6 +55,8 @@
   --color-button-DEFAULT: #f59e0b;
 
   --font-sans: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --cosmic-blur: 20px;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -97,6 +99,67 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   PERFORMANCE TIERS & TRANSITION OPTIMIZATIONS
+   ══════════════════════════════════════════════════════════════ */
+.prefers-reduced-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+  view-transition-name: none !important;
+}
+
+.is-low-end * {
+  --cosmic-blur: 0px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.is-view-transitioning * {
+  --cosmic-blur: 0px !important;
+}
+
+.is-low-end .nebula-glow,
+.is-view-transitioning .nebula-glow,
+.is-low-end .cosmic-bg::before,
+.is-low-end .cosmic-bg::after,
+.is-view-transitioning .cosmic-bg::before,
+.is-view-transitioning .cosmic-bg::after {
+  display: none !important;
+  animation: none !important;
+}
+
+.is-low-end .fly-in {
+  transition-duration: 0.25s !important;
+  transform: none !important; /* Just fade in on low-end */
+}
+
+/* Optimize during View Transitions for all tiers */
+.is-view-transitioning *,
+.is-view-transitioning *::before,
+.is-view-transitioning *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+  will-change: auto !important;
+}
+
+.is-mid-end .fly-in {
+  --fly-duration: 450ms;
+  --fly-distance: 24px;
+}
+
+/* Speed up View Transitions on slower devices */
+.is-low-end ::view-transition-group(root),
+.is-mid-end ::view-transition-group(root) {
+  animation-duration: 280ms !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
    COSMIC STARFIELD BACKGROUND
    ══════════════════════════════════════════════════════════════ */
 .cosmic-bg {
@@ -113,6 +176,7 @@ body {
   height: 100%;
   pointer-events: none;
   z-index: 0;
+  view-transition-name: none !important;
 }
 
 .cosmic-bg::before {
@@ -164,9 +228,10 @@ body {
 .nebula-glow {
   position: fixed;
   border-radius: 50%;
-  filter: blur(90px);
+  filter: blur(calc(var(--cosmic-blur) * 4.5));
   pointer-events: none;
   z-index: 0;
+  view-transition-name: none !important;
 }
 
 .nebula-glow--purple {
@@ -257,16 +322,16 @@ body {
    ══════════════════════════════════════════════════════════════ */
 .glass-card {
   background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(var(--cosmic-blur));
+  -webkit-backdrop-filter: blur(var(--cosmic-blur));
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.25rem;
 }
 
 .glass-card-strong {
   background: rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
+  backdrop-filter: blur(var(--cosmic-blur));
+  -webkit-backdrop-filter: blur(var(--cosmic-blur));
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 1.5rem;
 }
@@ -400,7 +465,7 @@ body {
 .input-cosmic {
   width: 100%;
   background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(var(--cosmic-blur));
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
@@ -476,7 +541,7 @@ body {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
   border: 1px solid rgba(139, 92, 246, 0.3);
   color: #c4b5fd;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(var(--cosmic-blur));
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -550,7 +615,7 @@ body {
    ══════════════════════════════════════════════════════════════ */
 .cosmic-footer {
   background: rgba(5, 0, 15, 0.8);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(var(--cosmic-blur));
   border-top: 1px solid rgba(139, 92, 246, 0.15);
   position: relative;
 }
@@ -574,8 +639,12 @@ body {
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   background-color: #050008;
+}
+
+html.is-scrolling-smooth {
+  scroll-behavior: smooth;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -587,21 +656,21 @@ html {
 .layout-leave-active {
   transition:
     opacity 0.38s var(--ease-fluid),
-    filter 0.44s var(--ease-fluid),
+    
     transform 0.44s var(--ease-fluid);
 }
 
 .page-enter-from,
 .layout-enter-from {
   opacity: 0;
-  filter: blur(10px);
+  
   transform: translateY(18px) scale(0.985);
 }
 
 .page-leave-to,
 .layout-leave-to {
   opacity: 0;
-  filter: blur(8px);
+  
   transform: translateY(-12px) scale(1.01);
 }
 
@@ -611,31 +680,31 @@ html {
 .slide-right-leave-active {
   transition:
     opacity 0.45s var(--ease-snappy),
-    filter 0.45s var(--ease-snappy),
+    
     transform 0.52s var(--ease-snappy);
 }
 
 .slide-left-enter-from {
   opacity: 0;
-  filter: blur(10px);
+  
   transform: translateX(68px) scale(0.97) rotate(0.35deg);
 }
 
 .slide-left-leave-to {
   opacity: 0;
-  filter: blur(8px);
+  
   transform: translateX(-52px) scale(0.96) rotate(-0.3deg);
 }
 
 .slide-right-enter-from {
   opacity: 0;
-  filter: blur(10px);
+  
   transform: translateX(-68px) scale(0.97) rotate(-0.35deg);
 }
 
 .slide-right-leave-to {
   opacity: 0;
-  filter: blur(8px);
+  
   transform: translateX(52px) scale(0.96) rotate(0.3deg);
 }
 
@@ -722,12 +791,12 @@ html:active-view-transition-type(shop-category-shift)::view-transition-new(root)
   from {
     opacity: 1;
     transform: scale(1);
-    filter: blur(0);
+    
   }
   to {
     opacity: 0;
     transform: scale(0.992);
-    filter: blur(4px);
+    
   }
 }
 
@@ -735,12 +804,12 @@ html:active-view-transition-type(shop-category-shift)::view-transition-new(root)
   from {
     opacity: 0;
     transform: scale(1.008);
-    filter: blur(8px);
+    
   }
   to {
     opacity: 1;
     transform: scale(1);
-    filter: blur(0);
+    
   }
 }
 
@@ -748,12 +817,12 @@ html:active-view-transition-type(shop-category-shift)::view-transition-new(root)
   from {
     opacity: 1;
     transform: translateX(0) scale(1);
-    filter: blur(0) saturate(1);
+    
   }
   to {
     opacity: 0.2;
     transform: translateX(-11%) scale(0.95) rotate(-0.4deg);
-    filter: blur(10px) saturate(0.85);
+    
   }
 }
 
@@ -761,12 +830,12 @@ html:active-view-transition-type(shop-category-shift)::view-transition-new(root)
   from {
     opacity: 0.2;
     transform: translateX(11%) scale(1.05) rotate(0.4deg);
-    filter: blur(10px) saturate(1.15);
+    
   }
   to {
     opacity: 1;
     transform: translateX(0) scale(1) rotate(0);
-    filter: blur(0) saturate(1);
+    
   }
 }
 
@@ -774,12 +843,12 @@ html:active-view-transition-type(shop-category-shift)::view-transition-new(root)
   from {
     opacity: 1;
     transform: translateX(0) scale(1);
-    filter: blur(0) saturate(1);
+    
   }
   to {
     opacity: 0.2;
     transform: translateX(11%) scale(0.95) rotate(0.4deg);
-    filter: blur(10px) saturate(0.85);
+    
   }
 }
 
@@ -787,12 +856,12 @@ html:active-view-transition-type(shop-category-shift)::view-transition-new(root)
   from {
     opacity: 0.2;
     transform: translateX(-11%) scale(1.05) rotate(-0.4deg);
-    filter: blur(10px) saturate(1.15);
+    
   }
   to {
     opacity: 1;
     transform: translateX(0) scale(1) rotate(0);
-    filter: blur(0) saturate(1);
+    
   }
 }
 
@@ -831,19 +900,15 @@ html:active-view-transition-type(shop-category-shift)::view-transition-new(root)
   --fly-tilt: 0deg;
   opacity: 0;
   transform: translate3d(var(--fly-x), var(--fly-y), 0) scale(var(--fly-scale)) rotate(var(--fly-tilt));
-  filter: blur(10px) saturate(1.15);
   transition:
     opacity var(--fly-duration) var(--ease-fluid),
-    transform var(--fly-duration) var(--ease-fluid),
-    filter calc(var(--fly-duration) * 0.8) var(--ease-fluid);
+    transform var(--fly-duration) var(--ease-fluid);
   transition-delay: var(--fly-delay);
-  will-change: transform, opacity, filter;
 }
 
 .fly-in--visible {
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
-  filter: blur(0) saturate(1);
 }
 
 .fly-in--up {
