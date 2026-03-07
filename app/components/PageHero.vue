@@ -8,11 +8,11 @@ import { Icon } from "@iconify/vue";
     <div class="absolute inset-0 z-0">
       <div class="hero-gradient absolute inset-0"></div>
       <!-- Decorative floating elements — hidden on small mobile -->
-      <div class="hidden sm:block absolute top-10 left-10 text-4xl hippie-float opacity-20">🤍</div>
-      <div class="hidden sm:block absolute top-20 right-20 text-3xl hippie-float-delayed opacity-15">✨</div>
-      <div class="hidden md:block absolute bottom-20 left-1/4 text-5xl hippie-float opacity-10">🎨</div>
-      <div class="hidden sm:block absolute top-1/3 right-10 text-3xl hippie-float-delayed opacity-15">🌸</div>
-      <div class="hidden md:block absolute bottom-10 right-1/3 text-4xl hippie-float opacity-10">🧵</div>
+      <div class="hidden sm:block absolute top-10 left-10 text-4xl hippie-float opacity-20">☮</div>
+      <div class="hidden sm:block absolute top-20 right-20 text-3xl hippie-float-delayed opacity-15">🌀</div>
+      <div class="hidden md:block absolute bottom-20 left-1/4 text-5xl hippie-float opacity-10">🍄</div>
+      <div class="hidden sm:block absolute top-1/3 right-10 text-3xl hippie-float-delayed opacity-15">✨</div>
+      <div class="hidden md:block absolute bottom-10 right-1/3 text-4xl hippie-float opacity-10">🔮</div>
 
       <!-- Mandala decoration — only on larger screens -->
       <div class="hidden lg:block absolute -right-20 top-1/2 -translate-y-1/2 w-80 h-80 mandala-spin opacity-5">
@@ -33,26 +33,26 @@ import { Icon } from "@iconify/vue";
     <div class="relative z-10 container mx-auto px-5 md:px-6 py-12 md:py-16">
       <div class="max-w-3xl">
         <div class="cosmic-badge mb-4 md:mb-6 text-[10px] md:text-xs">
-          <span>✨ Nová kolekce 2026</span>
+          <span>☮ Nová kolekce 2026</span>
         </div>
 
         <h1 class="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold mb-4 md:mb-6 leading-none tracking-tight">
-          <span class="neon-text-rainbow">S láskou</span>
+          <span class="neon-text-rainbow">Trippy</span>
           <br>
-          <span class="text-white neon-text">vyráběné</span>
+          <span class="text-white neon-text">Mess</span>
         </h1>
 
         <p class="text-sm sm:text-base md:text-xl text-white/50 max-w-lg mb-6 md:mb-10 leading-relaxed">
-          Unikátní kousky oblečení, obrazů a doplňků inspirované přírodou a uměním. Vše tvořeno ručně a s maximální péčí. 🤍
+          Hvězdný výběr pro osvícené duše. Ponořte se do kosmického zboží z jiné dimenze. 🌌
         </p>
 
         <div class="flex flex-col sm:flex-row gap-3 md:gap-4">
           <button class="btn-cosmic flex items-center justify-center gap-2 group text-sm md:text-lg px-6 py-3 md:px-8 md:py-4">
-            <span>Prohlédnout dílnu</span>
+            <span>Prozkoumat vesmír</span>
             <Icon icon="ep:right" height="18" class="transition-transform group-hover:translate-x-1" />
           </button>
           <button class="btn-cosmic-outline flex items-center justify-center gap-2 text-sm md:text-lg px-6 py-3 md:px-8 md:py-4">
-            <span>✨ Nové kousky</span>
+            <span>☮ Nové produkty</span>
           </button>
         </div>
       </div>
