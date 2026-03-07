@@ -17,7 +17,8 @@ function updateTokenCookie(token: string | null) {
   }
 }
 
-async function refreshSession(supabase: any) {
+async function refreshSession() {
+  const supabase = getSupabase()
   try {
     const { data: { session } } = await supabase.auth.getSession()
     if (session?.user) {
@@ -44,7 +45,7 @@ export function useAuth() {
 
   if (!initialized && import.meta.client) {
     initialized = true
-    refreshSession(supabase)
+    refreshSession()
 
     // Listen for auth state changes (login, logout, token refresh)
     supabase.auth.onAuthStateChange((_event, session) => {
