@@ -5,6 +5,7 @@ import { Icon } from '@iconify/vue'
 
 const { refreshSession, supabase } = useAuth()
 const router = useRouter()
+const toast = useCosmicToast()
 
 const email = ref('')
 const password = ref('')
@@ -47,6 +48,7 @@ const handleRegister = async () => {
       }
     } else {
       await refreshSession()
+      toast.success('Registrace', 'Vítejte v naší kosmické komunitě! ✨')
       await router.push('/')
     }
   } catch (e: any) {

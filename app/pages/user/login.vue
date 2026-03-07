@@ -5,6 +5,7 @@ import { Icon } from '@iconify/vue'
 
 const { refreshSession, supabase } = useAuth()
 const router = useRouter()
+const toast = useCosmicToast()
 
 const email = ref('')
 const password = ref('')
@@ -25,6 +26,7 @@ const handleLogin = async () => {
       error.value = authError.message || 'Nesprávný email nebo heslo.'
     } else {
       await refreshSession()
+      toast.success('Přihlášení', 'Vítejte zpět v kosmické dimenzi! 👽')
       await router.push('/')
     }
   } catch (e: any) {

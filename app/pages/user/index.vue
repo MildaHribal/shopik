@@ -68,6 +68,7 @@ async function saveProfile() {
 
 async function handleSignOut() {
   await signOut()
+  toast.success('Odhlášení', 'Úspěšně jste se odhlásili. Mír a lásku! ✌️')
   router.push('/user/login')
 }
 

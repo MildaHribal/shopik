@@ -29,9 +29,11 @@ watch(searchQuery, async (newQuery) => {
 });
 
 const { currentUser, signOut } = useAuth();
+const toast = useCosmicToast();
 
 const logout = async () => {
   await signOut();
+  toast.success('Odhlášení', 'Úspěšně jste se odhlásili. Mír a lásku! ✌️');
 };
 
 // Categories from DB
