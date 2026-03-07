@@ -36,7 +36,9 @@ export default defineEventHandler(async (event) => {
   if (body.stock !== undefined) updateData.stock = Number(body.stock);
 
   // Resolve category
-  if (body.category !== undefined) {
+  if (body.categoryId !== undefined) {
+    updateData.categoryId = body.categoryId ? Number(body.categoryId) : null;
+  } else if (body.category !== undefined) {
     if (body.category) {
       const existing = await db
         .select()

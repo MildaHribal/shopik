@@ -22,9 +22,11 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Resolve category – find by name or create
+    // Resolve category – prioritize categoryId if provided
     let categoryId: number | null = null;
-    if (body.category) {
+    if (body.categoryId) {
+      categoryId = Number(body.categoryId);
+    } else if (body.category) {
       const existing = await db
         .select()
         .from(categories)

@@ -15,17 +15,35 @@ useSeoMeta({
   ogUrl: `${siteUrl}/`,
   twitterCard: 'summary_large_image',
 })
-const {data: rawProducts, pending, error} = await useFetch<Product[]>('/api/products?random=true&limit=12')
+const { data: rawProducts, pending, error } = await useFetch<Product[]>('/api/products?limit=30&random=true')
 
-const productsWithIds = computed(() => {
+// Split the random products into three distinct sliders
+const bestSellers = computed(() => {
   if (!rawProducts.value) return [];
-  return rawProducts.value.map((p, index) => ({
+  return rawProducts.value.slice(0, 10).map((p, index) => ({
     ...p,
-    id: p.id || `${(p.title || 'product').replace(/\s+/g, '-')}-${index}`
+    id: p.id || `bs-${index}`
+  }));
+});
+
+const featured = computed(() => {
+  if (!rawProducts.value) return [];
+  return rawProducts.value.slice(10, 20).map((p, index) => ({
+    ...p,
+    id: p.id || `feat-${index}`
+  }));
+});
+
+const newArrivals = computed(() => {
+  if (!rawProducts.value) return [];
+  return rawProducts.value.slice(20, 30).map((p, index) => ({
+    ...p,
+    id: p.id || `new-${index}`
   }));
 });
 
 const jsonLd = computed(() => {
+  if (!rawProducts.value) return [];
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -37,7 +55,7 @@ const jsonLd = computed(() => {
   const itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    itemListElement: productsWithIds.value.map((p, index) => ({
+    itemListElement: rawProducts.value.map((p, index) => ({
       '@type': 'ListItem',
       position: index + 1,
       item: {
@@ -66,26 +84,10 @@ useHead(() => ({
   }))
 }))
 
-const categories = computed(() => {
-  if (!productsWithIds.value) return []
-  return [...new Set(productsWithIds.value.map(p => p.category).filter(Boolean))].sort() as string[]
-})
+const carouselBest = ref<InstanceType<typeof ProductCarousel> | null>(null);
+const carouselFeat = ref<InstanceType<typeof ProductCarousel> | null>(null);
+const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
 
-const selectedCategory = ref<string | null>(null)
-const showMobileFilters = ref(false)
-
-const filteredProducts = computed(() => {
-  if (!productsWithIds.value) return []
-  if (!selectedCategory.value) return productsWithIds.value
-  return productsWithIds.value.filter(p => p.category === selectedCategory.value)
-})
-
-const carouselRef = ref<InstanceType<typeof ProductCarousel> | null>(null);
-
-const selectCategory = (cat: string | null) => {
-  selectedCategory.value = cat
-  showMobileFilters.value = false
-}
 </script>
 
 <template>
@@ -115,14 +117,14 @@ const selectCategory = (cat: string | null) => {
           </div>
           <div class="flex gap-2">
             <button
-              @click="carouselRef?.prev()"
+              @click="carouselBest?.prev()"
               class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
               aria-label="Předchozí"
             >
               <Icon icon="ep:arrow-left-bold" height="18" />
             </button>
             <button
-              @click="carouselRef?.next()"
+              @click="carouselBest?.next()"
               class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
               aria-label="Další"
             >
@@ -132,9 +134,9 @@ const selectCategory = (cat: string | null) => {
         </div>
 
         <ProductCarousel
-          v-if="productsWithIds && productsWithIds.length > 0"
-          :products="productsWithIds"
-          ref="carouselRef"
+          v-if="bestSellers.length > 0"
+          :products="bestSellers"
+          ref="carouselBest"
         />
       </section>
 
@@ -153,10 +155,10 @@ const selectCategory = (cat: string | null) => {
               Největší výběr gadgetů v Česku
             </h2>
             <p class="text-white/50 text-sm md:text-lg mb-5 md:mb-6">Objevte nové dimenze zábavy s naší kosmickou kolekcí</p>
-            <button class="btn-cosmic flex items-center gap-2 group text-sm md:text-base px-6 py-3 md:px-8 md:py-3">
+            <NuxtLink to="/category/vsechny" class="btn-cosmic inline-flex items-center gap-2 group text-sm md:text-base px-6 py-3 md:px-8 md:py-3">
               <span>Prohlédnout kolekci</span>
               <Icon icon="ep:right" height="18" class="transition-transform group-hover:translate-x-1" />
-            </button>
+            </NuxtLink>
           </div>
 
           <!-- Floating decorations - hidden on very small screens -->
@@ -168,80 +170,82 @@ const selectCategory = (cat: string | null) => {
       <!-- Cosmic Divider -->
       <div class="cosmic-divider mx-4 md:mx-14"></div>
 
-      <!-- All Products Section -->
-      <section class="py-8 md:py-12 px-4 md:px-8">
-        <div class="flex items-center justify-between gap-3 mb-6 md:mb-8 px-2 md:px-6">
-          <div class="flex items-center gap-3">
+      <!-- Featured Section -->
+      <section class="py-10 md:py-16 px-4 md:px-14">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
+          <div>
             <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-tight neon-text-cyan">
-              Všechny produkty
+              Vybrané pro tebe ✨
             </h2>
-            <span class="text-xl md:text-2xl hippie-float">✨</span>
+            <p class="text-white/30 mt-1 md:mt-2 text-xs md:text-sm">Must-have kousky pro každou dimenzi</p>
           </div>
-
-          <!-- Mobile filter button -->
-          <button
-            @click="showMobileFilters = !showMobileFilters"
-            class="lg:hidden flex items-center gap-2 px-3 py-2 glass-card text-white/60 hover:text-white text-sm transition-all"
-          >
-            <Icon icon="mdi:filter-variant" height="18" />
-            <span class="hidden sm:inline">Filtry</span>
-          </button>
-        </div>
-
-        <!-- Mobile category filter (collapsible) -->
-        <Transition name="expand">
-          <div v-if="showMobileFilters" class="lg:hidden mx-2 mb-6">
-            <div class="glass-card p-4">
-              <div class="flex flex-wrap gap-2">
-                <button
-                  @click="selectCategory(null)"
-                  class="px-3 py-2 rounded-xl text-xs font-medium transition-all"
-                  :class="selectedCategory === null
-                    ? 'bg-gradient-to-r from-primary-500/30 to-secondary-500/30 text-white border border-primary-500/30'
-                    : 'text-white/50 hover:text-white bg-white/5'"
-                >
-                  ✨ Vše
-                </button>
-                <button
-                  v-for="category in categories"
-                  :key="category"
-                  @click="selectCategory(category)"
-                  class="px-3 py-2 rounded-xl text-xs font-medium transition-all"
-                  :class="selectedCategory === category
-                    ? 'bg-gradient-to-r from-primary-500/30 to-secondary-500/30 text-white border border-primary-500/30'
-                    : 'text-white/50 hover:text-white bg-white/5'"
-                >
-                  {{ category }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </Transition>
-
-        <div class="flex mt-4">
-          <!-- Desktop Sidebar -->
-          <div class="hidden lg:block">
-            <Sidebar
-              :categories="categories"
-              :selected-category="selectedCategory"
-              @select="selectedCategory = $event"
-            />
-          </div>
-          <div class="flex-1 lg:pl-8 lg:pr-4">
-            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
-              <NuxtLink
-                v-for="product in filteredProducts"
-                :key="product.id"
-                :to="`/product/${product.slug || product.id}`"
-                :prefetch="false"
-                class="block h-full"
-                :aria-label="product.title"
-              >
-                <ProductCard :product="product"/>
-              </NuxtLink>
-            </div>
+          <div class="flex gap-2">
+            <button
+              @click="carouselFeat?.prev()"
+              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
+              aria-label="Předchozí"
+            >
+              <Icon icon="ep:arrow-left-bold" height="18" />
+            </button>
+            <button
+              @click="carouselFeat?.next()"
+              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
+              aria-label="Další"
+            >
+              <Icon icon="ep:arrow-right-bold" height="18" />
+            </button>
           </div>
         </div>
+
+        <ProductCarousel
+          v-if="featured.length > 0"
+          :products="featured"
+          ref="carouselFeat"
+        />
+      </section>
+
+      <!-- Cosmic Divider -->
+      <div class="cosmic-divider mx-4 md:mx-14 opacity-50"></div>
+
+      <!-- New Arrivals Section -->
+      <section class="py-10 md:py-16 px-4 md:px-14">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
+          <div>
+            <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-tight text-secondary-400">
+              Absolutní novinky 🚀
+            </h2>
+            <p class="text-white/30 mt-1 md:mt-2 text-xs md:text-sm">Freshest kapky z jiného vesmíru</p>
+          </div>
+          <div class="flex gap-2">
+            <button
+              @click="carouselNew?.prev()"
+              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
+            >
+              <Icon icon="ep:arrow-left-bold" height="18" />
+            </button>
+            <button
+              @click="carouselNew?.next()"
+              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
+            >
+              <Icon icon="ep:arrow-right-bold" height="18" />
+            </button>
+          </div>
+        </div>
+
+        <ProductCarousel
+          v-if="newArrivals.length > 0"
+          :products="newArrivals"
+          ref="carouselNew"
+        />
+      </section>
+
+      <!-- All Products Call to action -->
+      <section class="py-16 md:py-24 text-center px-4 flex flex-col items-center">
+        <h3 class="text-2xl text-white font-bold mb-6">Chceš prozkoumat celý vesmír?</h3>
+        <NuxtLink to="/category/vsechny" class="btn-cosmic inline-flex items-center justify-center gap-3 group text-lg md:text-xl px-10 py-5">
+           <span>Zobrazit všechny produkty</span>
+           <Icon icon="lucide:sparkles" height="24" class="transition-transform group-hover:rotate-12 group-hover:scale-110 text-yellow-300" />
+        </NuxtLink>
       </section>
 
     </template>
@@ -249,20 +253,5 @@ const selectCategory = (cat: string | null) => {
 </template>
 
 <style scoped>
-.expand-enter-active,
-.expand-leave-active {
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-.expand-enter-from,
-.expand-leave-to {
-  opacity: 0;
-  max-height: 0;
-  margin-bottom: 0;
-}
-.expand-enter-to,
-.expand-leave-from {
-  opacity: 1;
-  max-height: 200px;
-}
+
 </style>

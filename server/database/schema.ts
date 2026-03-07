@@ -4,8 +4,9 @@ import { relations } from 'drizzle-orm';
 // ── Categories ──────────────────────────────────────────────────────────────────
 export const categories = pgTable('categories', {
   id: serial('id').primaryKey(),
-  name: text('name').notNull().unique(),
+  name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
+  parentId: integer('parent_id'),
   createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -84,8 +85,16 @@ export const favorites = pgTable('favorites', {
 });
 
 // ── Relations ───────────────────────────────────────────────────────────────────
-export const categoriesRelations = relations(categories, ({ many }) => ({
+export const categoriesRelations = relations(categories, ({ many, one }) => ({
   products: many(products),
+  parent: one(categories, {
+    fields: [categories.parentId],
+    references: [categories.id],
+    relationName: 'subcategory',
+  }),
+  subcategories: many(categories, {
+    relationName: 'subcategory',
+  }),
 }));
 
 export const ordersRelations = relations(orders, ({ many, one }) => ({

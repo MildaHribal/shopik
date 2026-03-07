@@ -34,13 +34,58 @@ const logout = async () => {
   await signOut();
 };
 
-const navLinks = [
-  { label: 'Moda', link: '#' },
-  { label: 'Bizuterie', link: '#' },
-  { label: 'Doplnky', link: '#' },
-  { label: 'Obrazy', link: '#' },
-  { label: 'Kokot', link: '#' }
-];
+// Categories from DB
+const { data: categoriesData } = await useFetch<any[]>('/api/categories');
+
+const categoryTree = computed(() => {
+  if (!categoriesData.value) return [];
+  
+  // Custom ordering map
+  const orderMap: Record<string, number> = {
+    'MODA': 20,
+    'BIZUTERIE': 10,
+    'DOPLNKY': 30,
+    'OBRAZY': 40,
+    'OSTATNÍ': 50
+  };
+
+  const map = new Map();
+  // First pass: create nodes
+  categoriesData.value.forEach(cat => {
+    map.set(cat.id, { ...cat, children: [] });
+  });
+  
+  const tree: any[] = [];
+  // Second pass: link parents/children
+  categoriesData.value.forEach(cat => {
+    const node = map.get(cat.id);
+    if (cat.parentId) {
+      const parent = map.get(cat.parentId);
+      if (parent) {
+        parent.children.push(node);
+      }
+    } else {
+      tree.push(node);
+    }
+  });
+
+  // Sort top-level categories by custom map
+  return tree.sort((a, b) => {
+    const orderA = orderMap[a.name] || 999;
+    const orderB = orderMap[b.name] || 999;
+    return orderA - orderB;
+  });
+});
+
+// For mobile menu tracking
+const expandedMobileCats = ref<Set<number>>(new Set());
+const toggleMobileCat = (id: number) => {
+  if (expandedMobileCats.value.has(id)) {
+    expandedMobileCats.value.delete(id);
+  } else {
+    expandedMobileCats.value.add(id);
+  }
+};
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 20
@@ -87,14 +132,49 @@ onUnmounted(() => {
     <!-- Desktop Nav Links -->
     <div class="hidden md:flex flex-grow justify-center mx-4">
       <div class="flex items-center gap-1">
-        <button
-          v-for="item in navLinks"
-          :key="item.label"
-          class="nav-link group relative px-5 py-2.5 overflow-hidden rounded-full text-sm font-semibold text-white/60 transition-all duration-300 hover:text-white hover:bg-white/5"
+        <div
+          v-for="cat in categoryTree"
+          :key="cat.id"
+          class="relative group"
         >
-          <span class="relative z-10">{{ item.label }}</span>
-          <span class="nav-link-glow"></span>
-        </button>
+          <NuxtLink
+            :to="`/category/${cat.slug}`"
+            class="nav-link px-4 py-2.5 rounded-full text-sm font-semibold text-white/60 transition-all duration-300 hover:text-white hover:bg-white/5 flex items-center gap-1.5"
+          >
+            <span>{{ cat.name }}</span>
+            <Icon v-if="cat.children.length > 0" name="heroicons:chevron-down" class="w-3.5 h-3.5 opacity-40 group-hover:rotate-180 transition-transform duration-300" />
+            <span class="nav-link-glow"></span>
+          </NuxtLink>
+
+          <!-- Level 2 Dropdown -->
+          <div v-if="cat.children.length > 0" class="dropdown-container">
+            <div class="dropdown-menu">
+              <div v-for="sub in cat.children" :key="sub.id" class="relative group/sub">
+                <NuxtLink
+                  :to="`/category/${sub.slug}`"
+                  class="dropdown-item"
+                >
+                  <span class="text-sm font-medium">{{ sub.name }}</span>
+                  <Icon v-if="sub.children.length > 0" name="heroicons:chevron-right" class="w-3.5 h-3.5 opacity-40" />
+                </NuxtLink>
+
+                <!-- Level 3 Flyout -->
+                <div v-if="sub.children.length > 0" class="submenu-container">
+                  <div class="dropdown-menu">
+                    <NuxtLink
+                      v-for="third in sub.children"
+                      :key="third.id"
+                      :to="`/category/${third.slug}`"
+                      class="dropdown-item"
+                    >
+                      <span class="text-sm font-medium">{{ third.name }}</span>
+                    </NuxtLink>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -158,16 +238,59 @@ onUnmounted(() => {
           <div class="mb-8">
             <h3 class="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-4 ml-4">Kategorie</h3>
             <div class="space-y-1">
-              <NuxtLink
-                v-for="item in navLinks"
-                :key="item.label"
-                to="/"
-                @click="isMobileMenuOpen = false"
-                class="flex items-center px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/5 transition-all"
-              >
-                <span class="text-lg mr-3">🌀</span>
-                <span class="font-medium">{{ item.label }}</span>
-              </NuxtLink>
+              <div v-for="cat in categoryTree" :key="cat.id">
+                <div class="flex items-center justify-between">
+                  <NuxtLink
+                    :to="`/category/${cat.slug}`"
+                    @click="isMobileMenuOpen = false"
+                    class="flex-grow flex items-center px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/5 transition-all"
+                  >
+                    <span class="text-lg mr-3">🌀</span>
+                    <span class="font-medium">{{ cat.name }}</span>
+                  </NuxtLink>
+                  <button 
+                    v-if="cat.children.length > 0"
+                    @click="toggleMobileCat(cat.id)"
+                    class="p-4 text-white/30"
+                  >
+                    <Icon :name="expandedMobileCats.has(cat.id) ? 'heroicons:chevron-up' : 'heroicons:chevron-down'" />
+                  </button>
+                </div>
+
+                <!-- Mobile Subcategories -->
+                <div v-if="expandedMobileCats.has(cat.id) && cat.children.length > 0" class="ml-8 space-y-1 border-l border-white/10 pl-2">
+                  <div v-for="sub in cat.children" :key="sub.id">
+                    <div class="flex items-center justify-between">
+                      <NuxtLink
+                        :to="`/category/${sub.slug}`"
+                        @click="isMobileMenuOpen = false"
+                        class="flex-grow px-4 py-2 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/5"
+                      >
+                        {{ sub.name }}
+                      </NuxtLink>
+                      <button 
+                        v-if="sub.children.length > 0"
+                        @click="toggleMobileCat(sub.id)"
+                        class="p-2 text-white/20"
+                      >
+                        <Icon :name="expandedMobileCats.has(sub.id) ? 'heroicons:chevron-up' : 'heroicons:chevron-down'" />
+                      </button>
+                    </div>
+
+                    <div v-if="expandedMobileCats.has(sub.id) && sub.children.length > 0" class="ml-4 space-y-1 border-l border-white/10 pl-2">
+                      <NuxtLink
+                        v-for="third in sub.children"
+                        :key="third.id"
+                        :to="`/category/${third.slug}`"
+                        @click="isMobileMenuOpen = false"
+                        class="block px-4 py-1.5 rounded-lg text-xs text-white/40 hover:text-white"
+                      >
+                        {{ third.name }}
+                      </NuxtLink>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -374,6 +497,71 @@ onUnmounted(() => {
   border-color: rgba(139, 92, 246, 0.5);
   box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5), 0 0 25px rgba(139, 92, 246, 0.2);
   transform: scale(1.05);
+}
+
+/* Flyout Menu Styles */
+.dropdown-container {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  padding-top: 0.75rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 60;
+}
+
+.group:hover .dropdown-container {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.dropdown-menu {
+  background: #1a0225; /* Very dark purple */
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 1rem;
+  min-width: 220px;
+  padding: 0.5rem;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(139, 92, 246, 0.1);
+  backdrop-filter: blur(20px);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+  position: relative;
+  white-space: nowrap;
+}
+
+.dropdown-item:hover {
+  background: rgba(139, 92, 246, 0.1);
+  color: #fff;
+}
+
+.submenu-container {
+  position: absolute;
+  top: -0.5rem;
+  left: 100%;
+  padding-left: 0.5rem;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(10px);
+  transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.group\/sub:hover > .submenu-container {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
 }
 
 /* Transitions */

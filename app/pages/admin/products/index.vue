@@ -12,10 +12,39 @@ const toast = useCosmicToast()
 const searchQuery = ref('')
 const selectedCategory = ref('')
 
-const categories = computed(() => {
-  if (!products.value) return []
-  return [...new Set(products.value.map((p: any) => p.category).filter(Boolean))].sort()
+const { data: allCategories, refresh: refreshCategories } = await useFetch<any[]>('/api/categories')
+
+const categoryTree = computed(() => {
+  if (!allCategories.value) return []
+  const map = new Map()
+  allCategories.value.forEach(cat => {
+    map.set(cat.id, { ...cat, children: [] })
+  })
+  const tree: any[] = []
+  allCategories.value.forEach(cat => {
+    const node = map.get(cat.id)
+    if (cat.parentId) {
+      const parent = map.get(cat.parentId)
+      if (parent) parent.children.push(node)
+    } else {
+      tree.push(node)
+    }
+  })
+  return tree
 })
+
+// Helper to get flat category name including parents
+function getCategoryPath(id: number | null): string {
+  if (!id || !allCategories.value) return ''
+  const path: string[] = []
+  let current = allCategories.value.find(c => c.id === id)
+  while (current) {
+    path.unshift(current.name)
+    const nextId = current.parentId
+    current = nextId ? allCategories.value.find(c => c.id === nextId) : null
+  }
+  return path.join(' > ')
+}
 
 const filteredProducts = computed(() => {
   if (!products.value) return []
@@ -44,8 +73,35 @@ const form = ref({
   image: '',
   images: [] as string[],
   stock: 0,
-  category: ''
+  category: '',
+  categoryId: null as number | null
 })
+
+// Hierarchical picker state
+const pickerPath = ref<any[]>([]) // Breadcrumbs for navigation
+const currentLevelCategories = computed(() => {
+  if (pickerPath.value.length === 0) return categoryTree.value
+  return pickerPath.value[pickerPath.value.length - 1].children || []
+})
+
+function selectLevel(cat: any) {
+  if (cat.children && cat.children.length > 0) {
+    pickerPath.value.push(cat)
+  } else {
+    // Leaf category selected
+    form.value.categoryId = cat.id
+    form.value.category = cat.name
+  }
+}
+
+function resetPicker() {
+  pickerPath.value = []
+}
+
+function setFinalCategory(cat: any) {
+  form.value.categoryId = cat.id
+  form.value.category = cat.name
+}
 
 // Image upload state
 const uploading = ref(false)
@@ -55,8 +111,9 @@ const MAX_IMAGES = 5
 function openCreate() {
   isEditing.value = false
   editingProduct.value = null
-  form.value = { title: '', description: '', price: 0, image: '', images: [], stock: 0, category: '' }
+  form.value = { title: '', description: '', price: 0, image: '', images: [], stock: 0, category: '', categoryId: null }
   uploadError.value = ''
+  pickerPath.value = []
   showModal.value = true
 }
 
@@ -70,9 +127,11 @@ function openEdit(product: any) {
     image: product.image || '',
     images: product.images || [],
     stock: product.stock,
-    category: product.category || ''
+    category: product.category || '',
+    categoryId: product.categoryId || null
   }
   uploadError.value = ''
+  pickerPath.value = []
   showModal.value = true
 }
 
@@ -220,7 +279,7 @@ function getImageSrc(image: string) {
       </div>
       <select v-model="selectedCategory" class="filter-select">
         <option value="">Všechny kategorie</option>
-        <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+        <option v-for="cat in allCategories" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
       </select>
     </div>
 
@@ -329,9 +388,63 @@ function getImageSrc(image: string) {
                   <input v-model.number="form.stock" type="number" class="form-input" min="0" />
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group font-sans">
                 <label class="form-label">Kategorie</label>
-                <input v-model="form.category" type="text" class="form-input" placeholder="Kategorie" />
+                <div class="category-picker-box border border-white/5 rounded-xl bg-black/20 p-4">
+                  <!-- Selected Category Breadcrumb -->
+                  <div v-if="form.categoryId" class="flex items-center gap-2 p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg mb-4">
+                    <Icon icon="lucide:check-circle" class="text-primary-400" />
+                    <span class="text-sm font-bold text-primary-200 uppercase tracking-tight">{{ getCategoryPath(form.categoryId) }}</span>
+                    <button type="button" @click="form.categoryId = null; form.category = ''" class="ml-auto p-1.5 hover:bg-red-500/10 rounded-full text-red-500 transition-all">
+                      <Icon icon="lucide:x" height="14" />
+                    </button>
+                  </div>
+
+                  <!-- Picker Stepper -->
+                  <div class="picker-stepper bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+                    <!-- Picker Breadcrumbs (Navigation) -->
+                    <div class="flex items-center gap-2 px-4 py-2 bg-white/5 border-b border-white/10 text-xs">
+                      <button type="button" @click="resetPicker" class="text-gray-400 hover:text-white transition-colors">Všechny</button>
+                      <template v-for="(p, i) in pickerPath" :key="p.id">
+                        <Icon icon="lucide:chevron-right" height="10" class="text-gray-600" />
+                        <button type="button" @click="pickerPath = pickerPath.slice(0, i + 1)" class="text-gray-300 hover:text-white font-medium">
+                          {{ p.name }}
+                        </button>
+                      </template>
+                    </div>
+
+                    <!-- Options Grid -->
+                    <div class="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[250px] overflow-y-auto custom-scrollbar">
+                      <button 
+                        v-for="cat in currentLevelCategories" 
+                        :key="cat.id"
+                        type="button"
+                        class="picker-btn group"
+                        @click="selectLevel(cat)"
+                      >
+                        <span class="text-sm font-semibold">{{ cat.name }}</span>
+                        <Icon v-if="cat.children && cat.children.length > 0" icon="lucide:folder-tree" height="14" class="ml-auto opacity-30 group-hover:opacity-100 transition-opacity" />
+                        <Icon v-else icon="lucide:check" height="14" class="ml-auto opacity-0 group-hover:opacity-100 text-primary-400 transition-opacity" />
+                      </button>
+
+                      <div v-if="currentLevelCategories.length === 0" class="col-span-2 py-8 text-center text-gray-500 italic text-sm">
+                        Žádné další podkategorie
+                      </div>
+                    </div>
+
+                    <!-- "Select This" button for intermediate levels -->
+                    <div v-if="pickerPath.length > 0" class="p-3 bg-white/[0.02] border-t border-white/5">
+                      <button 
+                        type="button"
+                        class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-primary-500/20 hover:bg-primary-500/30 text-primary-300 text-sm font-bold border border-primary-500/20 transition-all"
+                        @click="setFinalCategory(pickerPath[pickerPath.length - 1])"
+                      >
+                        <Icon icon="lucide:plus-circle" height="16" />
+                        Zvolit: {{ pickerPath[pickerPath.length - 1].name }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Multi-image upload -->
@@ -910,5 +1023,43 @@ function getImageSrc(image: string) {
 
 .text-right {
   text-align: right;
+}
+
+/* Category Picker Styles */
+.picker-btn {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+}
+
+.picker-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(109, 201, 149, 0.3);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 </style>
