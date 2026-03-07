@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { getSupabase } from '~~/lib/auth'
+import { useCookie } from '#app'
 
 // Shared reactive state across components
 const currentUser = ref<{ id: string; name: string; email: string } | null>(null)
@@ -8,14 +9,13 @@ const isAuthLoading = ref(true)
 let initialized = false
 
 function updateTokenCookie(token: string | null) {
-  if (import.meta.client) {
-    const secureFlag = window.location.protocol === 'https:' ? '; Secure' : ''
-    if (token) {
-      document.cookie = `sb-access-token=${token}; path=/; max-age=604800; SameSite=Lax${secureFlag}`
-    } else {
-      document.cookie = `sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT${secureFlag}`
-    }
-  }
+  const tokenCookie = useCookie('sb-access-token', {
+    maxAge: 604800, // 7 days
+    sameSite: 'lax',
+    secure: window?.location?.protocol === 'https:',
+    path: '/'
+  })
+  tokenCookie.value = token || null
 }
 
 async function refreshSession() {
