@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useCartStore } from "~/stores/cart";
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-
+import { useAuth } from '~/composables/useAuth';
 
 const cart = useCartStore();
 const isScrolled = ref(false);
@@ -28,11 +28,10 @@ watch(searchQuery, async (newQuery) => {
   }
 });
 
-const { isSignedIn } = useUser();
-const clerk = useClerk();
+const { currentUser, signOut } = useAuth();
 
 const logout = async () => {
-  await clerk.value?.signOut();
+  await signOut();
 };
 
 // Categories from DB
@@ -182,22 +181,22 @@ onUnmounted(() => {
     <!-- Right Actions -->
     <div class="flex items-center space-x-3 md:space-x-4">
       <button @click="isSearchOpen = true" class="nav-action-btn" title="Hledat">
-        <Icon name="iconamoon:search-fill" height="24" />
+        <Icon name="iconamoon:search-fill" height="20" />
       </button>
 
       <div class="flex items-center gap-1.5 md:gap-2 relative">
         <NuxtLink 
-          :to="isSignedIn ? '/user' : '/user/login'" 
+          to="/user" 
           class="nav-action-btn" 
           title="Můj profil"
           aria-label="Můj profil"
         >
-          <Icon name="bxs:user" height="24" />
+          <Icon name="bxs:user" height="20" />
         </NuxtLink>
       </div>
 
       <NuxtLink to="/cart" data-cart-anchor="true" class="nav-action-btn relative" title="Košík" aria-label="Košík">
-        <Icon name="mdi:cart" height="24" />
+        <Icon name="mdi:cart" height="20" />
         <span v-if="cart.itemCount > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full shadow-lg shadow-primary-500/30">
           {{ cart.itemCount }}
         </span>
@@ -298,12 +297,10 @@ onUnmounted(() => {
           <div>
             <h3 class="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-4 ml-4">Můj účet</h3>
             <div class="space-y-1">
-              <template v-if="!isSignedIn">
-                <NuxtLink to="/user/login" @click="isMobileMenuOpen = false" class="flex items-center px-4 py-3 rounded-xl text-white/70 hover:bg-white/5">
-                  <Icon name="mdi:login" class="mr-3 text-lg" />
-                  <span>Přihlásit se</span>
-                </NuxtLink>
-              </template>
+              <NuxtLink v-if="!currentUser" to="/user/login" @click="isMobileMenuOpen = false" class="flex items-center px-4 py-3 rounded-xl text-white/70 hover:bg-white/5">
+                <Icon name="mdi:login" class="mr-3 text-lg" />
+                <span>Přihlásit se</span>
+              </NuxtLink>
               <template v-else>
                 <NuxtLink to="/user" @click="isMobileMenuOpen = false" class="flex items-center px-4 py-3 rounded-xl text-white/70 hover:bg-white/5">
                   <Icon name="mdi:account-circle" class="mr-3 text-lg" />
@@ -333,22 +330,22 @@ onUnmounted(() => {
   <Transition name="navbar">
     <div v-if="isScrolled" class="fixed top-4 right-4 z-40 flex items-center space-x-2 md:space-x-3 pointer-events-none">
       <button @click="isSearchOpen = true" class="pointer-events-auto floating-btn" title="Search">
-        <Icon name="iconamoon:search-fill" height="22" />
+        <Icon name="iconamoon:search-fill" height="18" />
       </button>
 
       <div class="pointer-events-auto">
         <NuxtLink 
-          :to="isSignedIn ? '/user' : '/user/login'" 
+          to="/user" 
           class="floating-btn" 
           title="Můj profil"
           aria-label="Můj profil"
         >
-          <Icon name="bxs:user" height="22" />
+          <Icon name="bxs:user" height="18" />
         </NuxtLink>
       </div>
 
       <NuxtLink to="/cart" data-cart-anchor="true" class="pointer-events-auto floating-btn relative" title="Košík" aria-label="Košík">
-        <Icon name="mdi:cart-outline" height="22" />
+        <Icon name="mdi:cart-outline" height="18" />
         <span v-if="cart.itemCount > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full">
           {{ cart.itemCount }}
         </span>

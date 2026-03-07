@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
     const street = body?.street ? String(body.street).trim() : null
     const city = body?.city ? String(body.city).trim() : null
     const zip = body?.zip ? String(body.zip).trim() : null
-    const email = body?.email ? String(body.email).trim() : (userEmail || `${userId}@clerkuser.local`)
+    const email = userEmail || `${userId}@no-email.local`
 
     const existing = await db.query.users.findFirst({
       where: eq(users.supabaseAuthId, userId),

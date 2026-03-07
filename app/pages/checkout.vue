@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { useCartStore } from "~/stores/cart";
 import { Icon } from "@iconify/vue";
+import { useAuth } from "~/composables/useAuth";
 
 const cart = useCartStore();
-const { user, isSignedIn } = useUser();
+const { currentUser } = useAuth();
 const toast = useCosmicToast()
 
 const step = ref<'details' | 'payment' | 'success'>('details');
@@ -23,25 +24,25 @@ const form = ref({
 
 // Předvyplnění z profilu pro přihlášené uživatele
 const { data: userProfile } = await useFetch(
-  () => (isSignedIn.value ? '/api/user/profile' : ''),
+  () => (currentUser.value ? '/api/user/profile' : ''),
   { 
-    immediate: !!isSignedIn.value,
-    watch: [isSignedIn],
+    immediate: !!currentUser.value,
+    watch: [currentUser],
     default: () => null 
   }
 );
 watch(
-  [userProfile, user],
-  ([profile, clkUser]) => {
+  [userProfile, currentUser],
+  ([profile, user]) => {
     if (profile) {
       form.value.customerName = (profile as any).name ?? '';
-      form.value.customerEmail = clkUser?.primaryEmailAddress?.emailAddress ?? (profile as any).email ?? '';
+      form.value.customerEmail = user?.email ?? (profile as any).email ?? '';
       form.value.phone = (profile as any).phone ?? '';
       form.value.street = (profile as any).street ?? '';
       form.value.city = (profile as any).city ?? '';
       form.value.zip = (profile as any).zip ?? '';
-    } else if (clkUser?.primaryEmailAddress?.emailAddress && !form.value.customerEmail) {
-      form.value.customerEmail = clkUser.primaryEmailAddress.emailAddress;
+    } else if (user?.email && !form.value.customerEmail) {
+      form.value.customerEmail = user.email;
     }
   },
   { immediate: true }
@@ -395,7 +396,7 @@ function selectedStyle(active: boolean) {
         Vaše objednávka <span class="text-primary-400 font-mono font-bold">#{{ orderId }}</span> byla přijata.
       </p>
       <div class="glass-card p-5 mb-8 text-left text-sm text-white/50">
-        <template v-if="isSignedIn">
+        <template v-if="currentUser">
           Objednávku vidíte v
           <NuxtLink to="/user" class="text-primary-400 hover:underline">Můj profil → Moje objednávky</NuxtLink>.
         </template>

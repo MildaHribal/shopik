@@ -2,13 +2,14 @@
 import { Icon } from '@iconify/vue'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-const { user } = useUser()
-const clerk = useClerk()
-const router = useRouter()
+import { useAuth } from '~~/app/composables/useAuth'
 
 definePageMeta({
   middleware: ['auth']
 })
+
+const { currentUser, signOut } = useAuth()
+const router = useRouter()
 
 const activeTab = ref('profile')
 
@@ -54,10 +55,7 @@ async function saveProfile() {
   try {
     await $fetch('/api/user/profile', {
       method: 'PATCH',
-      body: {
-        ...formData.value,
-        email: user.value?.primaryEmailAddress?.emailAddress
-      }
+      body: formData.value
     })
     await refreshProfile()
     toast.success('Uloženo', 'Údaje byly úspěšně uloženy.')
@@ -69,7 +67,7 @@ async function saveProfile() {
 }
 
 async function handleSignOut() {
-  await clerk.value?.signOut()
+  await signOut()
   router.push('/user/login')
 }
 
@@ -104,10 +102,10 @@ const statusClass = (status: string) => {
       <div class="w-full md:w-64 flex-shrink-0">
         <div class="glass-card-strong p-6 text-center mb-6">
           <div class="w-20 h-20 rounded-full mx-auto mb-4 bg-gradient-to-tr from-primary-500 to-secondary-500 flex items-center justify-center text-2xl font-black text-white shadow-lg">
-            {{ user?.fullName?.charAt(0) || '?' }}
+            {{ currentUser?.name?.charAt(0) || '?' }}
           </div>
-          <h2 class="text-xl font-bold text-white leading-tight">{{ user?.fullName || 'Uživatel' }}</h2>
-          <p class="text-sm text-white/50 break-all">{{ user?.primaryEmailAddress?.emailAddress }}</p>
+          <h2 class="text-xl font-bold text-white leading-tight">{{ currentUser?.name }}</h2>
+          <p class="text-sm text-white/50 break-all">{{ currentUser?.email }}</p>
         </div>
 
         <nav class="glass-card-strong p-2 flex flex-row flex-wrap md:flex-col gap-2 justify-center md:justify-start">
