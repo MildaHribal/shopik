@@ -8,14 +8,15 @@ let client: SupabaseClient | null = null
  */
 export const getSupabaseAdmin = (): SupabaseClient => {
   if (!client) {
-    const supabaseUrl = process.env.SUPABASE_URL || ''
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || ''
+    const config = useRuntimeConfig()
+    const supabaseUrl = config.public.supabaseUrl || process.env.SUPABASE_URL || ''
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || config.public.supabaseKey || process.env.SUPABASE_KEY || ''
     
     if (!supabaseUrl || !supabaseServiceKey) {
       throw createError({
         statusCode: 500,
         statusMessage: 'Supabase configuration missing',
-        message: 'SUPABASE_URL and SUPABASE_SERVICE_KEY are required in environment.'
+        message: 'SUPABASE_URL and SUPABASE_SERVICE_KEY (or SUPABASE_KEY) are required in environment.'
       })
     }
     

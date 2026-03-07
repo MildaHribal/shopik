@@ -10,9 +10,9 @@ let initialized = false
 function updateTokenCookie(token: string | null) {
   if (import.meta.client) {
     if (token) {
-      document.cookie = `sb-access-token=${token}; path=/; max-age=604800; SameSite=Lax`
+      document.cookie = `sb-access-token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`
     } else {
-      document.cookie = 'sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      document.cookie = 'sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure'
     }
   }
 }

@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { getRequestHeaders } from 'h3'
+import { getCookie, getRequestHeader } from 'h3'
 import { getSupabaseAdmin } from './auth'
 
 type SupabaseSession = {
@@ -11,23 +11,14 @@ type SupabaseSession = {
 } | null
 
 async function fetchSupabaseSession(event: H3Event): Promise<SupabaseSession> {
-  const headers = getRequestHeaders(event)
-  const authHeader = headers['authorization'] || headers['Authorization']
+  const authHeader = getRequestHeader(event, 'authorization') || getRequestHeader(event, 'Authorization')
 
   // Try to get token from Authorization header or cookie
   let token = ''
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.slice(7)
   } else {
-    // Parse sb-access-token from cookies
-    const cookieHeader = headers['cookie'] || ''
-    const cookies = Object.fromEntries(
-      cookieHeader.split(';').map(c => {
-        const [key, ...val] = c.trim().split('=')
-        return [key, val.join('=')]
-      })
-    )
-    token = cookies['sb-access-token'] || ''
+    token = getCookie(event, 'sb-access-token') || ''
   }
 
   if (!token) return null
@@ -36,7 +27,15 @@ async function fetchSupabaseSession(event: H3Event): Promise<SupabaseSession> {
     const supabase = getSupabaseAdmin()
     const { data: { user }, error } = await supabase.auth.getUser(token)
 
-    if (error || !user) return null
+    if (error) {
+      console.error('Supabase getUser error:', error.message)
+      return null
+    }
+
+    if (!user) {
+       console.error('Supabase user is null')
+       return null
+    }
 
     return {
       user: {
@@ -46,7 +45,7 @@ async function fetchSupabaseSession(event: H3Event): Promise<SupabaseSession> {
       }
     }
   } catch (err) {
-    console.error('Session error:', err)
+    console.error('Session exception:', err)
     return null
   }
 }
