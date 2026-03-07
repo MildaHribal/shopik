@@ -9,10 +9,11 @@ let initialized = false
 
 function updateTokenCookie(token: string | null) {
   if (import.meta.client) {
+    const secureFlag = window.location.protocol === 'https:' ? '; Secure' : ''
     if (token) {
-      document.cookie = `sb-access-token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`
+      document.cookie = `sb-access-token=${token}; path=/; max-age=604800; SameSite=Lax${secureFlag}`
     } else {
-      document.cookie = 'sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure'
+      document.cookie = `sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT${secureFlag}`
     }
   }
 }

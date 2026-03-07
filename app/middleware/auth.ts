@@ -1,7 +1,7 @@
 import { useAuth } from "~/composables/useAuth";
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { currentUser, refreshSession, supabase } = useAuth();
+  const { currentUser, refreshSession } = useAuth();
 
   // If we already have a user, allow navigation
   if (currentUser.value) {
@@ -14,18 +14,21 @@ export default defineNuxtRouteMiddleware(async (to) => {
     if (currentUser.value) return;
   }
 
-  // Fallback to API check with Supabase token
+  // Fallback to API check with Supabase token via cookie
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
+    const tokenCookie = useCookie('sb-access-token');
+    const token = tokenCookie.value;
+
+    if (!token) {
       return navigateTo('/user/login');
     }
 
     const user = await $fetch('/api/user/profile', {
       headers: {
-        Authorization: `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
+
     if (user) {
       currentUser.value = {
         id: (user as any).supabaseAuthId || (user as any).id,
@@ -41,4 +44,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
     console.error('Auth check failed:', error);
     return navigateTo('/user/login');
   }
+  
+  return navigateTo('/user/login');
 });
