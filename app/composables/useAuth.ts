@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { supabase } from '~~/lib/auth'
+import { getSupabase } from '~~/lib/auth'
 
 // Shared reactive state across components
 const currentUser = ref<{ id: string; name: string; email: string } | null>(null)
@@ -17,7 +17,7 @@ function updateTokenCookie(token: string | null) {
   }
 }
 
-async function refreshSession() {
+async function refreshSession(supabase: any) {
   try {
     const { data: { session } } = await supabase.auth.getSession()
     if (session?.user) {
@@ -40,9 +40,11 @@ async function refreshSession() {
 }
 
 export function useAuth() {
+  const supabase = getSupabase()
+
   if (!initialized && import.meta.client) {
     initialized = true
-    refreshSession()
+    refreshSession(supabase)
 
     // Listen for auth state changes (login, logout, token refresh)
     supabase.auth.onAuthStateChange((_event, session) => {

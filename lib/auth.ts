@@ -1,6 +1,18 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || ''
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || process.env.SUPABASE_KEY || ''
+let client: SupabaseClient | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
+export const getSupabase = (): SupabaseClient => {
+  if (!client) {
+    const config = useRuntimeConfig();
+    const supabaseUrl = (config.public.supabaseUrl as string) || '';
+    const supabaseKey = (config.public.supabaseKey as string) || '';
+    
+    if (!supabaseUrl) {
+      console.warn('Supabase URL is missing! Check your environment variables (NUXT_PUBLIC_SUPABASE_URL).');
+    }
+    
+    client = createClient(supabaseUrl, supabaseKey);
+  }
+  return client;
+}

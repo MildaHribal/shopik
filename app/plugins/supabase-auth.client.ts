@@ -1,6 +1,7 @@
-import { supabase } from '~~/lib/auth'
+import { getSupabase } from '~~/lib/auth'
 
 export default defineNuxtPlugin(() => {
+  const supabase = getSupabase()
   const originalFetch = globalThis.$fetch
 
   // Add global interceptor to attach Supabase token to API requests
