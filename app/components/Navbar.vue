@@ -39,7 +39,7 @@ const navLinks = [
   { label: 'Bizuterie', link: '#' },
   { label: 'Doplnky', link: '#' },
   { label: 'Obrazy', link: '#' },
-  { label: 'Ostatni', link: '#' }
+  { label: 'Kokot', link: '#' }
 ];
 
 const handleScroll = () => {
