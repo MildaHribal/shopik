@@ -123,7 +123,7 @@ onUnmounted(() => {
   <nav class="navbar-main w-full flex items-center justify-between px-4 md:px-6 py-4 top-0 z-50">
     <!-- Brand -->
     <div class="flex items-center gap-2">
-      <span class="text-lg md:text-xl hippie-float">🔮</span>
+      <span class="text-lg md:text-xl hippie-float">🤍</span>
       <NuxtLink to="/" class="text-xl md:text-2xl font-bold tracking-tight transition-all duration-300 hover:scale-105 neon-text-rainbow">
         Shopik
       </NuxtLink>
@@ -226,7 +226,7 @@ onUnmounted(() => {
       >
         <div class="p-6 border-b border-white/5 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="text-xl">🔮</span>
+            <span class="text-xl">🤍</span>
             <span class="text-xl font-bold neon-text-rainbow">Shopik</span>
           </div>
           <button @click="isMobileMenuOpen = false" class="text-white/40">
@@ -245,7 +245,7 @@ onUnmounted(() => {
                     @click="isMobileMenuOpen = false"
                     class="flex-grow flex items-center px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/5 transition-all"
                   >
-                    <span class="text-lg mr-3">🌀</span>
+                    <span class="text-lg mr-3">✨</span>
                     <span class="font-medium">{{ cat.name }}</span>
                   </NuxtLink>
                   <button 
@@ -320,7 +320,7 @@ onUnmounted(() => {
         </div>
 
         <div class="p-6 border-t border-white/5 text-center">
-          <p class="text-[10px] text-white/20 font-medium">☮ TRIPIER THAN EVER 2026 ☮</p>
+          <p class="text-[10px] text-white/20 font-medium">✨ TVOŘENO S LÁSKOU ✨</p>
         </div>
       </div>
     </Transition>
@@ -397,11 +397,11 @@ onUnmounted(() => {
             
             <div v-if="isSearching" class="text-center text-white/50 py-8 flex flex-col items-center">
               <Icon name="lucide:loader-2" class="animate-spin text-3xl mb-2 text-primary-400" />
-              <span>Hledám ve hvězdách...</span>
+              <span>Snažím se to najít...</span>
             </div>
             
             <div v-else-if="searchResults.length === 0" class="text-center text-white/50 py-8">
-               Nic jsme nenašli pro <strong>"{{ searchQuery }}"</strong> 🪐
+               Nic jsme nenašli pro <strong>"{{ searchQuery }}"</strong> 🤍
             </div>
             
             <div v-else class="space-y-2">
