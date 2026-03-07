@@ -417,14 +417,14 @@ const submitReview = async () => {
             </div>
 
             <!-- Thumbnail Strip -->
-            <div v-if="allImages.length > 1" class="flex gap-2 md:gap-3 overflow-x-auto pb-2 hide-scrollbar">
+            <div v-if="allImages.length > 1" class="flex gap-2 md:gap-3 overflow-x-auto px-1 pt-1 pb-2 -mx-1 hide-scrollbar">
               <button
                 v-for="(img, idx) in allImages"
                 :key="idx"
                 @click="setSelectedImage(idx)"
                 class="relative flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg md:rounded-xl overflow-hidden border-2 transition-all duration-300 micro-lift"
                 :class="selectedImageIndex === idx
-                  ? 'border-primary-500 shadow-lg shadow-primary-500/30 scale-105'
+                  ? 'border-primary-500 ring-2 ring-primary-400/55 shadow-lg shadow-primary-500/30'
                   : 'border-white/10 hover:border-white/30 opacity-60 hover:opacity-100'"
               >
                 <NuxtImg
@@ -519,12 +519,12 @@ const submitReview = async () => {
                 ref="addToCartButtonRef"
                 type="button"
                 @click="addToCart"
-                class="w-full flex items-center justify-center gap-2 md:gap-3 py-4 md:py-5 text-base md:text-lg font-bold rounded-xl md:rounded-2xl transition-all duration-300 focus:outline-none micro-lift"
+                class="w-full min-h-[3.75rem] md:min-h-[4.25rem] px-6 flex items-center justify-center gap-2 md:gap-3 py-4 md:py-5 text-base md:text-lg font-bold rounded-xl md:rounded-2xl transition-all duration-300 focus:outline-none micro-lift"
                 :disabled="product.stock <= 0"
                 :class="product.stock > 0
                   ? (isAddedToCart
                     ? 'bg-emerald-500 text-white ring-2 ring-emerald-300/60 shadow-[0_12px_30px_rgba(16,185,129,0.35)]'
-                    : 'btn-cosmic')
+                    : 'text-white bg-gradient-to-br from-primary-500 via-primary-500 to-secondary-500 shadow-[0_10px_26px_rgba(139,92,246,0.35)] hover:brightness-105')
                   : 'bg-white/5 text-white/30 cursor-not-allowed border border-white/10'"
               >
                 <Icon :icon="isAddedToCart ? 'mdi:check-bold' : 'mdi:cart-plus'" height="22" />

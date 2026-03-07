@@ -1,4 +1,4 @@
-type MotionType = 'shop-fade' | 'shop-slide-left' | 'shop-slide-right'
+type MotionType = 'shop-fade' | 'shop-slide-left' | 'shop-slide-right' | 'shop-category-shift'
 
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.hook('page:view-transition:start', (transition: any) => {

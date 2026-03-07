@@ -639,6 +639,23 @@ html {
   transform: translateX(52px) scale(0.96) rotate(0.3deg);
 }
 
+.category-swap-enter-active,
+.category-swap-leave-active {
+  transition:
+    opacity 0.22s var(--ease-snappy),
+    transform 0.24s var(--ease-snappy);
+}
+
+.category-swap-enter-from {
+  opacity: 0.92;
+  transform: scale(1.003);
+}
+
+.category-swap-leave-to {
+  opacity: 0.92;
+  transform: scale(0.997);
+}
+
 /* ══════════════════════════════════════════════════════════════
    VIEW TRANSITIONS API TYPES
    ══════════════════════════════════════════════════════════════ */
@@ -691,6 +708,14 @@ html:active-view-transition-type(shop-slide-right)::view-transition-old(root) {
 
 html:active-view-transition-type(shop-slide-right)::view-transition-new(root) {
   animation: vt-slide-in-left 540ms var(--ease-snappy) both;
+}
+
+html:active-view-transition-type(shop-category-shift)::view-transition-old(root) {
+  animation: vt-category-out 220ms var(--ease-snappy) both;
+}
+
+html:active-view-transition-type(shop-category-shift)::view-transition-new(root) {
+  animation: vt-category-in 220ms var(--ease-snappy) both;
 }
 
 @keyframes vt-fade-out {
@@ -768,6 +793,28 @@ html:active-view-transition-type(shop-slide-right)::view-transition-new(root) {
     opacity: 1;
     transform: translateX(0) scale(1) rotate(0);
     filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes vt-category-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.92;
+    transform: scale(0.997);
+  }
+}
+
+@keyframes vt-category-in {
+  from {
+    opacity: 0.92;
+    transform: scale(1.003);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
