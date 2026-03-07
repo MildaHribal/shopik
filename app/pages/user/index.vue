@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '~~/app/composables/useAuth'
 
 definePageMeta({
-  middleware: []
+  middleware: ['auth']
 })
 
 const { currentUser, signOut } = useAuth()

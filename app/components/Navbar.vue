@@ -186,7 +186,7 @@ onUnmounted(() => {
 
       <div class="flex items-center gap-1.5 md:gap-2 relative">
         <NuxtLink 
-          :to="currentUser ? '/user' : '/user/login'" 
+          to="/user" 
           class="nav-action-btn" 
           title="Můj profil"
           aria-label="Můj profil"
@@ -335,7 +335,7 @@ onUnmounted(() => {
 
       <div class="pointer-events-auto">
         <NuxtLink 
-          :to="currentUser ? '/user' : '/user/login'" 
+          to="/user" 
           class="floating-btn" 
           title="Můj profil"
           aria-label="Můj profil"
