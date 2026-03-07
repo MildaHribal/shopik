@@ -11,9 +11,9 @@ useHead({
 <template>
     <UApp>
         <ToastHost />
+        <NuxtLoadingIndicator />
         <NuxtLayout>
             <NuxtPage />
         </NuxtLayout>
-        <NuxtLoadingIndicator />
     </UApp>
 </template>

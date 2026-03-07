@@ -70,6 +70,7 @@ body {
     #08001a 80%,
     #030008 100%
   );
+  background-color: #050008;
   min-height: 100vh;
   font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color: #e2d9f3;
@@ -565,26 +566,359 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   PAGE & LAYOUT TRANSITIONS (Blurry Expansion)
+   MOTION TOKENS
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  --ease-fluid: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #050008;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAGE & LAYOUT TRANSITIONS (Vue Fallback)
    ══════════════════════════════════════════════════════════════ */
 .page-enter-active,
 .page-leave-active,
 .layout-enter-active,
 .layout-leave-active {
-  transition: opacity 0.5s ease-in-out, filter 0.5s ease-in-out, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    opacity 0.38s var(--ease-fluid),
+    filter 0.44s var(--ease-fluid),
+    transform 0.44s var(--ease-fluid);
 }
 
 .page-enter-from,
 .layout-enter-from {
   opacity: 0;
-  filter: blur(20px);
-  transform: scale(0.95);
+  filter: blur(10px);
+  transform: translateY(18px) scale(0.985);
 }
 
 .page-leave-to,
 .layout-leave-to {
   opacity: 0;
+  filter: blur(8px);
+  transform: translateY(-12px) scale(1.01);
+}
+
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition:
+    opacity 0.45s var(--ease-snappy),
+    filter 0.45s var(--ease-snappy),
+    transform 0.52s var(--ease-snappy);
+}
+
+.slide-left-enter-from {
+  opacity: 0;
   filter: blur(10px);
-  transform: scale(1.02);
+  transform: translateX(68px) scale(0.97) rotate(0.35deg);
+}
+
+.slide-left-leave-to {
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateX(-52px) scale(0.96) rotate(-0.3deg);
+}
+
+.slide-right-enter-from {
+  opacity: 0;
+  filter: blur(10px);
+  transform: translateX(-68px) scale(0.97) rotate(-0.35deg);
+}
+
+.slide-right-leave-to {
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateX(52px) scale(0.96) rotate(0.3deg);
+}
+
+.category-swap-enter-active,
+.category-swap-leave-active {
+  transition:
+    opacity 0.22s var(--ease-snappy),
+    transform 0.24s var(--ease-snappy);
+}
+
+.category-swap-enter-from {
+  opacity: 0.92;
+  transform: scale(1.003);
+}
+
+.category-swap-leave-to {
+  opacity: 0.92;
+  transform: scale(0.997);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   VIEW TRANSITIONS API TYPES
+   ══════════════════════════════════════════════════════════════ */
+::view-transition-group(root) {
+  animation-duration: 520ms;
+  animation-timing-function: var(--ease-fluid);
+}
+
+/* Avoid browser-default root crossfade flashes on untyped transitions. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  background: transparent;
+  mix-blend-mode: normal;
+  backface-visibility: hidden;
+}
+
+::view-transition-group(category-pill-desktop),
+::view-transition-group(category-pill-mobile) {
+  animation-duration: 360ms;
+  animation-timing-function: var(--ease-snappy);
+}
+
+::view-transition-old(category-pill-desktop),
+::view-transition-new(category-pill-desktop),
+::view-transition-old(category-pill-mobile),
+::view-transition-new(category-pill-mobile) {
+  mix-blend-mode: normal;
+}
+
+html:active-view-transition-type(shop-fade)::view-transition-old(root) {
+  animation: vt-fade-out 360ms var(--ease-fluid) both;
+}
+
+html:active-view-transition-type(shop-fade)::view-transition-new(root) {
+  animation: vt-fade-in 420ms var(--ease-fluid) both;
+}
+
+html:active-view-transition-type(shop-slide-left)::view-transition-old(root) {
+  animation: vt-slide-out-left 540ms var(--ease-snappy) both;
+}
+
+html:active-view-transition-type(shop-slide-left)::view-transition-new(root) {
+  animation: vt-slide-in-right 540ms var(--ease-snappy) both;
+}
+
+html:active-view-transition-type(shop-slide-right)::view-transition-old(root) {
+  animation: vt-slide-out-right 540ms var(--ease-snappy) both;
+}
+
+html:active-view-transition-type(shop-slide-right)::view-transition-new(root) {
+  animation: vt-slide-in-left 540ms var(--ease-snappy) both;
+}
+
+html:active-view-transition-type(shop-category-shift)::view-transition-old(root) {
+  animation: vt-category-out 220ms var(--ease-snappy) both;
+}
+
+html:active-view-transition-type(shop-category-shift)::view-transition-new(root) {
+  animation: vt-category-in 220ms var(--ease-snappy) both;
+}
+
+@keyframes vt-fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.992);
+    filter: blur(4px);
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(1.008);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes vt-slide-out-left {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0) saturate(1);
+  }
+  to {
+    opacity: 0.2;
+    transform: translateX(-11%) scale(0.95) rotate(-0.4deg);
+    filter: blur(10px) saturate(0.85);
+  }
+}
+
+@keyframes vt-slide-in-right {
+  from {
+    opacity: 0.2;
+    transform: translateX(11%) scale(1.05) rotate(0.4deg);
+    filter: blur(10px) saturate(1.15);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1) rotate(0);
+    filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes vt-slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0) saturate(1);
+  }
+  to {
+    opacity: 0.2;
+    transform: translateX(11%) scale(0.95) rotate(0.4deg);
+    filter: blur(10px) saturate(0.85);
+  }
+}
+
+@keyframes vt-slide-in-left {
+  from {
+    opacity: 0.2;
+    transform: translateX(-11%) scale(1.05) rotate(-0.4deg);
+    filter: blur(10px) saturate(1.15);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1) rotate(0);
+    filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes vt-category-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.92;
+    transform: scale(0.997);
+  }
+}
+
+@keyframes vt-category-in {
+  from {
+    opacity: 0.92;
+    transform: scale(1.003);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SCROLL FLY-IN REVEAL
+   ══════════════════════════════════════════════════════════════ */
+.fly-in {
+  --fly-distance: 48px;
+  --fly-duration: 820ms;
+  --fly-delay: 0ms;
+  --fly-x: 0px;
+  --fly-y: 0px;
+  --fly-scale: 0.965;
+  --fly-tilt: 0deg;
+  opacity: 0;
+  transform: translate3d(var(--fly-x), var(--fly-y), 0) scale(var(--fly-scale)) rotate(var(--fly-tilt));
+  filter: blur(10px) saturate(1.15);
+  transition:
+    opacity var(--fly-duration) var(--ease-fluid),
+    transform var(--fly-duration) var(--ease-fluid),
+    filter calc(var(--fly-duration) * 0.8) var(--ease-fluid);
+  transition-delay: var(--fly-delay);
+  will-change: transform, opacity, filter;
+}
+
+.fly-in--visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  filter: blur(0) saturate(1);
+}
+
+.fly-in--up {
+  --fly-y: var(--fly-distance);
+  --fly-tilt: -1.1deg;
+}
+
+.fly-in--down {
+  --fly-y: calc(var(--fly-distance) * -1);
+  --fly-tilt: 1.1deg;
+}
+
+.fly-in--left {
+  --fly-x: calc(var(--fly-distance) * -1);
+  --fly-tilt: -1.4deg;
+}
+
+.fly-in--right {
+  --fly-x: var(--fly-distance);
+  --fly-tilt: 1.4deg;
+}
+
+.fly-in--zoom {
+  --fly-y: calc(var(--fly-distance) * 0.45);
+  --fly-scale: 0.9;
+  --fly-tilt: -0.8deg;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MICROINTERACTIONS
+   ══════════════════════════════════════════════════════════════ */
+.micro-lift {
+  transition:
+    transform 0.33s var(--ease-snappy),
+    box-shadow 0.33s var(--ease-snappy),
+    filter 0.33s var(--ease-snappy);
+}
+
+.motion-card {
+  transition: transform 0.4s var(--ease-snappy), filter 0.4s var(--ease-snappy);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .micro-lift:hover {
+    transform: translateY(-3px) scale(1.01);
+  }
+
+  .motion-card:hover {
+    transform: translateY(-6px);
+    filter: brightness(1.05);
+  }
+}
+
+:where(a, button, input, textarea, select) {
+  transition-timing-function: var(--ease-snappy);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .fly-in,
+  .fly-in--visible,
+  .micro-lift,
+  .motion-card {
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.01ms !important;
+  }
 }
 

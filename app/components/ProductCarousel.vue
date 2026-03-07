@@ -46,6 +46,13 @@ defineExpose({
         v-for="(product, index) in products"
         :key="product.id || product.name"
         class="flex-shrink-0 w-1/2 sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-1/6 p-1.5 md:p-2 snap-start"
+        v-fly="{
+          direction: index % 2 === 0 ? 'up' : 'zoom',
+          distance: 20,
+          duration: 560,
+          delay: Math.min(index * 34, 220),
+          threshold: 0.12,
+        }"
       >
         <NuxtLink :to="`/product/${product.slug || product.id}`" :prefetch="false" class="block h-full" :aria-label="product.title">
           <ProductCard :product="product" :isPriority="index < 4" class="h-full" />

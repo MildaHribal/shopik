@@ -5,6 +5,10 @@ import Sidebar from "~/components/Sidebar.vue"
 import { Icon } from "@iconify/vue"
 import type { Product } from '~~/types'
 
+definePageMeta({
+  pageTransition: false,
+})
+
 const route = useRoute()
 const currentSlug = computed(() => route.params.slug as string || 'vsechny')
 
@@ -151,12 +155,19 @@ const currentCategoryName = computed(() => {
 
         <div v-else class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           <NuxtLink
-            v-for="product in filteredProducts"
+            v-for="(product, productIndex) in filteredProducts"
             :key="product.id"
             :to="`/product/${product.slug || product.id}`"
             :prefetch="false"
             class="block h-full transform hover:-translate-y-2 transition-transform duration-300"
             :aria-label="product.title"
+            v-fly="{
+              direction: productIndex % 2 === 0 ? 'up' : 'zoom',
+              distance: 26,
+              duration: 620,
+              delay: Math.min((productIndex % 8) * 42, 280),
+              threshold: 0.1,
+            }"
           >
             <ProductCard :product="product"/>
           </NuxtLink>

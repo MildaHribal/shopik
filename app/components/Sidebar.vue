@@ -28,12 +28,18 @@ const isActiveBranch = (cat: any): boolean => {
           <li>
             <NuxtLink
               to="/category/vsechny"
-              class="w-full text-left px-4 py-2.5 rounded-xl transition-all duration-300 text-sm font-medium block"
-              :class="currentSlug === 'vsechny' || !currentSlug
-                ? 'bg-gradient-to-r from-primary-500/20 to-secondary-500/20 text-white border border-primary-500/30 shadow-lg shadow-primary-500/10'
-                : 'text-white/50 hover:text-white hover:bg-white/5'"
+              class="category-btn w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium block relative"
+              :class="currentSlug === 'vsechny' || !currentSlug ? 'category-btn--active' : ''"
             >
-              ✨ Všechny produkty
+              <span
+                  v-if="currentSlug === 'vsechny' || !currentSlug"
+                  class="category-btn__active-bg"
+                  style="view-transition-name: category-pill-desktop"
+                  aria-hidden="true"
+              ></span>
+              <span class="relative z-10 flex items-center">
+                ✨ Všechny produkty
+              </span>
             </NuxtLink>
           </li>
           
@@ -41,17 +47,24 @@ const isActiveBranch = (cat: any): boolean => {
             <div class="mb-1">
               <NuxtLink
                 :to="`/category/${cat.slug}`"
-                class="w-full flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 group"
+                class="category-btn w-full flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 group relative"
                 :class="cat.slug === currentSlug
-                  ? 'bg-gradient-to-r from-primary-500/20 to-secondary-500/20 text-white border border-primary-500/30 shadow-lg shadow-primary-500/10'
+                  ? 'category-btn--active'
                   : isActiveBranch(cat) 
                     ? 'text-primary-300 bg-white/5 font-semibold' 
-                    : 'text-white/50 hover:text-white hover:bg-white/5'"
+                    : ''"
               >
-                <!-- Prefix icon/emoji if top-level -->
-                <Icon v-if="cat.children.length > 0" :name="isActiveBranch(cat) ? 'heroicons:chevron-down' : 'heroicons:chevron-right'" class="mr-2 opacity-50 transition-transform group-hover:text-primary-400" />
-                <span v-else class="mr-2 text-xs opacity-50">✨</span>
-                {{ cat.name }}
+                <span
+                    v-if="cat.slug === currentSlug"
+                    class="category-btn__active-bg"
+                    style="view-transition-name: category-pill-desktop"
+                    aria-hidden="true"
+                ></span>
+                <div class="relative z-10 flex items-center w-full">
+                  <Icon v-if="cat.children.length > 0" :name="isActiveBranch(cat) ? 'heroicons:chevron-down' : 'heroicons:chevron-right'" class="mr-2 opacity-50 transition-transform group-hover:text-primary-400" />
+                  <span v-else class="mr-2 text-xs opacity-50">✨</span>
+                  {{ cat.name }}
+                </div>
               </NuxtLink>
             </div>
             
@@ -60,15 +73,23 @@ const isActiveBranch = (cat: any): boolean => {
               <li v-for="sub in cat.children" :key="sub.id">
                 <NuxtLink
                   :to="`/category/${sub.slug}`"
-                  class="w-full flex items-center px-3 py-2 rounded-lg transition-all duration-300 text-[13px] group"
+                  class="category-btn w-full flex items-center px-3 py-2 rounded-lg transition-all duration-300 text-[13px] group relative"
                   :class="sub.slug === currentSlug
-                    ? 'bg-primary-500/20 text-white border border-primary-500/30'
+                    ? 'category-btn--active'
                     : isActiveBranch(sub)
                       ? 'text-primary-300 bg-white/5'
-                      : 'text-white/50 hover:text-white hover:bg-white/5'"
+                      : ''"
                 >
-                  <Icon v-if="sub.children.length > 0" :name="isActiveBranch(sub) ? 'heroicons:chevron-down' : 'heroicons:chevron-right'" class="mr-1.5 opacity-50 transition-transform group-hover:text-primary-400 w-3 h-3" />
-                  {{ sub.name }}
+                  <span
+                      v-if="sub.slug === currentSlug"
+                      class="category-btn__active-bg"
+                      style="view-transition-name: category-pill-desktop"
+                      aria-hidden="true"
+                  ></span>
+                  <div class="relative z-10 flex items-center w-full">
+                    <Icon v-if="sub.children.length > 0" :name="isActiveBranch(sub) ? 'heroicons:chevron-down' : 'heroicons:chevron-right'" class="mr-1.5 opacity-50 transition-transform group-hover:text-primary-400 w-3 h-3" />
+                    {{ sub.name }}
+                  </div>
                 </NuxtLink>
                 
                 <!-- Children (Level 3) -->
@@ -76,12 +97,20 @@ const isActiveBranch = (cat: any): boolean => {
                   <li v-for="third in sub.children" :key="third.id">
                     <NuxtLink
                       :to="`/category/${third.slug}`"
-                      class="w-full block px-3 py-1.5 rounded-md transition-all duration-300 text-xs"
+                      class="category-btn w-full block px-3 py-1.5 rounded-md transition-all duration-300 text-xs relative"
                       :class="third.slug === currentSlug
-                        ? 'text-white font-semibold bg-white/10'
-                        : 'text-white/40 hover:text-white hover:bg-white/5'"
+                        ? 'category-btn--active'
+                        : ''"
                     >
-                      {{ third.name }}
+                      <span
+                          v-if="third.slug === currentSlug"
+                          class="category-btn__active-bg"
+                          style="view-transition-name: category-pill-desktop"
+                          aria-hidden="true"
+                      ></span>
+                      <span class="relative z-10">
+                        {{ third.name }}
+                      </span>
                     </NuxtLink>
                   </li>
                 </ul>
@@ -107,5 +136,45 @@ const isActiveBranch = (cat: any): boolean => {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+.category-btn {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    border: 1px solid transparent;
+    color: rgba(255, 255, 255, 0.62);
+    transition:
+        color 0.3s var(--ease-snappy),
+        border-color 0.3s var(--ease-snappy),
+        transform 0.3s var(--ease-snappy);
+}
+
+.category-btn:hover {
+    color: white;
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.category-btn--active {
+    color: white;
+    border-color: rgba(139, 92, 246, 0.38);
+    box-shadow: 0 8px 28px rgba(139, 92, 246, 0.14);
+}
+
+.category-btn__active-bg {
+    position: absolute;
+    inset: 2px;
+    border-radius: 0.62rem;
+    background: linear-gradient(120deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.32));
+    border: 1px solid rgba(139, 92, 246, 0.32);
+    pointer-events: none;
+    z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .category-btn {
+        transition: none !important;
+    }
 }
 </style>

@@ -91,7 +91,7 @@ const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
 </script>
 
 <template>
-  <div class="w-full overflow-x-hidden">
+  <div class="w-full">
     <div v-if="pending" class="flex items-center justify-center min-h-[60vh]">
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto mb-4"></div>
@@ -104,10 +104,12 @@ const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
     <template v-else>
 
       <!-- Hero -->
-      <PageHero/>
+      <div v-fly="{ direction: 'up', distance: 24, duration: 760 }">
+        <PageHero />
+      </div>
 
       <!-- Best Sellers Section -->
-      <section class="py-10 md:py-16 px-4 md:px-14">
+      <section v-fly="{ direction: 'left', distance: 56 }" class="py-10 md:py-16 px-4 md:px-14">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
           <div>
             <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-tight neon-text">
@@ -118,14 +120,14 @@ const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
           <div class="flex gap-2">
             <button
               @click="carouselBest?.prev()"
-              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
+              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 micro-lift"
               aria-label="Předchozí"
             >
               <Icon icon="ep:arrow-left-bold" height="18" />
             </button>
             <button
               @click="carouselBest?.next()"
-              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
+              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 micro-lift"
               aria-label="Další"
             >
               <Icon icon="ep:arrow-right-bold" height="18" />
@@ -133,18 +135,20 @@ const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
           </div>
         </div>
 
-        <ProductCarousel
-          v-if="bestSellers.length > 0"
-          :products="bestSellers"
-          ref="carouselBest"
-        />
+        <div v-fly="{ direction: 'up', delay: 80, distance: 38 }">
+          <ProductCarousel
+            v-if="bestSellers.length > 0"
+            :products="bestSellers"
+            ref="carouselBest"
+          />
+        </div>
       </section>
 
       <!-- Cosmic Divider -->
       <div class="cosmic-divider mx-4 md:mx-14"></div>
 
       <!-- Banner Section -->
-      <section class="relative mx-4 md:mx-14 rounded-2xl md:rounded-3xl overflow-hidden my-8 md:my-10">
+      <section v-fly="{ direction: 'right', delay: 40, distance: 60 }" class="relative mx-4 md:mx-14 rounded-2xl md:rounded-3xl overflow-hidden my-8 md:my-10">
         <div class="relative min-h-[280px] md:h-[350px] flex items-center">
           <div class="absolute inset-0 bg-gradient-to-br from-primary-900/50 via-secondary-900/30 to-accent-900/40"></div>
           <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>
@@ -155,7 +159,7 @@ const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
               Největší výběr gadgetů v Česku
             </h2>
             <p class="text-white/50 text-sm md:text-lg mb-5 md:mb-6">Objevte nové dimenze zábavy s naší kosmickou kolekcí</p>
-            <NuxtLink to="/category/vsechny" class="btn-cosmic inline-flex items-center gap-2 group text-sm md:text-base px-6 py-3 md:px-8 md:py-3">
+            <NuxtLink to="/category/vsechny" class="btn-cosmic micro-lift inline-flex items-center gap-2 group text-sm md:text-base px-6 py-3 md:px-8 md:py-3">
               <span>Prohlédnout kolekci</span>
               <Icon icon="ep:right" height="18" class="transition-transform group-hover:translate-x-1" />
             </NuxtLink>
@@ -171,7 +175,7 @@ const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
       <div class="cosmic-divider mx-4 md:mx-14"></div>
 
       <!-- Featured Section -->
-      <section class="py-10 md:py-16 px-4 md:px-14">
+      <section v-fly="{ direction: 'up', distance: 40 }" class="py-10 md:py-16 px-4 md:px-14">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
           <div>
             <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-tight neon-text-cyan">
@@ -182,14 +186,14 @@ const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
           <div class="flex gap-2">
             <button
               @click="carouselFeat?.prev()"
-              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
+              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 micro-lift"
               aria-label="Předchozí"
             >
               <Icon icon="ep:arrow-left-bold" height="18" />
             </button>
             <button
               @click="carouselFeat?.next()"
-              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
+              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 micro-lift"
               aria-label="Další"
             >
               <Icon icon="ep:arrow-right-bold" height="18" />
@@ -208,7 +212,7 @@ const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
       <div class="cosmic-divider mx-4 md:mx-14 opacity-50"></div>
 
       <!-- New Arrivals Section -->
-      <section class="py-10 md:py-16 px-4 md:px-14">
+      <section v-fly="{ direction: 'up', distance: 40 }" class="py-10 md:py-16 px-4 md:px-14">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
           <div>
             <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-tight text-secondary-400">
@@ -219,13 +223,13 @@ const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
           <div class="flex gap-2">
             <button
               @click="carouselNew?.prev()"
-              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
+              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 micro-lift"
             >
               <Icon icon="ep:arrow-left-bold" height="18" />
             </button>
             <button
               @click="carouselNew?.next()"
-              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300"
+              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 micro-lift"
             >
               <Icon icon="ep:arrow-right-bold" height="18" />
             </button>
@@ -240,9 +244,9 @@ const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
       </section>
 
       <!-- All Products Call to action -->
-      <section class="py-12 md:py-16 text-center px-4 flex flex-col items-center">
+      <section v-fly="{ direction: 'up', distance: 30 }" class="py-12 md:py-16 text-center px-4 flex flex-col items-center">
         <h3 class="text-2xl text-white font-bold mb-6">Chceš prozkoumat celý vesmír?</h3>
-        <NuxtLink to="/category/vsechny" class="btn-cosmic inline-flex items-center justify-center gap-3 group text-lg md:text-xl px-10 py-5">
+        <NuxtLink to="/category/vsechny" class="btn-cosmic micro-lift inline-flex items-center justify-center gap-3 group text-lg md:text-xl px-10 py-5">
            <span>Zobrazit všechny produkty</span>
            <Icon icon="lucide:sparkles" height="24" class="transition-transform group-hover:rotate-12 group-hover:scale-110 text-yellow-300" />
         </NuxtLink>
@@ -382,5 +386,4 @@ const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
 </template>
 
 <style scoped>
-
 </style>
