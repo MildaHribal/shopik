@@ -8,6 +8,7 @@ export default defineNuxtConfig({
         '@pinia/nuxt',
         '@nuxt/icon',
         '@nuxt/image',
+        '@formkit/auto-animate/nuxt'
     ],
 
     app: {
@@ -24,10 +25,7 @@ export default defineNuxtConfig({
         },
         pageTransition: { name: 'page', mode: 'out-in' },
         layoutTransition: { name: 'layout', mode: 'out-in' },
-        viewTransition: {
-            enabled: true,
-            types: ['slide'],
-        },
+        viewTransition: true,
     },
 
     experimental: {

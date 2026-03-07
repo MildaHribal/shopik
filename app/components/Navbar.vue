@@ -115,7 +115,7 @@ onUnmounted(() => {
         </NuxtLink>
       </div>
 
-      <NuxtLink to="/cart" class="nav-action-btn relative" title="Košík" aria-label="Košík">
+      <NuxtLink to="/cart" data-cart-anchor="true" class="nav-action-btn relative" title="Košík" aria-label="Košík">
         <Icon name="mdi:cart" height="20" />
         <span v-if="cart.itemCount > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full shadow-lg shadow-primary-500/30">
           {{ cart.itemCount }}
@@ -221,7 +221,7 @@ onUnmounted(() => {
         </NuxtLink>
       </div>
 
-      <NuxtLink to="/cart" class="pointer-events-auto floating-btn relative" title="Košík" aria-label="Košík">
+      <NuxtLink to="/cart" data-cart-anchor="true" class="pointer-events-auto floating-btn relative" title="Košík" aria-label="Košík">
         <Icon name="mdi:cart-outline" height="18" />
         <span v-if="cart.itemCount > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full">
           {{ cart.itemCount }}
