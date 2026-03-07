@@ -89,8 +89,75 @@ useSeoMeta({
   ogImage: () => selectedImage.value || undefined,
   twitterCard: 'summary_large_image',
 })
+const jsonLd = computed(() => {
+  if (!product.value) return null;
+  const p: any = product.value;
+  const reviews = productReviews.value || [];
+  
+  const schema: any = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: p.title || p.name,
+    description: p.shortDescription || p.description,
+    image: selectedImage.value?.startsWith('http') ? selectedImage.value : `${siteUrl}${selectedImage.value || ''}`,
+    sku: p.id,
+    brand: {
+      '@type': 'Brand',
+      name: p.brand || 'Shopik'
+    },
+    offers: {
+      '@type': 'Offer',
+      price: p.price,
+      priceCurrency: 'CZK',
+      itemCondition: 'https://schema.org/NewCondition',
+      availability: p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      url: canonicalUrl.value,
+      seller: {
+        '@type': 'Organization',
+        name: 'Shopik'
+      }
+    }
+  };
+
+  if (reviews.length > 0) {
+    const avgRating = reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length;
+    schema.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: avgRating.toFixed(1),
+      reviewCount: reviews.length
+    };
+    schema.review = reviews.map((r: any) => ({
+      '@type': 'Review',
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: r.rating
+      },
+      author: {
+        '@type': 'Person',
+        name: r.userName || 'Zákazník'
+      },
+      reviewBody: r.comment || '',
+      datePublished: r.createdAt ? new Date(r.createdAt).toISOString().split('T')[0] : undefined
+    }));
+  } else if (p.rating) {
+    schema.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: p.rating,
+      reviewCount: p.reviewsCount || 1
+    };
+  }
+
+  return schema;
+});
+
 useHead(() => ({
-  link: [{ rel: 'canonical', href: canonicalUrl.value }]
+  link: [{ rel: 'canonical', href: canonicalUrl.value }],
+  script: jsonLd.value ? [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify(jsonLd.value)
+    }
+  ] : []
 }))
 
 const addToCart = () => {

@@ -15,10 +15,6 @@ useSeoMeta({
   ogUrl: `${siteUrl}/`,
   twitterCard: 'summary_large_image',
 })
-useHead({
-  link: [{ rel: 'canonical', href: `${siteUrl}/` }]
-})
-
 const {data: rawProducts, pending, error} = await useFetch<Product[]>('/api/products?random=true&limit=12')
 
 const productsWithIds = computed(() => {
@@ -28,6 +24,47 @@ const productsWithIds = computed(() => {
     id: p.id || `${(p.title || 'product').replace(/\s+/g, '-')}-${index}`
   }));
 });
+
+const jsonLd = computed(() => {
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Shopik',
+    url: siteUrl,
+    description: 'Kosmické zboží, gadgety a doplňky. Prohlédněte si nejprodávanější produkty a objevte nové dimenze zábavy.'
+  };
+
+  const itemListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: productsWithIds.value.map((p, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'Product',
+        url: `${siteUrl}/product/${(p as any).slug || p.id}`,
+        name: p.title || p.name,
+        image: p.image?.startsWith('http') ? p.image : `${siteUrl}${p.image?.startsWith('/') ? '' : '/'}${p.image || ''}`,
+        offers: {
+          '@type': 'Offer',
+          price: p.price,
+          priceCurrency: 'CZK',
+          availability: p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+        }
+      }
+    }))
+  };
+
+  return [websiteSchema, itemListSchema];
+});
+
+useHead(() => ({
+  link: [{ rel: 'canonical', href: `${siteUrl}/` }],
+  script: jsonLd.value.map(schema => ({
+    type: 'application/ld+json',
+    innerHTML: JSON.stringify(schema)
+  }))
+}))
 
 const categories = computed(() => {
   if (!productsWithIds.value) return []
