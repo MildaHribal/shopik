@@ -77,6 +77,25 @@ export default defineNuxtConfig({
     nitro: {
         compressPublicAssets: { gzip: true, brotli: true },
         minify: true,
+        /*alias: {
+            debug: fileURLToPath(new URL("./server/mocks/debug.ts", import.meta.url)),
+            typeorm: fileURLToPath(new URL("./server/mocks/typeorm.ts", import.meta.url)),
+        },*/
+        prerender: {
+            crawlLinks: true,
+            failOnError: false,
+            routes: ["/"],
+        },
+    },
+
+    routeRules: {
+        '/': { swr: true },
+        '/product/**': { swr: true },
+        '/cart': { swr: false },
+        '/checkout': { swr: false },
+        '/my-account': { swr: false },
+        '/user/**': { swr: false },
+        '/admin/**': { ssr: false },
     },
 
     linkChecker: {
