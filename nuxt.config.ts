@@ -8,6 +8,7 @@ export default defineNuxtConfig({
         '@pinia/nuxt',
         '@nuxt/icon',
         '@nuxt/image',
+        '@clerk/nuxt'
     ],
 
     app: {
@@ -38,10 +39,10 @@ export default defineNuxtConfig({
 
     runtimeConfig: {
         public: {
-            supabaseUrl: process.env.SUPABASE_URL || '',
-            supabaseKey: process.env.SUPABASE_KEY || '',
+            clerkPublishableKey: process.env.NUXT_PUBLIC_CLERK_PUBLISHABLE_KEY || '',
             siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-        }
+        },
+        clerkSecretKey: process.env.NUXT_CLERK_SECRET_KEY || ''
     },
 
     site: {
