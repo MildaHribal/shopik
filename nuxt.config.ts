@@ -4,10 +4,10 @@ export default defineNuxtConfig({
     devtools: { enabled: process.env.NODE_ENV === 'development' },
 
     modules: [
-      '@nuxt/ui',
-      '@pinia/nuxt',
-      '@nuxt/icon',
-      '@nuxt/image',
+        '@nuxt/ui',
+        '@pinia/nuxt',
+        '@nuxt/icon',
+        '@nuxt/image',
     ],
 
     app: {
@@ -21,7 +21,13 @@ export default defineNuxtConfig({
                 { name: 'description', content: 'Shopik — kosmické zboží, gadgety a doplňky.' },
                 { name: 'robots', content: 'index,follow,max-image-preview:large' },
             ],
-        }
+        },
+        pageTransition: { name: 'page', mode: 'out-in' },
+        layoutTransition: { name: 'layout', mode: 'out-in' },
+        viewTransition: {
+            enabled: true,
+            types: ['slide'],
+        },
     },
 
     experimental: {
@@ -29,7 +35,8 @@ export default defineNuxtConfig({
             nuxtLink: {
                 prefetch: false,
             }
-        }
+        },
+        viewTransition: true,
     },
 
     runtimeConfig: {

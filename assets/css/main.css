@@ -563,3 +563,28 @@ body {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.5), rgba(6, 182, 212, 0.5), transparent);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   PAGE & LAYOUT TRANSITIONS (Blurry Expansion)
+   ══════════════════════════════════════════════════════════════ */
+.page-enter-active,
+.page-leave-active,
+.layout-enter-active,
+.layout-leave-active {
+  transition: opacity 0.5s ease-in-out, filter 0.5s ease-in-out, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-enter-from,
+.layout-enter-from {
+  opacity: 0;
+  filter: blur(20px);
+  transform: scale(0.95);
+}
+
+.page-leave-to,
+.layout-leave-to {
+  opacity: 0;
+  filter: blur(10px);
+  transform: scale(1.02);
+}
+
