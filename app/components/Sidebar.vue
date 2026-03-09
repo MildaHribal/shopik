@@ -61,7 +61,7 @@ const isActiveBranch = (cat: any): boolean => {
                     aria-hidden="true"
                 ></span>
                 <div class="relative z-10 flex items-center w-full">
-                  <Icon v-if="cat.children.length > 0" :name="isActiveBranch(cat) ? 'heroicons:chevron-down' : 'heroicons:chevron-right'" class="mr-2 opacity-50 transition-transform group-hover:text-primary-400" />
+                  <Icon v-if="cat.children.length > 0" :name="isActiveBranch(cat) ? 'mdi:chevron-down' : 'mdi:chevron-right'" class="mr-2 opacity-50 transition-transform group-hover:text-primary-400" />
                   <span v-else class="mr-2 text-xs opacity-50">✨</span>
                   {{ cat.name }}
                 </div>
@@ -87,7 +87,7 @@ const isActiveBranch = (cat: any): boolean => {
                       aria-hidden="true"
                   ></span>
                   <div class="relative z-10 flex items-center w-full">
-                    <Icon v-if="sub.children.length > 0" :name="isActiveBranch(sub) ? 'heroicons:chevron-down' : 'heroicons:chevron-right'" class="mr-1.5 opacity-50 transition-transform group-hover:text-primary-400 w-3 h-3" />
+                    <Icon v-if="sub.children.length > 0" :name="isActiveBranch(sub) ? 'mdi:chevron-down' : 'mdi:chevron-right'" class="mr-1.5 opacity-50 transition-transform group-hover:text-primary-400 w-3 h-3" />
                     {{ sub.name }}
                   </div>
                 </NuxtLink>

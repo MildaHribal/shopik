@@ -8,6 +8,9 @@ export default defineNuxtConfig({
         '@pinia/nuxt',
         '@nuxt/icon',
         '@nuxt/image',
+        '@nuxtjs/seo',
+        '@nuxtjs/robots',
+        '@nuxtjs/sitemap',
     ],
 
     app: {
@@ -36,11 +39,19 @@ export default defineNuxtConfig({
         viewTransition: true,
     },
 
+    router: {
+        options: {
+            scrollBehaviorType: 'smooth'
+        }
+    },
+
     runtimeConfig: {
+        stripeSecretKey: process.env.STRIPE_SECRET_KEY,
         public: {
             supabaseUrl: process.env.SUPABASE_URL || '',
             supabaseKey: process.env.SUPABASE_KEY || '',
             siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+            stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY
         }
     },
 

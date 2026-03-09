@@ -5,8 +5,11 @@ import { useAuth } from '~/composables/useAuth';
 
 const cart = useCartStore();
 const isScrolled = ref(false);
+const isVisible = ref(true);
 const isSearchOpen = ref(false);
 const isMobileMenuOpen = ref(false);
+
+let lastScrollY = 0;
 
 const searchQuery = ref('');
 const searchResults = ref<any[]>([]);
@@ -90,7 +93,17 @@ const toggleMobileCat = (id: number) => {
 };
 
 const handleScroll = () => {
-  isScrolled.value = window.scrollY > 20
+  const currentScrollY = window.scrollY;
+  
+  // Show/Hide logic
+  if (currentScrollY > lastScrollY && currentScrollY > 100) {
+    isVisible.value = false;
+  } else {
+    isVisible.value = true;
+  }
+  
+  isScrolled.value = currentScrollY > 20;
+  lastScrollY = currentScrollY;
 }
 
 watch(isSearchOpen, (val) => {
@@ -122,7 +135,10 @@ onUnmounted(() => {
 
 <template>
   <!-- Main Navbar -->
-  <nav class="navbar-main w-full flex items-center justify-between px-4 md:px-6 py-4 top-0 z-50">
+  <nav 
+    class="navbar-main w-full flex items-center justify-between px-4 md:px-6 py-4 fixed top-0 z-50 transition-transform duration-300"
+    :class="{ 'navbar--hidden': !isVisible && !isSearchOpen && !isMobileMenuOpen, 'navbar--scrolled': isScrolled }"
+  >
     <!-- Brand -->
     <div class="flex items-center gap-2">
       <span class="text-lg md:text-xl hippie-float">🔮</span>
@@ -144,7 +160,7 @@ onUnmounted(() => {
             class="nav-link px-4 py-2.5 rounded-full text-sm font-semibold text-white/60 transition-all duration-300 hover:text-white hover:bg-white/5 flex items-center gap-1.5"
           >
             <span>{{ cat.name }}</span>
-            <Icon v-if="cat.children.length > 0" name="heroicons:chevron-down" class="w-3.5 h-3.5 opacity-40 group-hover:rotate-180 transition-transform duration-300" />
+            <Icon v-if="cat.children.length > 0" name="mdi:chevron-down" class="w-3.5 h-3.5 opacity-40 group-hover:rotate-180 transition-transform duration-300" />
             <span class="nav-link-glow"></span>
           </NuxtLink>
 
@@ -157,7 +173,7 @@ onUnmounted(() => {
                   class="dropdown-item"
                 >
                   <span class="text-sm font-medium">{{ sub.name }}</span>
-                  <Icon v-if="sub.children.length > 0" name="heroicons:chevron-right" class="w-3.5 h-3.5 opacity-40" />
+                  <Icon v-if="sub.children.length > 0" name="mdi:chevron-right" class="w-3.5 h-3.5 opacity-40" />
                 </NuxtLink>
 
                 <!-- Level 3 Flyout -->
@@ -193,7 +209,7 @@ onUnmounted(() => {
           title="Můj profil"
           aria-label="Můj profil"
         >
-          <Icon name="bxs:user" height="20" />
+          <Icon name="mdi:account" height="20" />
         </NuxtLink>
       </div>
 
@@ -255,7 +271,7 @@ onUnmounted(() => {
                     @click="toggleMobileCat(cat.id)"
                     class="p-4 text-white/30"
                   >
-                    <Icon :name="expandedMobileCats.has(cat.id) ? 'heroicons:chevron-up' : 'heroicons:chevron-down'" />
+                    <Icon :name="expandedMobileCats.has(cat.id) ? 'mdi:chevron-up' : 'mdi:chevron-down'" />
                   </button>
                 </div>
 
@@ -275,7 +291,7 @@ onUnmounted(() => {
                         @click="toggleMobileCat(sub.id)"
                         class="p-2 text-white/20"
                       >
-                        <Icon :name="expandedMobileCats.has(sub.id) ? 'heroicons:chevron-up' : 'heroicons:chevron-down'" />
+                        <Icon :name="expandedMobileCats.has(sub.id) ? 'mdi:chevron-up' : 'mdi:chevron-down'" />
                       </button>
                     </div>
 
@@ -328,31 +344,21 @@ onUnmounted(() => {
     </Transition>
   </Teleport>
 
-  <!-- Floating Navbar on Scroll -->
+  <!-- Floating Cart when Navbar hides -->
   <Transition name="navbar">
-    <div v-if="isScrolled" class="fixed top-4 right-4 z-40 flex items-center space-x-2 md:space-x-3 pointer-events-none">
-      <button @click="isSearchOpen = true" class="pointer-events-auto floating-btn" title="Search">
-        <Icon name="iconamoon:search-fill" height="18" />
-      </button>
-
-      <div class="pointer-events-auto">
-        <NuxtLink 
-          to="/user" 
-          class="floating-btn" 
-          title="Můj profil"
-          aria-label="Můj profil"
-        >
-          <Icon name="bxs:user" height="18" />
-        </NuxtLink>
-      </div>
-
-      <NuxtLink to="/cart" data-cart-anchor="true" class="pointer-events-auto floating-btn relative" title="Košík" aria-label="Košík">
-        <Icon name="mdi:cart-outline" height="18" />
-        <span v-if="cart.itemCount > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full">
-          {{ cart.itemCount }}
-        </span>
-      </NuxtLink>
-    </div>
+    <NuxtLink 
+      v-if="!isVisible && !isSearchOpen && !isMobileMenuOpen && isScrolled"
+      to="/cart" 
+      data-cart-anchor="true" 
+      class="fixed top-4 right-4 z-[90] floating-btn relative" 
+      title="Košík" 
+      aria-label="Košík"
+    >
+      <Icon name="mdi:cart" height="20" />
+      <span v-if="cart.itemCount > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full shadow-lg shadow-primary-500/30">
+        {{ cart.itemCount }}
+      </span>
+    </NuxtLink>
   </Transition>
 
   <!-- Search Overlay -->
@@ -442,6 +448,21 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.navbar-main {
+  background: transparent;
+  backdrop-filter: blur(0px);
+}
+
+.navbar--scrolled {
+  background: rgba(13, 0, 32, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.navbar--hidden {
+  transform: translateY(-100%);
+}
+
 .nav-action-btn {
   display: flex;
   align-items: center;
@@ -575,6 +596,16 @@ onUnmounted(() => {
 .navbar-leave-to {
   opacity: 0;
   transform: translateY(-20px);
+}
+
+.cart-float-enter-active,
+.cart-float-leave-active {
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cart-float-enter-from,
+.cart-float-leave-to {
+  opacity: 0;
+  transform: translateX(20px) scale(0.9);
 }
 
 .slide-enter-active,

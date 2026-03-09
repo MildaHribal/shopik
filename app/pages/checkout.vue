@@ -11,6 +11,24 @@ const step = ref<'details' | 'payment' | 'success'>('details');
 const orderId = ref<number | null>(null);
 const isSubmitting = ref(false);
 
+const route = useRoute();
+const router = useRouter();
+
+// Kontrola návratu ze Stripe
+onMounted(() => {
+  if (route.query.success === 'true' && route.query.orderId) {
+    orderId.value = Number(route.query.orderId);
+    cart.clearCart();
+    step.value = 'success';
+    
+    // Vyčistit URL (router.replace zachová historii ale smaže query)
+    router.replace({ query: {} });
+  } else if (route.query.cancel === 'true') {
+    toast.error('Platba byla zrušena', 'Můžete to zkusit znovu nebo zvolit jinou metodu.');
+    router.replace({ query: {} });
+  }
+});
+
 const form = ref({
   customerName: '',
   customerEmail: '',
@@ -98,28 +116,48 @@ const paymentLabel = computed(() =>
   paymentMethods.find(p => p.value === form.value.paymentMethod)?.label ?? ''
 );
 
-const detailsValid = computed(() =>
-  form.value.customerName &&
-  form.value.customerEmail &&
-  form.value.street &&
-  form.value.city &&
-  form.value.zip
-);
+const detailsValid = computed(() => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return (
+    form.value.customerName &&
+    form.value.customerEmail &&
+    emailRegex.test(form.value.customerEmail) &&
+    form.value.street &&
+    form.value.city &&
+    form.value.zip
+  );
+});
 
 async function placeOrder() {
   if (cart.items.length === 0) return;
   isSubmitting.value = true;
   try {
-    const response: any = await $fetch('/api/orders', {
-      method: 'POST',
-      body: {
-        ...form.value,
-        items: cart.items.map(item => ({ id: item.id, quantity: 1 }))
+    if (form.value.paymentMethod === 'card') {
+      // Stripe platba
+      const response: any = await $fetch('/api/create-checkout-session', {
+        method: 'POST',
+        body: {
+          ...form.value,
+          items: cart.items.map(item => ({ id: item.id, quantity: 1 })),
+          shippingPrice: selectedShipping.value?.price || 0,
+        }
+      });
+      if (response.url) {
+        window.location.href = response.url;
       }
-    });
-    orderId.value = response.orderId;
-    cart.clearCart();
-    step.value = 'success';
+    } else {
+      // Ostatní metody (Dobírka apod.)
+      const response: any = await $fetch('/api/orders', {
+        method: 'POST',
+        body: {
+          ...form.value,
+          items: cart.items.map(item => ({ id: item.id, quantity: 1 }))
+        }
+      });
+      orderId.value = response.orderId;
+      cart.clearCart();
+      step.value = 'success';
+    }
   } catch (err: any) {
     toast.error('Objednávku se nepodařilo odeslat', err?.data?.statusMessage || 'Zkuste to znovu.');
   } finally {
@@ -336,11 +374,21 @@ function selectedStyle(active: boolean) {
         <h1 class="text-2xl md:text-3xl font-extrabold text-white neon-text">Potvrzení objednávky ✅</h1>
       </div>
 
-      <!-- Demo info -->
-      <div class="glass-card-strong p-6 mb-5 text-center">
-        <div class="text-5xl mb-3">🎭</div>
-        <h2 class="text-xl font-bold text-white mb-2">Demo platba</h2>
-        <p class="text-white/50 text-sm">V demo režimu se platba přeskočí. Stiskni tlačítko níže a objednávka se rovnou zpracuje.</p>
+      <!-- Informace o platbě -->
+      <div v-if="form.paymentMethod === 'card'" class="glass-card-strong p-6 mb-5 flex items-center gap-5">
+        <div class="h-16 w-16 rounded-2xl bg-primary-500/10 flex items-center justify-center flex-shrink-0">
+          <Icon icon="logos:stripe" height="24" />
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-white mb-1">Bezpečná platba kartou</h2>
+          <p class="text-white/50 text-sm">
+            Po kliknutí na tlačítko níže budete přesměrováni na zabezpečenou platební bránu <strong>Stripe</strong> pro dokončení vaší platby.
+          </p>
+        </div>
+      </div>
+      <div v-else class="glass-card-strong p-6 mb-5 text-center">
+        <h2 class="text-lg font-bold text-white mb-1">Potvrzení objednávky</h2>
+        <p class="text-white/50 text-sm">Zkontrolujte si prosím údaje níže před odesláním objednávky.</p>
       </div>
 
       <!-- Shrnutí -->
@@ -378,7 +426,7 @@ function selectedStyle(active: boolean) {
         class="btn-cosmic w-full py-5 text-xl flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed">
         <Icon v-if="isSubmitting" icon="lucide:loader-2" height="24" class="animate-spin" />
         <Icon v-else icon="mdi:check-decagram" height="24" />
-        {{ isSubmitting ? 'Odesíláme...' : 'Potvrdit a odeslat objednávku' }}
+          {{ isSubmitting ? 'Odesíláme...' : (form.paymentMethod === 'card' ? 'Zaplatit kartou' : 'Potvrdit a odeslat objednávku') }}
       </button>
     </div>
 
