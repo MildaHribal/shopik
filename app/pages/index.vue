@@ -67,7 +67,7 @@ const jsonLd = computed(() => {
           '@type': 'Offer',
           price: p.price,
           priceCurrency: 'CZK',
-          availability: p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+          availability: (p.stock ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
         }
       }
     }))
@@ -336,6 +336,12 @@ const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
             </p>
             
             <div class="space-y-4">
+              <div class="flex items-center gap-4 text-white/80">
+                <div class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
+                  <Icon icon="lucide:user" class="text-primary-400" />
+                </div>
+                <span>Kristýna Egnerová</span>
+              </div>
               <div class="flex items-center gap-4 text-white/80">
                 <div class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
                   <Icon icon="lucide:map-pin" class="text-primary-400" />

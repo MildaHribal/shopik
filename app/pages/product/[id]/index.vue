@@ -7,10 +7,14 @@ const route = useRoute();
 const router = useRouter();
 
 const goBack = () => {
-  // Check if we have a previous history state and if it was the home page
-  const previousPath = window.history.state?.back;
-  if (previousPath === '/' || previousPath === '/#') {
-    router.back();
+  if (process.client) {
+    // If the previous history exists, it will try to go back to restore scroll position
+    const previousPath = window.history.state?.back;
+    if (previousPath && (previousPath === '/' || previousPath === '/#')) {
+      router.back();
+    } else {
+      router.push('/');
+    }
   } else {
     router.push('/');
   }
@@ -394,15 +398,15 @@ const submitReview = async () => {
     <!-- Product Detail -->
     <div v-else-if="product" class="relative">
       <!-- Back button -->
-      <button 
-        @click="goBack" 
+      <NuxtLink 
+        to="/" 
+        @click.prevent="goBack"
         v-fly="{ direction: 'left', distance: 20, duration: 640 }" 
-        class="relative z-30 inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-4 md:mb-8 group cursor-pointer"
-        type="button"
+        class="relative z-[100] inline-flex items-center gap-2 text-white/50 hover:text-white transition-all mb-6 md:mb-10 group cursor-pointer px-4 py-2 -ml-4"
       >
         <Icon icon="ep:arrow-left-bold" height="16" class="transition-transform group-hover:-translate-x-1" />
-        <span class="text-sm">Zpět na úvod</span>
-      </button>
+        <span class="text-xs md:text-sm font-semibold tracking-wide uppercase">Zpět na úvod</span>
+      </NuxtLink>
 
       <div class="glass-card-strong overflow-hidden" v-fly="{ direction: 'up', distance: 42 }">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">

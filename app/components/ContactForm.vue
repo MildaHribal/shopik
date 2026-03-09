@@ -46,6 +46,15 @@ const handleSubmit = async () => {
         <div class="space-y-6">
           <div class="flex items-center gap-4 group/item">
             <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover/item:border-primary-500/50 group-hover/item:bg-primary-500/10 transition-all duration-300">
+              <Icon icon="mdi:account-outline" height="20" class="text-primary-400" />
+            </div>
+            <div>
+              <p class="text-sm font-bold text-white">Kristýna Egnerová</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4 group/item">
+            <div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10 group-hover/item:border-primary-500/50 group-hover/item:bg-primary-500/10 transition-all duration-300">
               <Icon icon="mdi:map-marker-outline" height="20" class="text-primary-400" />
             </div>
             <div>

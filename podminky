@@ -1,0 +1,80 @@
+1. Obchodní podmínky (VOP)
+Vytvořte stránku /obchodni-podminky
+
+Všeobecné obchodní podmínky
+1. Úvodní ustanovení
+Tyto obchodní podmínky platí pro nákup v internetovém obchodě shop.hribal.site, který provozuje Kristýna Egnerová, se sídlem [Doplň svou vymyšlenou ulici], Plzeň, PSČ [Doplň], IČO: [Doplnit po přidělení] (dále jen „Prodávající“). Prodávající není plátcem DPH.
+
+2. Objednávka a uzavření kupní smlouvy
+
+Podáním objednávky kupující stvrzuje, že se seznámil s těmito podmínkami.
+
+Kupní smlouva vzniká v okamžiku potvrzení objednávky ze strany Prodávajícího e-mailem.
+
+Předmětem prodeje je ruční výroba, umění a oblečení.
+
+3. Ceny a platba
+
+Všechny ceny na e-shopu jsou konečné.
+
+Platba probíhá online prostřednictvím platební brány Stripe (platební karty, Google Pay). Zboží je odesíláno až po připsání platby.
+
+4. Doprava a doručení
+
+Zboží odesíláme obvykle do 2 pracovních dnů, nejpozději však do 7 dnů od zaplacení.
+
+Způsoby dopravy: Zásilkovna, Česká pošta, Balíkovna.
+
+Osobní odběr: Možný v Plzni po předchozí domluvě e-mailem.
+
+5. Odstoupení od smlouvy
+
+Kupující (spotřebitel) má právo odstoupit od smlouvy do 14 dnů od převzetí zboží bez udání důvodu.
+
+Zboží musí být vráceno nepoužité a nepoškozené na adresu sídla. Náklady na vrácení zboží nese v tomto případě Kupující.
+
+2. Reklamační řád (Refund Policy)
+Vytvořte stránku /reklamace (Stripe vyžaduje viditelnou politiku vracení peněz)
+
+1. Záruční doba
+Na veškeré nové zboží se vztahuje zákonná záruční doba 24 měsíců. Vzhledem k povaze zboží (ruční výroba/umění) se záruka nevztahuje na běžné opotřebení nebo nevhodné zacházení.
+
+2. Postup reklamace
+
+Pokud zjistíte vadu, kontaktujte nás na e-mailu: [Váš e-mail].
+
+Zásilku s reklamovaným zbožím zašlete na adresu sídla (Kristýna Egnerová, [Adresa], Plzeň).
+
+Reklamaci vyřídíme nejpozději do 30 dnů.
+
+3. Vracení peněz (Refundace)
+Při schválené reklamaci nebo platném odstoupení od smlouvy vracíme peníze stejným způsobem, jakým byla platba přijata (přes bránu Stripe), a to do 14 dnů.
+
+3. Ochrana osobních údajů (GDPR)
+Vytvořte stránku /gdpr nebo /ochrana-osobnich-udaju
+
+1. Správce údajů
+Správcem je Kristýna Egnerová, IČO: [Doplnit], Plzeň.
+
+2. Jaké údaje sbíráme?
+Pro účely vyřízení objednávky zpracováváme: Jméno, příjmení, doručovací adresu, e-mail a telefonní číslo.
+
+3. Komu údaje předáváme?
+Vaše data jsou v nezbytném rozsahu předávána těmto partnerům:
+
+Dopravci: Zásilkovna, Česká pošta, Balíkovna (pro doručení zásilky).
+
+Platební brána: Stripe (pro zpracování platby).
+
+Technické služby: Cloudflare (zabezpečení webu), Google Search Console (analýza webu).
+
+4. Marketing (Newsletter)
+Pokud se přihlásíte k odběru, budeme vám zasílat novinky o naší tvorbě. Z odběru se můžete kdykoliv odhlásit odkazem v e-mailu.
+
+Co udělat teď na webu?
+Patička (Footer): Dej tam odkazy: "Obchodní podmínky", "Doprava a reklamace", "Ochrana údajů".
+
+Checkbox v košíku: Předtím, než uživatel klikne na tlačítko "Zaplatit", musí tam být nezaškrtnuté políčko: "Souhlasím s obchodními podmínkami a zásadami GDPR". Bez toho ti Stripe může zamítnout registraci.
+
+Kontakt: Ujisti se, že na stránce s kontaktem je tvoje celé jméno a e-mail.
+

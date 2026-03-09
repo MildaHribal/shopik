@@ -40,7 +40,13 @@ import { Icon } from "@iconify/vue";
           </div>
 
           <p class="text-white/40 text-sm">© 2026 Shopik — Vesmírné zboží pro osvícenou mysl ✨</p>
-          <div class="flex justify-center gap-6 mt-6 text-white/30">
+          <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-4 text-xs">
+            <NuxtLink to="/obchodni-podminky" class="text-white/30 hover:text-white transition-colors">Obchodní podmínky</NuxtLink>
+            <NuxtLink to="/reklamace" class="text-white/30 hover:text-white transition-colors">Doprava a reklamace</NuxtLink>
+            <NuxtLink to="/ochrana-osobnich-udaju" class="text-white/30 hover:text-white transition-colors">Ochrana osobních údajů</NuxtLink>
+          </div>
+
+          <div class="flex justify-center gap-6 mt-8 text-white/30">
             <span class="hippie-float text-lg">🍄</span>
             <span class="hippie-float-delayed text-lg">🌀</span>
             <span class="hippie-float text-lg">🌌</span>

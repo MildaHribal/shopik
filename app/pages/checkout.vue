@@ -10,6 +10,7 @@ const toast = useCosmicToast()
 const step = ref<'details' | 'payment' | 'success'>('details');
 const orderId = ref<number | null>(null);
 const isSubmitting = ref(false);
+const agreedToTerms = ref(false);
 
 const route = useRoute();
 const router = useRouter();
@@ -420,9 +421,30 @@ function selectedStyle(active: boolean) {
         </div>
       </div>
 
+      <!-- Podmínky souhlas -->
+      <div class="mb-5 px-1 py-3 border-t border-white/5 mt-5">
+        <label class="flex items-start gap-3 cursor-pointer group">
+          <div class="relative flex items-center h-5 mt-0.5">
+            <input 
+              v-model="agreedToTerms" 
+              type="checkbox" 
+              id="terms-checkbox"
+              class="w-5 h-5 rounded border-white/10 bg-white/5 text-primary-500 focus:ring-primary-500/50 transition-all cursor-pointer"
+            />
+          </div>
+          <span class="text-xs text-white/40 leading-relaxed group-hover:text-white/60 transition-colors">
+            Souhlasím s 
+            <NuxtLink to="/obchodni-podminky" target="_blank" class="text-primary-400 hover:underline">obchodními podmínkami</NuxtLink> 
+            a 
+            <NuxtLink to="/ochrana-osobnich-udaju" target="_blank" class="text-primary-400 hover:underline">zásadami GDPR</NuxtLink>.
+            Beru na vědomí, že tyto údaje budou zpracovány za účelem vyřízení objednávky.
+          </span>
+        </label>
+      </div>
+
       <button
         @click="placeOrder"
-        :disabled="isSubmitting"
+        :disabled="isSubmitting || !agreedToTerms"
         class="btn-cosmic w-full py-5 text-xl flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed">
         <Icon v-if="isSubmitting" icon="lucide:loader-2" height="24" class="animate-spin" />
         <Icon v-else icon="mdi:check-decagram" height="24" />
