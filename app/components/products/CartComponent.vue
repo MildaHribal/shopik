@@ -31,8 +31,8 @@ const cart = useCartStore()
       <div class="flex-grow glass-card overflow-hidden">
         <div class="divide-y divide-white/5">
           <div
-            v-for="(item, index) in cart.items"
-            :key="index"
+            v-for="item in cart.items"
+            :key="item.id"
             class="p-4 md:p-5 flex items-center hover:bg-white/[0.02] transition-colors"
           >
             <!-- Image -->
@@ -61,10 +61,29 @@ const cart = useCartStore()
                 </div>
                 <span class="text-white font-bold text-xs md:text-sm neon-text flex-shrink-0">{{ item.price }} Kč</span>
               </div>
-              <div class="flex items-end justify-between mt-2 md:mt-3">
-                <span class="text-[10px] md:text-xs text-white/30">Množství: 1</span>
+              
+              <div class="flex items-center gap-2 md:gap-4 mt-2 md:mt-3">
+                <!-- Quantity Selector in Cart -->
+                <div class="flex items-center h-8 bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+                  <button 
+                    @click="cart.updateQuantity(item.id, item.quantity - 1)"
+                    type="button"
+                    class="w-8 h-full flex items-center justify-center text-white/40 hover:text-white transition-colors hover:bg-white/5"
+                  >
+                    <Icon icon="mdi:minus" height="14" />
+                  </button>
+                  <span class="w-8 text-center text-xs font-bold text-white">{{ item.quantity }}</span>
+                  <button 
+                    @click="cart.updateQuantity(item.id, item.quantity + 1)"
+                    type="button"
+                    class="w-8 h-full flex items-center justify-center text-white/40 hover:text-white transition-colors hover:bg-white/5"
+                  >
+                    <Icon icon="mdi:plus" height="14" />
+                  </button>
+                </div>
+
                 <button
-                  @click="cart.removeFromCart(index)"
+                  @click="cart.removeFromCart(item.id)"
                   type="button"
                   class="text-[10px] md:text-xs text-red-400/60 hover:text-red-400 transition-colors flex items-center gap-1"
                 >
@@ -111,6 +130,7 @@ const cart = useCartStore()
         </div>
       </div>
     </div>
+
   </div>
 </template>
 

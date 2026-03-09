@@ -1,14 +1,42 @@
 <script setup lang="ts">
 import { useCartStore } from "~/stores/cart";
 import { Icon } from "@iconify/vue";
+import ContactForm from "~/components/ContactForm.vue";
 
 const route = useRoute();
+const router = useRouter();
+
+const goBack = () => {
+  // Check if we have a previous history state and if it was the home page
+  const previousPath = window.history.state?.back;
+  if (previousPath === '/' || previousPath === '/#') {
+    router.back();
+  } else {
+    router.push('/');
+  }
+};
 const { data: asyncProduct, pending, error } = useLazyAsyncData(`product-${route.params.id}`, () =>
   Promise.all([
     $fetch<any>(`/api/products/${route.params.id}`)
   ])
 );
 const product = computed(() => asyncProduct.value?.[0] || null);
+
+// Fetch similar products based on the loaded product category
+const { data: asyncSimilarProducts } = useLazyAsyncData(
+  `similar-${route.params.id}`,
+  async () => {
+    if (!product.value?.category) return [];
+    try {
+      const res = await $fetch<any>(`/api/products?category=${encodeURIComponent(product.value.category)}&limit=8`);
+      return res?.filter((p: any) => p.id !== product.value.id) || [];
+    } catch {
+      return [];
+    }
+  },
+  { watch: [product] }
+);
+const similarProducts = computed(() => asyncSimilarProducts.value?.slice(0, 6) || []);
 const cart = useCartStore();
 const { flyToCart } = useFlyToCartAnimation()
 const toast = useCosmicToast()
@@ -29,6 +57,7 @@ const reviewRating = ref(5);
 const reviewComment = ref("");
 const isSubmittingReview = ref(false);
 const isTogglingFavorite = ref(false);
+const selectedQuantity = ref(1);
 
 // Fetch favorite status (API returns isFavorite: false when not logged in)
 interface FavoriteStatus { isFavorite: boolean }
@@ -255,7 +284,7 @@ const addToCart = (event?: MouseEvent) => {
     return
   }
 
-  cart.addToCart(product.value)
+  cart.addToCart(product.value, selectedQuantity.value)
   showAddedState()
 
   flyToCart({
@@ -365,10 +394,15 @@ const submitReview = async () => {
     <!-- Product Detail -->
     <div v-else-if="product" class="relative">
       <!-- Back button -->
-      <NuxtLink to="/" v-fly="{ direction: 'left', distance: 20, duration: 640 }" class="inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-4 md:mb-8 group">
+      <button 
+        @click="goBack" 
+        v-fly="{ direction: 'left', distance: 20, duration: 640 }" 
+        class="relative z-30 inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-4 md:mb-8 group cursor-pointer"
+        type="button"
+      >
         <Icon icon="ep:arrow-left-bold" height="16" class="transition-transform group-hover:-translate-x-1" />
         <span class="text-sm">Zpět na úvod</span>
-      </NuxtLink>
+      </button>
 
       <div class="glass-card-strong overflow-hidden" v-fly="{ direction: 'up', distance: 42 }">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
@@ -376,7 +410,7 @@ const submitReview = async () => {
           <!-- Image Section -->
           <div class="p-4 md:p-8 bg-white/[0.02]">
             <!-- Main Image -->
-            <div ref="mainImageWrapRef" class="relative w-full aspect-square rounded-xl md:rounded-2xl overflow-hidden bg-black/20 mb-3 md:mb-4">
+            <div ref="mainImageWrapRef" class="relative w-full aspect-square rounded-xl md:rounded-2xl overflow-hidden bg-black/20 mb-3 md:mb-4 group/main">
               <Transition :name="imageTransitionName" mode="out-in">
                 <div
                   :key="selectedImage ? `${selectedImage}-${selectedImageIndex}` : `fallback-${selectedImageIndex}`"
@@ -411,7 +445,7 @@ const submitReview = async () => {
               </div>
 
               <!-- Image counter -->
-              <div v-if="allImages.length > 1" class="absolute bottom-3 right-3 cosmic-badge text-[10px]">
+              <div v-if="allImages.length > 1" class="absolute bottom-3 right-3 cosmic-badge text-[10px] z-10 font-bold">
                 {{ selectedImageIndex + 1 }} / {{ allImages.length }}
               </div>
             </div>
@@ -515,6 +549,34 @@ const submitReview = async () => {
                 <span class="text-[10px] md:text-xs font-mono text-white/20 uppercase tracking-widest">ID: {{ product.id }}</span>
               </div>
 
+              <!-- Quantity Selector -->
+              <div v-if="product.stock > 0" class="flex items-center gap-4 mb-6">
+                <span class="text-sm font-semibold text-white/50 uppercase tracking-wider">Množství:</span>
+                <div class="flex items-center glass-card px-2 py-1 rounded-xl border border-white/10">
+                  <button 
+                    @click="selectedQuantity = Math.max(1, selectedQuantity - 1)"
+                    type="button"
+                    class="w-10 h-10 flex items-center justify-center text-white/50 hover:text-white transition-colors"
+                  >
+                    <Icon icon="mdi:minus" height="20" />
+                  </button>
+                  <input 
+                    v-model.number="selectedQuantity"
+                    type="number"
+                    min="1"
+                    :max="product.stock"
+                    class="w-12 text-center bg-transparent border-none focus:ring-0 text-white font-bold"
+                  />
+                  <button 
+                    @click="selectedQuantity = Math.min(product.stock, selectedQuantity + 1)"
+                    type="button"
+                    class="w-10 h-10 flex items-center justify-center text-white/50 hover:text-white transition-colors"
+                  >
+                    <Icon icon="mdi:plus" height="20" />
+                  </button>
+                </div>
+              </div>
+
               <button
                 ref="addToCartButtonRef"
                 type="button"
@@ -535,8 +597,17 @@ const submitReview = async () => {
         </div>
       </div>
 
+      <!-- Similar Products -->
+      <div v-if="similarProducts.length > 0" class="mt-12 md:mt-16">
+        <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 md:mb-8 neon-text-cyan flex items-center gap-3">
+          <Icon icon="lucide:sparkles" class="text-yellow-300" />
+          Také by se vám mohlo líbit
+        </h2>
+        <ProductCarousel :products="similarProducts" />
+      </div>
+
       <!-- Recenze -->
-      <div class="glass-card-strong p-6 md:p-8 mt-8 min-h-[500px]" v-fly="{ direction: 'up', delay: 70, distance: 48 }">
+      <div class="glass-card-strong p-6 md:p-8 mt-12 md:mt-16 min-h-[500px]" v-fly="{ direction: 'up', delay: 70, distance: 48 }">
         <h2 class="text-xl font-bold text-white mb-6 pb-4 border-b border-white/10 flex items-center gap-2">
           <Icon icon="mdi:star-outline" class="text-primary-400" height="24" />
           Recenze ({{ productReviews?.length ?? 0 }})
@@ -589,6 +660,11 @@ const submitReview = async () => {
           </div>
         </div>
         <div v-else class="text-center py-8 text-white/50 text-sm">Zatím zde nejsou žádné recenze.</div>
+      </div>
+
+      <!-- Contact Form / Newsletter -->
+      <div class="mt-16 md:mt-24 mb-10">
+        <ContactForm />
       </div>
     </div>
 

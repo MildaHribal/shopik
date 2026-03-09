@@ -345,21 +345,23 @@ onUnmounted(() => {
   </Teleport>
 
   <!-- Floating Cart when Navbar hides -->
-  <Transition name="navbar">
-    <NuxtLink 
-      v-if="!isVisible && !isSearchOpen && !isMobileMenuOpen && isScrolled"
-      to="/cart" 
-      data-cart-anchor="true" 
-      class="fixed top-4 right-4 z-[90] floating-btn relative" 
-      title="Košík" 
-      aria-label="Košík"
-    >
-      <Icon name="mdi:cart" height="20" />
-      <span v-if="cart.itemCount > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full shadow-lg shadow-primary-500/30">
-        {{ cart.itemCount }}
-      </span>
-    </NuxtLink>
-  </Transition>
+  <Teleport to="body">
+    <Transition name="cart-float">
+      <NuxtLink 
+        v-if="!isVisible && !isSearchOpen && !isMobileMenuOpen && isScrolled"
+        to="/cart" 
+        data-cart-anchor="true" 
+        class="fixed top-4 right-4 z-[100] flex items-center justify-center w-12 h-12 rounded-full glass-card hover:glass-card-hover border border-white/20 shadow-lg text-white" 
+        title="Košík" 
+        aria-label="Košík"
+      >
+        <Icon name="mdi:cart" height="20" />
+        <span v-if="cart.itemCount > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold leading-none text-white bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full shadow-lg shadow-primary-500/30">
+          {{ cart.itemCount }}
+        </span>
+      </NuxtLink>
+    </Transition>
+  </Teleport>
 
   <!-- Search Overlay -->
   <Teleport to="body">

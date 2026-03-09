@@ -138,7 +138,7 @@ async function placeOrder() {
         method: 'POST',
         body: {
           ...form.value,
-          items: cart.items.map(item => ({ id: item.id, quantity: 1 })),
+          items: cart.items.map(item => ({ id: item.id, quantity: item.quantity })),
           shippingPrice: selectedShipping.value?.price || 0,
         }
       });
@@ -151,7 +151,7 @@ async function placeOrder() {
         method: 'POST',
         body: {
           ...form.value,
-          items: cart.items.map(item => ({ id: item.id, quantity: 1 }))
+          items: cart.items.map(item => ({ id: item.id, quantity: item.quantity }))
         }
       });
       orderId.value = response.orderId;
@@ -342,7 +342,7 @@ function selectedStyle(active: boolean) {
               </div>
               <div class="flex-grow min-w-0">
                 <div class="text-xs font-medium text-white truncate">{{ item.title }}</div>
-                <div class="text-[11px] text-white/40">1 × {{ item.price }} Kč</div>
+                <div class="text-[11px] text-white/40">{{ item.quantity }} × {{ item.price }} Kč</div>
               </div>
             </div>
           </div>
