@@ -1,10 +1,18 @@
 <script setup lang="ts">
+const route = useRoute();
+
 useHead({
     htmlAttrs: {
         lang: 'cs',
     },
+    titleTemplate: (titleChunk) => {
+      return titleChunk ? `${titleChunk} · Shopik` : 'Shopik — Kosmický e-shop';
+    },
     meta: [
         { name: 'theme-color', content: '#0d0020' },
+    ],
+    link: [
+        { rel: 'icon', type: 'image/webp', href: '/logo.webp' },
     ]
 })
 </script>

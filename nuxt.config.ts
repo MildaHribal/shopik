@@ -36,6 +36,7 @@ export default defineNuxtConfig({
                 prefetch: false,
             }
         },
+        restoreState: true,
         viewTransition: true,
     },
 

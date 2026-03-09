@@ -2,6 +2,7 @@
 import { useCartStore } from "~/stores/cart";
 import { Icon } from "@iconify/vue";
 import { useAuth } from "~/composables/useAuth";
+import QrcodeVue from 'qrcode.vue';
 
 const cart = useCartStore();
 const { currentUser } = useAuth();
@@ -30,6 +31,8 @@ onMounted(() => {
   }
 });
 
+const packetaBranch = ref<{ id: string; name: string } | null>(null);
+
 const form = ref({
   customerName: '',
   customerEmail: '',
@@ -39,6 +42,40 @@ const form = ref({
   zip: '',
   paymentMethod: 'card',
   shippingMethod: 'zasilkovna',
+});
+
+// Zásilkovna Widget Config
+useHead({
+  script: [
+    { src: 'https://widget.packeta.com/v6/www/js/library.js', async: true }
+  ]
+});
+
+const openPacketaWidget = () => {
+  if (typeof (window as any).Packeta !== 'undefined') {
+    const packetaApiKey = useRuntimeConfig().public.packetaApiKey;
+    
+    (window as any).Packeta.Widget.pick(packetaApiKey, (pickupPoint: any) => {
+      if (pickupPoint) {
+        packetaBranch.value = {
+          id: pickupPoint.id,
+          name: pickupPoint.nameStreet || pickupPoint.name
+        };
+      }
+    }, {
+      country: "cz",
+      language: "cs",
+      theme: "dark"
+    });
+  } else {
+    toast.error('Widget Zásilkovny se nepodařilo načíst.', 'Zkuste prosím obnovit stránku.');
+  }
+};
+
+watch(() => form.value.shippingMethod, (newMethod) => {
+  if (newMethod !== 'zasilkovna') {
+    packetaBranch.value = null;
+  }
 });
 
 // Předvyplnění z profilu pro přihlášené uživatele
@@ -69,8 +106,7 @@ watch(
 
 const paymentMethods = [
   { value: 'card',      label: 'Platební karta', note: 'Visa, Mastercard, Maestro', icon: 'mdi:credit-card-outline' },
-  { value: 'googlepay', label: 'Google Pay',     note: 'Rychlá platba přes Google', icon: 'logos:google-pay' },
-  { value: 'paypal',    label: 'PayPal',          note: 'Platba přes PayPal účet',  icon: 'logos:paypal' },
+  { value: 'transfer',  label: 'Bankovní převod', note: 'Platba předem na účet', icon: 'mdi:bank-outline' },
   { value: 'cash',      label: 'Dobírka',         note: 'Platba při převzetí',       icon: 'mdi:cash-multiple' },
 ];
 
@@ -119,7 +155,7 @@ const paymentLabel = computed(() =>
 
 const detailsValid = computed(() => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return (
+  const isFormValid = (
     form.value.customerName &&
     form.value.customerEmail &&
     emailRegex.test(form.value.customerEmail) &&
@@ -127,6 +163,12 @@ const detailsValid = computed(() => {
     form.value.city &&
     form.value.zip
   );
+  
+  if (form.value.shippingMethod === 'zasilkovna' && !packetaBranch.value) {
+    return false;
+  }
+  
+  return isFormValid;
 });
 
 async function placeOrder() {
@@ -139,6 +181,8 @@ async function placeOrder() {
         method: 'POST',
         body: {
           ...form.value,
+          packetaBranchId: packetaBranch.value?.id,
+          packetaBranchName: packetaBranch.value?.name,
           items: cart.items.map(item => ({ id: item.id, quantity: item.quantity })),
           shippingPrice: selectedShipping.value?.price || 0,
         }
@@ -152,6 +196,8 @@ async function placeOrder() {
         method: 'POST',
         body: {
           ...form.value,
+          packetaBranchId: packetaBranch.value?.id,
+          packetaBranchName: packetaBranch.value?.name,
           items: cart.items.map(item => ({ id: item.id, quantity: item.quantity }))
         }
       });
@@ -175,6 +221,11 @@ function selectedStyle(active: boolean) {
     ? 'border-color: rgba(139,92,246,0.7); background: rgba(139,92,246,0.08);'
     : 'border-color: rgba(255,255,255,0.07); background: rgba(255,255,255,0.02);';
 }
+
+const spaydString = computed(() => {
+  if (!orderId.value) return '';
+  return `SPD*1.0*ACC:CZ7355000000008294444956*AM:${totalWithShipping.value}*CC:CZK*X-VS:${orderId.value}*MSG:Objednavka ${orderId.value}`;
+});
 </script>
 
 <template>
@@ -285,6 +336,29 @@ function selectedStyle(active: boolean) {
                 <!-- Check -->
                 <Icon v-if="isSelected('shippingMethod', method.value)" icon="mdi:check-circle" height="18" class="text-primary-400 flex-shrink-0" />
                 <div v-else class="w-[18px] flex-shrink-0"></div>
+              </div>
+              
+              <!-- Zásilkovna Widget Tlačítko (zobrazí se jen pokud je vybrána Packeta) -->
+              <div v-if="isSelected('shippingMethod', 'zasilkovna') && method.value === 'zasilkovna'" class="mt-3 pl-4 pr-2">
+                <div class="glass-card-strong p-4 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 border border-white/5">
+                  <div class="flex items-center gap-3">
+                    <Icon icon="mdi:store-search" height="24" class="text-white/40" />
+                    <div>
+                      <div class="text-xs text-white/50 mb-0.5">Vybrané výdejní místo:</div>
+                      <div v-if="packetaBranch" class="text-sm font-bold text-white flex items-center gap-1.5">
+                        <Icon icon="mdi:check-decagram" class="text-green-400" />
+                        {{ packetaBranch.name }}
+                      </div>
+                      <div v-else class="text-sm font-semibold text-red-400/80">Není vybráno žádné místo!</div>
+                    </div>
+                  </div>
+                  <button 
+                    @click.prevent="openPacketaWidget"
+                    class="btn-cosmic px-4 py-2 flex items-center gap-2 text-sm whitespace-nowrap w-full md:w-auto mt-2 md:mt-0"
+                  >
+                    Vybrat z mapy
+                  </button>
+                </div>
               </div>
             </label>
           </div>
@@ -409,7 +483,10 @@ function selectedStyle(active: boolean) {
         </div>
         <div class="flex justify-between">
           <span class="text-white/40">Doprava</span>
-          <span class="text-white">{{ selectedShipping?.label }} — {{ selectedShipping?.price === 0 ? 'Zdarma' : `${selectedShipping?.price} Kč` }}</span>
+          <div class="text-right">
+            <span class="text-white block">{{ selectedShipping?.label }} — {{ selectedShipping?.price === 0 ? 'Zdarma' : `${selectedShipping?.price} Kč` }}</span>
+            <span v-if="packetaBranch" class="text-primary-400 text-xs font-semibold block mt-0.5">{{ packetaBranch.name }}</span>
+          </div>
         </div>
         <div class="flex justify-between">
           <span class="text-white/40">Platba</span>
@@ -474,6 +551,36 @@ function selectedStyle(active: boolean) {
           Objednávku vidíte v
           <NuxtLink to="/admin/orders" class="text-primary-400 hover:underline">Admin panelu → Objednávky</NuxtLink>.
         </template>
+      </div>
+
+      <!-- QR Platba pro bankovní převod -->
+      <div v-if="form.paymentMethod === 'transfer'" class="glass-card-strong p-8 mb-10 border border-primary-500/30 shadow-2xl shadow-primary-500/10">
+        <div class="flex flex-col md:flex-row items-center gap-10">
+          <div class="bg-white p-4 rounded-2xl shadow-xl">
+            <qrcode-vue :value="spaydString" :size="180" level="M" render-as="svg" />
+          </div>
+          <div class="text-left flex-grow space-y-4">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <Icon icon="mdi:qrcode-scan" class="text-primary-400" />
+              Platební údaje
+            </h3>
+            <div class="space-y-2 font-mono text-sm">
+              <div class="flex flex-col">
+                <span class="text-white/30 text-[10px] uppercase font-sans font-bold">Číslo účtu</span>
+                <span class="text-white text-base">8294444956 / 5500</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-white/30 text-[10px] uppercase font-sans font-bold">Částka</span>
+                <span class="text-primary-300 text-lg font-black">{{ totalWithShipping }} Kč</span>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-white/30 text-[10px] uppercase font-sans font-bold">Variabilní symbol</span>
+                <span class="text-white text-lg font-bold">{{ orderId }}</span>
+              </div>
+            </div>
+            <p class="text-xs text-white/40 italic">Objednávku odešleme ihned po spárování platby.</p>
+          </div>
+        </div>
       </div>
       <NuxtLink to="/" class="btn-cosmic px-10 py-4 text-lg inline-flex items-center gap-3">
         <Icon icon="mdi:store-outline" height="22" />
