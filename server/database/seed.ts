@@ -23,35 +23,33 @@ function slugify(str: string): string {
 }
 
 // ── Seed Data ───────────────────────────────────────────────────────────────────
-const productData = [
-  { name: 'Stylové boty',         category: 'Obuv',      price: 1200, image: 'boty.png',       stock: 12 },
-  { name: 'Značkové boty',        category: 'Obuv',      price: 2500, image: 'boty2.png',      stock: 8  },
-  { name: 'Gate',                  category: 'Oblečení',  price: 800,  image: 'gate.png',       stock: 15 },
-  { name: 'Anime tričko',         category: 'Oblečení',  price: 600,  image: 'anime.png',      stock: 20 },
-  { name: 'Tetovací rukáv',       category: 'Doplňky',   price: 450,  image: 'tetko.png',      stock: 30 },
-  { name: 'Pero',                 category: 'Kancelář',  price: 120,  image: 'pero.png',       stock: 50 },
-  { name: 'Dívka',                category: 'Umění',     price: 1500, image: 'devka.png',      stock: 3  },
-  { name: 'Bambusový kartáček',   category: 'Hygiena',   price: 50,   image: 'bambus.png',     stock: 40 },
-  { name: 'Chameleón',            category: 'Zvířata',   price: 2000, image: 'chamik.png',     stock: 2  },
-  { name: 'Komiksový sešit',      category: 'Knihy',     price: 150,  image: 'komiks.png',     stock: 25 },
-  { name: 'Korálky',              category: 'Šperky',    price: 300,  image: 'koralky.png',    stock: 18 },
-  { name: 'Obraz',                category: 'Umění',     price: 5000, image: 'obrazek.png',    stock: 1  },
-  { name: 'Mořská hvězdice',      category: 'Dekorace',  price: 250,  image: 'hvezdice.png',   stock: 10 },
-  { name: 'Chobotnice',           category: 'Hračky',    price: 400,  image: 'chobotnice.png', stock: 14 },
-  { name: 'Letní sandály',        category: 'Obuv',      price: 950,  image: 'boty.png',       stock: 9  },
-  { name: 'Sportovní tenisky',    category: 'Obuv',      price: 1800, image: 'boty2.png',      stock: 6  },
-  { name: 'Džínové kraťasy',      category: 'Oblečení',  price: 700,  image: 'gate.png',       stock: 22 },
-  { name: 'Manga tričko',         category: 'Oblečení',  price: 550,  image: 'anime.png',      stock: 17 },
-  { name: 'Luxusní pero',         category: 'Kancelář',  price: 500,  image: 'pero.png',       stock: 35 },
-  { name: 'Portrét',              category: 'Umění',     price: 2000, image: 'devka.png',      stock: 2  },
-  { name: 'Ekologický set',       category: 'Hygiena',   price: 150,  image: 'bambus.png',     stock: 28 },
-  { name: 'Plyšový chameleón',    category: 'Hračky',    price: 350,  image: 'chamik.png',     stock: 11 },
-  { name: 'Sběratelský komiks',   category: 'Knihy',     price: 500,  image: 'komiks.png',     stock: 7  },
-  { name: 'Náhrdelník',           category: 'Šperky',    price: 450,  image: 'koralky.png',    stock: 13 },
-  { name: 'Abstraktní malba',     category: 'Umění',     price: 7500, image: 'obrazek.png',    stock: 1  },
-  { name: 'Dekorace do koupelny', category: 'Dekorace',  price: 180,  image: 'hvezdice.png',   stock: 19 },
-  { name: 'Plyšová chobotnice',   category: 'Hračky',    price: 250,  image: 'chobotnice.png', stock: 16 },
+const productSeed = [
+  { name: 'Stylové boty',         category: 'Obuv',      price: 1200, stock: 12 },
+  { name: 'Značkové boty',        category: 'Obuv',      price: 2500, stock: 8  },
+  { name: 'Letní sandály',        category: 'Obuv',      price: 950,  stock: 9  },
+  { name: 'Sportovní tenisky',    category: 'Obuv',      price: 1800, stock: 6  },
+  { name: 'Anime tričko',         category: 'Oblečení',  price: 600,  stock: 20 },
+  { name: 'Manga tričko',         category: 'Oblečení',  price: 550,  stock: 17 },
+  { name: 'Džínové kraťasy',      category: 'Oblečení',  price: 700,  stock: 22 },
+  { name: 'Tetovací rukáv',       category: 'Doplňky',   price: 450,  stock: 30 },
+  { name: 'Náhrdelník',           category: 'Šperky',    price: 450,  stock: 13 },
+  { name: 'Korálky',              category: 'Šperky',    price: 300,  stock: 18 },
+  { name: 'Pero',                 category: 'Kancelář',  price: 120,  stock: 50 },
+  { name: 'Luxusní pero',         category: 'Kancelář',  price: 500,  stock: 35 },
+  { name: 'Bambusový kartáček',   category: 'Hygiena',   price: 50,   stock: 40 },
+  { name: 'Ekologický set',       category: 'Hygiena',   price: 150,  stock: 28 },
+  { name: 'Plyšová chobotnice',   category: 'Hračky',    price: 250,  stock: 16 },
+  { name: 'Plyšový chameleón',    category: 'Hračky',    price: 350,  stock: 11 },
+  { name: 'Komiksový sešit',      category: 'Knihy',     price: 150,  stock: 25 },
+  { name: 'Sběratelský komiks',   category: 'Knihy',     price: 500,  stock: 7  },
+  { name: 'Obraz',                category: 'Umění',     price: 5000, stock: 1  },
+  { name: 'Abstraktní malba',     category: 'Umění',     price: 7500, stock: 1  },
 ];
+
+const productData = productSeed.map((p) => ({
+  ...p,
+  image: `https://picsum.photos/seed/${slugify(p.name)}/600/800`,
+}));
 
 const orderData = [
   {
@@ -180,7 +178,7 @@ async function seed() {
         title: item.title,
         price: item.price,
         quantity: item.quantity,
-        image: item.image,
+        image: `https://picsum.photos/seed/${slugify(item.title)}/600/800`,
       })),
     );
   }

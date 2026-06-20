@@ -135,69 +135,29 @@ onUnmounted(() => {
 
 <template>
   <!-- Main Navbar -->
-  <nav 
-    class="navbar-main w-full flex items-center justify-between px-4 md:px-6 py-4 fixed top-0 z-50 transition-transform duration-300"
+  <nav
+    class="navbar-main w-full grid grid-cols-[1fr_auto_1fr] items-center px-4 md:px-6 py-2 md:py-3 fixed top-0 z-50 transition-transform duration-300"
     :class="{ 'navbar--hidden': !isVisible && !isSearchOpen && !isMobileMenuOpen, 'navbar--scrolled': isScrolled }"
   >
-    <!-- Brand -->
-    <div class="flex items-center gap-2">
-      <span class="text-lg md:text-xl hippie-float">🔮</span>
-      <NuxtLink to="/" class="text-xl md:text-2xl font-bold tracking-tight transition-all duration-300 hover:scale-105 neon-text-rainbow">
-        Shopik
-      </NuxtLink>
-    </div>
+    <!-- Left: Tynky Tvorba subbrand (same style as brand, slightly smaller, frog) -->
+    <NuxtLink to="/" class="subbrand-link justify-self-start hidden md:flex items-center gap-2 md:gap-3 transition-transform duration-300 hover:scale-105">
+      <span class="subbrand-frog hippie-float">🐸</span>
+      <span class="subbrand-text">Tynky Tvorba</span>
+    </NuxtLink>
+    <NuxtLink to="/" class="md:hidden justify-self-start flex items-center">
+      <img src="/hero/logo-mushroom.png" alt="" class="brand-art mobile-art" />
+    </NuxtLink>
 
-    <!-- Desktop Nav Links -->
-    <div class="hidden md:flex flex-grow justify-center mx-4">
-      <div class="flex items-center gap-1">
-        <div
-          v-for="cat in categoryTree"
-          :key="cat.id"
-          class="relative group"
-        >
-          <NuxtLink
-            :to="`/category/${cat.slug}`"
-            class="nav-link px-4 py-2.5 rounded-full text-sm font-semibold text-white/60 transition-all duration-300 hover:text-white hover:bg-white/5 flex items-center gap-1.5"
-          >
-            <span>{{ cat.name }}</span>
-            <Icon v-if="cat.children.length > 0" name="mdi:chevron-down" class="w-3.5 h-3.5 opacity-40 group-hover:rotate-180 transition-transform duration-300" />
-            <span class="nav-link-glow"></span>
-          </NuxtLink>
 
-          <!-- Level 2 Dropdown -->
-          <div v-if="cat.children.length > 0" class="dropdown-container">
-            <div class="dropdown-menu">
-              <div v-for="sub in cat.children" :key="sub.id" class="relative group/sub">
-                <NuxtLink
-                  :to="`/category/${sub.slug}`"
-                  class="dropdown-item"
-                >
-                  <span class="text-sm font-medium">{{ sub.name }}</span>
-                  <Icon v-if="sub.children.length > 0" name="mdi:chevron-right" class="w-3.5 h-3.5 opacity-40" />
-                </NuxtLink>
+    <!-- Brand (centered) -->
+    <NuxtLink to="/" class="brand-link justify-self-center flex items-center gap-3 md:gap-4 transition-transform duration-300 hover:scale-105">
+      <img src="/hero/logo-mushroom.png" alt="" class="brand-art hippie-float" />
+      <span class="brand-text">Tynky Bordel</span>
+    </NuxtLink>
 
-                <!-- Level 3 Flyout -->
-                <div v-if="sub.children.length > 0" class="submenu-container">
-                  <div class="dropdown-menu">
-                    <NuxtLink
-                      v-for="third in sub.children"
-                      :key="third.id"
-                      :to="`/category/${third.slug}`"
-                      class="dropdown-item"
-                    >
-                      <span class="text-sm font-medium">{{ third.name }}</span>
-                    </NuxtLink>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- Right Actions -->
-    <div class="flex items-center space-x-3 md:space-x-4">
+    <div class="flex items-center justify-end space-x-3 md:space-x-4">
       <button @click="isSearchOpen = true" class="nav-action-btn" title="Hledat">
         <Icon name="iconamoon:search-fill" height="20" />
       </button>
@@ -244,7 +204,7 @@ onUnmounted(() => {
       >
         <div class="p-6 border-b border-white/5 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="text-xl">🔮</span>
+            <span class="text-xl">🍄</span>
             <span class="text-xl font-bold neon-text-rainbow">Shopik</span>
           </div>
           <button @click="isMobileMenuOpen = false" class="text-white/40">
@@ -253,65 +213,6 @@ onUnmounted(() => {
         </div>
 
         <div class="flex-grow overflow-y-auto py-6 px-4">
-          <div class="mb-8">
-            <h3 class="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-4 ml-4">Kategorie</h3>
-            <div class="space-y-1">
-              <div v-for="cat in categoryTree" :key="cat.id">
-                <div class="flex items-center justify-between">
-                  <NuxtLink
-                    :to="`/category/${cat.slug}`"
-                    @click="isMobileMenuOpen = false"
-                    class="flex-grow flex items-center px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/5 transition-all"
-                  >
-                    <span class="text-lg mr-3">🌀</span>
-                    <span class="font-medium">{{ cat.name }}</span>
-                  </NuxtLink>
-                  <button 
-                    v-if="cat.children.length > 0"
-                    @click="toggleMobileCat(cat.id)"
-                    class="p-4 text-white/30"
-                  >
-                    <Icon :name="expandedMobileCats.has(cat.id) ? 'mdi:chevron-up' : 'mdi:chevron-down'" />
-                  </button>
-                </div>
-
-                <!-- Mobile Subcategories -->
-                <div v-if="expandedMobileCats.has(cat.id) && cat.children.length > 0" class="ml-8 space-y-1 border-l border-white/10 pl-2">
-                  <div v-for="sub in cat.children" :key="sub.id">
-                    <div class="flex items-center justify-between">
-                      <NuxtLink
-                        :to="`/category/${sub.slug}`"
-                        @click="isMobileMenuOpen = false"
-                        class="flex-grow px-4 py-2 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/5"
-                      >
-                        {{ sub.name }}
-                      </NuxtLink>
-                      <button 
-                        v-if="sub.children.length > 0"
-                        @click="toggleMobileCat(sub.id)"
-                        class="p-2 text-white/20"
-                      >
-                        <Icon :name="expandedMobileCats.has(sub.id) ? 'mdi:chevron-up' : 'mdi:chevron-down'" />
-                      </button>
-                    </div>
-
-                    <div v-if="expandedMobileCats.has(sub.id) && sub.children.length > 0" class="ml-4 space-y-1 border-l border-white/10 pl-2">
-                      <NuxtLink
-                        v-for="third in sub.children"
-                        :key="third.id"
-                        :to="`/category/${third.slug}`"
-                        @click="isMobileMenuOpen = false"
-                        class="block px-4 py-1.5 rounded-lg text-xs text-white/40 hover:text-white"
-                      >
-                        {{ third.name }}
-                      </NuxtLink>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div>
             <h3 class="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] mb-4 ml-4">Můj účet</h3>
             <div class="space-y-1">
@@ -450,36 +351,106 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* Navbar always has its own pastel band (no transparent hero overlap). */
 .navbar-main {
-  background: transparent;
-  backdrop-filter: blur(0px);
+  background: rgba(255, 216, 223, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(42, 19, 64, 0.1);
+  color: var(--pop-ink);
+  box-shadow: 0 2px 18px rgba(42, 19, 64, 0.06);
 }
 
+/* Slightly more opaque + tighter shadow after scroll for clearer separation. */
 .navbar--scrolled {
-  background: rgba(13, 0, 32, 0.8);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 216, 223, 0.95);
+  box-shadow: 0 4px 22px rgba(42, 19, 64, 0.1);
+}
+
+/* ── Centered brand: Nouveau-style decorative font ── */
+.brand-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Mushroom-eye artwork as brand symbol (instead of 🍄 emoji). */
+.brand-art {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 14px rgba(106, 78, 167, 0.5));
+}
+@media (min-width: 768px) {
+  .brand-art { width: 82px; height: 82px; }
+}
+@media (min-width: 1280px) {
+  .brand-art { width: 96px; height: 96px; }
+}
+.mobile-art { width: 48px; height: 48px; }
+
+.brand-text {
+  font-family: 'Berkshire Swash', 'Petrona', cursive;
+  font-size: 1.85rem;
+  letter-spacing: -0.04em;
+  color: inherit;
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.35);
+}
+@media (min-width: 768px) {
+  .brand-text { font-size: 2.5rem; }
+}
+@media (min-width: 1280px) {
+  .brand-text { font-size: 2.9rem; }
+}
+
+/* ── Left subbrand: "Tynky Tvorba" — same style as brand, smaller, frog ── */
+.subbrand-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.subbrand-frog {
+  font-size: 1.45rem;
+  line-height: 1;
+  filter: drop-shadow(0 3px 8px rgba(106, 78, 167, 0.3));
+}
+@media (min-width: 768px) {
+  .subbrand-frog { font-size: 1.75rem; }
+}
+
+.subbrand-text {
+  font-family: 'Berkshire Swash', 'Petrona', cursive;
+  font-size: 1.2rem;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: inherit;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.35);
+}
+@media (min-width: 768px) {
+  .subbrand-text { font-size: 1.5rem; }
 }
 
 .navbar--hidden {
   transform: translateY(-100%);
 }
 
+/* Pastel navbar: dark icons with light backdrop. */
 .nav-action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
+  padding: 0.55rem;
   border-radius: 9999px;
-  color: rgba(255, 255, 255, 0.5);
-  transition: all 0.3s ease;
+  color: var(--pop-ink);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(42, 19, 64, 0.1);
+  transition: all 0.25s ease;
 }
-
 .nav-action-btn:hover {
-  color: white;
-  background: rgba(139, 92, 246, 0.15);
-  box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
-  transform: scale(1.1);
+  color: var(--pop-ink);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(42, 19, 64, 0.25);
+  transform: scale(1.06);
 }
 
 .nav-link-glow {

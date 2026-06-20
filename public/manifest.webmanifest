@@ -1,0 +1,17 @@
+{
+  "name": "Tynky Admin",
+  "short_name": "Tynky Admin",
+  "description": "Správa shopiku — objednávky, produkty, zákazníci.",
+  "start_url": "/admin",
+  "scope": "/admin/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFD8DF",
+  "theme_color": "#2a1340",
+  "lang": "cs",
+  "icons": [
+    { "src": "/pwa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/pwa/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

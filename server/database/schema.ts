@@ -34,7 +34,7 @@ export const orders = pgTable('orders', {
   customerEmail: text('customer_email').notNull(),
   shippingAddress: text('shipping_address').notNull(),
   totalPrice: doublePrecision('total_price').notNull(),
-  status: text('status').notNull().default('pending'),           // pending | paid | shipped | delivered | cancelled
+  status: text('status').notNull().default('pending'),           // pending | shipped | delivered
   paymentStatus: text('payment_status').notNull().default('unpaid'), // unpaid | paid | refunded
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

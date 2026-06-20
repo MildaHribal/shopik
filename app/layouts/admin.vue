@@ -1,53 +1,117 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const route = useRoute()
 
 const navItems = [
-  { label: 'Dashboard', icon: 'lucide:layout-dashboard', to: '/admin' },
-  { label: 'Produkty', icon: 'lucide:package', to: '/admin/products' },
-  { label: 'Objednávky', icon: 'lucide:shopping-cart', to: '/admin/orders' },
-  { label: 'Zákazníci', icon: 'lucide:users', to: '/admin/customers' },
+  { label: 'Přehled',    icon: 'lucide:layout-dashboard', to: '/admin' },
+  { label: 'Produkty',   icon: 'lucide:package',          to: '/admin/products' },
+  { label: 'Objednávky', icon: 'lucide:shopping-bag',     to: '/admin/orders' },
+  { label: 'Zákazníci',  icon: 'lucide:users',            to: '/admin/customers' },
 ]
 
 const isActive = (path: string) => {
   if (path === '/admin') return route.path === '/admin'
   return route.path.startsWith(path)
 }
+
+// ── PWA setup (admin only) ──────────────────────────────────────────────
+// Inject manifest link + theme color into the page head and register the
+// service worker once the layout mounts. Keeping this in the admin layout
+// scopes the PWA to admin pages without polluting the public site.
+useHead({
+  link: [
+    { rel: 'manifest', href: '/manifest.webmanifest' },
+    { rel: 'apple-touch-icon', href: '/pwa/icon-192.png' },
+  ],
+  meta: [
+    { name: 'theme-color', content: '#2a1340' },
+    { name: 'apple-mobile-web-app-capable', content: 'yes' },
+    { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
+    { name: 'apple-mobile-web-app-title', content: 'Tynky Admin' },
+  ],
+})
+
+const installEvent = ref<any>(null)
+const isInstalled = ref(false)
+
+const onBIP = (e: Event) => {
+  e.preventDefault()
+  installEvent.value = e
+}
+const onAppInstalled = () => {
+  installEvent.value = null
+  isInstalled.value = true
+}
+
+async function install() {
+  if (!installEvent.value) return
+  installEvent.value.prompt()
+  const choice = await installEvent.value.userChoice
+  if (choice.outcome === 'accepted') {
+    installEvent.value = null
+  }
+}
+
+onMounted(() => {
+  if (typeof window === 'undefined') return
+  if (window.matchMedia?.('(display-mode: standalone)').matches) {
+    isInstalled.value = true
+  }
+  window.addEventListener('beforeinstallprompt', onBIP)
+  window.addEventListener('appinstalled', onAppInstalled)
+
+  // Register the service worker (scoped to /admin/).
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register('/admin-sw.js', { scope: '/admin/' })
+      .catch((err) => console.warn('[pwa] SW register failed', err))
+  }
+})
+onUnmounted(() => {
+  if (typeof window === 'undefined') return
+  window.removeEventListener('beforeinstallprompt', onBIP)
+  window.removeEventListener('appinstalled', onAppInstalled)
+})
 </script>
 
 <template>
-  <div class="admin-layout">
-    <!-- Sidebar -->
+  <div class="admin-shell admin-layout">
     <aside class="admin-sidebar">
-      <div class="sidebar-header">
-        <NuxtLink to="/admin" class="sidebar-logo">
-          <Icon icon="lucide:shield" height="28" class="text-primary-400" />
-          <span class="logo-text">Shopik Admin</span>
-        </NuxtLink>
-      </div>
+      <NuxtLink to="/admin" class="sidebar-logo">
+        <span class="logo-mark">🍄</span>
+        <span class="logo-text">Tynky · Admin</span>
+      </NuxtLink>
 
       <nav class="sidebar-nav">
         <NuxtLink
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
-          :class="['nav-item', { active: isActive(item.to) }]"
+          :class="['sidebar-link', { active: isActive(item.to) }]"
         >
-          <Icon :icon="item.icon" height="20" />
+          <Icon :icon="item.icon" height="18" />
           <span>{{ item.label }}</span>
         </NuxtLink>
       </nav>
 
-      <div class="sidebar-footer">
-        <NuxtLink to="/" class="nav-item back-link">
-          <Icon icon="lucide:arrow-left" height="20" />
-          <span>Zpět na obchod</span>
-        </NuxtLink>
-      </div>
+      <button
+        v-if="installEvent && !isInstalled"
+        @click="install"
+        class="install-btn"
+        title="Nainstalovat jako aplikaci"
+      >
+        <Icon icon="lucide:download" height="16" />
+        <span>Instalovat aplikaci</span>
+      </button>
+
+      <NuxtLink to="/" class="sidebar-back">
+        <Icon icon="lucide:arrow-left" height="16" />
+        <span>Zpět na shop</span>
+      </NuxtLink>
     </aside>
 
-    <!-- Main content -->
     <main class="admin-main">
       <slot />
     </main>
@@ -58,13 +122,13 @@ const isActive = (path: string) => {
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background: #0f1117;
 }
 
 .admin-sidebar {
-  width: 260px;
-  background: #161822;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  width: 232px;
+  background: rgba(255, 255, 255, 0.6);
+  border-right: 1px solid rgba(42, 19, 64, 0.08);
+  backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -72,75 +136,127 @@ const isActive = (path: string) => {
   left: 0;
   bottom: 0;
   z-index: 40;
-}
-
-.sidebar-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 1.5rem 0.75rem;
 }
 
 .sidebar-logo {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
+  padding: 0.25rem 0.85rem 1.25rem;
   text-decoration: none;
+  color: #2a1340;
+  border-bottom: 1px solid rgba(42, 19, 64, 0.08);
+  margin-bottom: 1rem;
+}
+
+.logo-mark {
+  font-size: 1.4rem;
+  line-height: 1;
 }
 
 .logo-text {
+  font-family: 'Berkshire Swash', cursive;
   font-size: 1.25rem;
-  font-weight: 700;
-  color: #e2e8f0;
   letter-spacing: -0.02em;
 }
 
 .sidebar-nav {
   flex: 1;
-  padding: 1rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.15rem;
 }
 
-.nav-item {
+.sidebar-link {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  color: #94a3b8;
+  gap: 0.7rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 9px;
+  color: rgba(42, 19, 64, 0.7);
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
+}
+.sidebar-link:hover {
+  color: #2a1340;
+  background: rgba(42, 19, 64, 0.05);
+}
+.sidebar-link.active {
+  color: #2a1340;
+  background: rgba(179, 50, 76, 0.1);
+  font-weight: 600;
 }
 
-.nav-item:hover {
-  color: #e2e8f0;
-  background: rgba(255, 255, 255, 0.05);
+.install-btn {
+  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  background: #2a1340;
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  transition: background 0.18s ease;
 }
+.install-btn:hover { background: #3a1f55; }
 
-.nav-item.active {
-  color: #6dc995;
-  background: rgba(109, 201, 149, 0.1);
+.sidebar-back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  color: rgba(42, 19, 64, 0.5);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border-top: 1px solid rgba(42, 19, 64, 0.08);
+  padding-top: 1rem;
+  margin-top: 0.75rem;
+  transition: color 0.18s ease;
 }
-
-.sidebar-footer {
-  padding: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.back-link {
-  color: #64748b !important;
-}
-
-.back-link:hover {
-  color: #94a3b8 !important;
-}
+.sidebar-back:hover { color: #2a1340; }
 
 .admin-main {
   flex: 1;
-  margin-left: 260px;
-  padding: 2rem;
+  margin-left: 232px;
+  padding: 2.25rem 2.25rem 3rem;
   min-height: 100vh;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .admin-sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: row;
+    padding: 0.75rem 1rem;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+  }
+  .sidebar-logo {
+    padding: 0;
+    border-bottom: 0;
+    margin-bottom: 0;
+    margin-right: auto;
+    white-space: nowrap;
+  }
+  .sidebar-nav { flex: none; flex-direction: row; gap: 0.25rem; }
+  .sidebar-link span { display: none; }
+  .sidebar-back { border-top: 0; padding: 0.5rem; margin-top: 0; }
+  .sidebar-back span { display: none; }
+  .admin-main { margin-left: 0; padding: 1.25rem; }
 }
 </style>

@@ -342,7 +342,7 @@ const submitReview = async () => {
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-12">
+  <div class="product-detail max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-12">
     <!-- Loading Skeleton -->
     <div v-if="pending" class="relative">
       <div class="inline-flex items-center gap-2 text-white/40 mb-4 md:mb-8">
@@ -686,6 +686,103 @@ const submitReview = async () => {
 </template>
 
 <style scoped>
+/* ── Pastel theme override for product detail page ──
+   The original markup uses Tailwind utility classes hardcoded for the dark
+   cosmic theme (text-white, glass-card, bg-white/X). On the pastel page bg
+   these become unreadable. We surgically override descendant utilities via
+   attribute selectors instead of rewriting the 600+ lines of markup.    */
+.product-detail :is(h1, h2, h3) {
+  color: var(--pop-ink, #2a1340) !important;
+}
+.product-detail [class~="text-white"],
+.product-detail [class*="text-white/"] {
+  color: var(--pop-ink, #2a1340) !important;
+}
+/* Light tints originally used for muted text — keep them muted on light bg. */
+.product-detail [class~="text-white\\/40"],
+.product-detail [class~="text-white\\/50"],
+.product-detail [class~="text-white\\/55"] {
+  color: rgba(42, 19, 64, 0.6) !important;
+}
+.product-detail [class~="text-white\\/30"],
+.product-detail [class~="text-white\\/20"] {
+  color: rgba(42, 19, 64, 0.45) !important;
+}
+.product-detail [class~="text-white\\/70"] {
+  color: rgba(42, 19, 64, 0.78) !important;
+}
+
+/* "Glass" cards become bright matte cards on the pastel page. */
+.product-detail :deep(.glass-card-strong),
+.product-detail :deep(.glass-card) {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(42, 19, 64, 0.1) !important;
+  box-shadow: 0 14px 32px rgba(42, 19, 64, 0.08) !important;
+}
+
+/* Cosmic gradient title + neon text are unreadable on light — fall back to ink. */
+.product-detail :deep(.neon-text),
+.product-detail :deep(.neon-text-cyan),
+.product-detail :deep(.neon-text-rainbow) {
+  color: var(--pop-ink, #2a1340) !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--pop-ink, #2a1340) !important;
+  text-shadow: none !important;
+}
+.product-detail :deep(.cosmic-badge) {
+  background: rgba(42, 19, 64, 0.08) !important;
+  color: var(--pop-ink, #2a1340) !important;
+  border: 1px solid rgba(42, 19, 64, 0.18) !important;
+  text-shadow: none !important;
+}
+
+/* Translucent white surfaces → translucent ink. */
+.product-detail [class*="bg-white/"] {
+  background: rgba(255, 255, 255, 0.6) !important;
+}
+.product-detail [class*="bg-black/"] {
+  background: rgba(42, 19, 64, 0.06) !important;
+}
+
+/* Borders that were rgba(white) on dark → rgba(ink) on light. */
+.product-detail [class*="border-white/"] {
+  border-color: rgba(42, 19, 64, 0.15) !important;
+}
+
+/* Description "neon left bar" turns into a subtle ink bar. */
+.product-detail [class*="border-primary-500/"] {
+  border-color: rgba(179, 50, 76, 0.4) !important;
+}
+
+/* Status pill (skladem / vyprodáno) — keep semantic colors but dark on light. */
+.product-detail :deep(.text-green-300) { color: #1f7a3a !important; }
+.product-detail :deep(.text-red-300)   { color: #8a2a2a !important; }
+
+/* Main heading: bigger + display font on top of dark color. */
+.product-detail :deep(h1) {
+  font-family: 'Caprasimo', Georgia, serif !important;
+  letter-spacing: -0.02em;
+}
+.product-detail :deep(h2) {
+  font-family: 'Gloock', Georgia, serif !important;
+}
+
+/* Price — switch the rainbow gradient to a clean dark display number. */
+.product-detail :deep(.neon-text-rainbow) {
+  font-family: 'Gloock', Georgia, serif !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+}
+
+/* Add-to-cart button (still dark/colorful gradient is OK against pastel). */
+.product-detail :deep(.btn-cosmic),
+.product-detail :deep(.btn-cosmic-outline) {
+  color: #fff !important;
+  text-shadow: none !important;
+}
+
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

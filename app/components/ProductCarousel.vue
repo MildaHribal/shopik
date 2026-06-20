@@ -105,9 +105,7 @@ defineExpose({
           threshold: 0.12,
         }"
       >
-        <NuxtLink :to="`/product/${product.slug || product.id}`" :prefetch="false" class="block h-full" :aria-label="product.title">
-          <ProductCard :product="product" :isPriority="index < 4" class="h-full" />
-        </NuxtLink>
+        <ProductCard :product="product" :isPriority="index < 4" class="h-full" />
       </div>
     </div>
   </div>

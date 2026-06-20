@@ -1,61 +1,52 @@
 <script setup lang="ts">
 import ProductCard from "~/components/products/ProductCard.vue";
 import ProductCarousel from "~/components/ProductCarousel.vue";
+import RingOrnament from "~/components/RingOrnament.vue";
 import { Icon } from "@iconify/vue";
 import type { Product } from '~~/types';
 
 const config = useRuntimeConfig()
 const siteUrl = config.public.siteUrl || useRequestURL().origin
 useSeoMeta({
-  title: 'Shopik — kosmický shop',
-  description: 'Kosmické zboží, gadgety a doplňky. Prohlédněte si nejprodávanější produkty a objevte nové dimenze zábavy.',
-  ogTitle: 'Shopik — kosmický shop',
-  ogDescription: 'Kosmické zboží, gadgety a doplňky. Prohlédněte si nejprodávanější produkty a objevte nové dimenze zábavy.',
+  title: 'Shopik',
+  description: 'Tištěné, šité, malované. Ručně vybírané kousky pro každého, kdo si všímá detailů.',
+  ogTitle: 'Shopik — viděno jinak',
+  ogDescription: 'Tištěné, šité, malované. Ručně vybírané kousky pro každého, kdo si všímá detailů.',
   ogType: 'website',
   ogUrl: `${siteUrl}/`,
   twitterCard: 'summary_large_image',
 })
-const { data: rawProducts, pending, error } = await useFetch<Product[]>('/api/products?limit=30&random=true')
 
-// Split the random products into three distinct sliders
-const bestSellers = computed(() => {
-  if (!rawProducts.value) return [];
-  return rawProducts.value.slice(0, 10).map((p, index) => ({
-    ...p,
-    id: p.id || `bs-${index}`
-  }));
-});
+const { data: allProducts, pending, error } = await useFetch<Product[]>('/api/products?limit=40')
 
 const featured = computed(() => {
-  if (!rawProducts.value) return [];
-  return rawProducts.value.slice(10, 20).map((p, index) => ({
-    ...p,
-    id: p.id || `feat-${index}`
-  }));
+  if (!allProducts.value) return [];
+  return allProducts.value
+    .slice(0, 10)
+    .map((p, index) => ({ ...p, id: p.id || `feat-${index}` }));
 });
 
-const newArrivals = computed(() => {
-  if (!rawProducts.value) return [];
-  return rawProducts.value.slice(20, 30).map((p, index) => ({
+const fullCollection = computed(() => {
+  if (!allProducts.value) return [];
+  return allProducts.value.map((p, index) => ({
     ...p,
-    id: p.id || `new-${index}`
+    id: p.id || `col-${index}`,
   }));
 });
 
 const jsonLd = computed(() => {
-  if (!rawProducts.value) return [];
+  if (!allProducts.value) return [];
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Shopik',
     url: siteUrl,
-    description: 'Kosmické zboží, gadgety a doplňky. Prohlédněte si nejprodávanější produkty a objevte nové dimenze zábavy.'
+    description: 'Tištěné, šité, malované. Ručně vybírané kousky pro každého, kdo si všímá detailů.'
   };
-
   const itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    itemListElement: rawProducts.value.map((p, index) => ({
+    itemListElement: allProducts.value.map((p, index) => ({
       '@type': 'ListItem',
       position: index + 1,
       item: {
@@ -72,11 +63,11 @@ const jsonLd = computed(() => {
       }
     }))
   };
-
   return [websiteSchema, itemListSchema];
 });
 
 useHead(() => ({
+  htmlAttrs: { class: 'psy-grain' },
   link: [{ rel: 'canonical', href: `${siteUrl}/` }],
   script: jsonLd.value.map(schema => ({
     type: 'application/ld+json',
@@ -85,311 +76,253 @@ useHead(() => ({
 }))
 
 const carouselBest = ref<InstanceType<typeof ProductCarousel> | null>(null);
-const carouselFeat = ref<InstanceType<typeof ProductCarousel> | null>(null);
-const carouselNew = ref<InstanceType<typeof ProductCarousel> | null>(null);
-
 </script>
 
 <template>
   <div class="w-full">
     <div v-if="pending" class="flex items-center justify-center min-h-[60vh]">
       <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto mb-4"></div>
-        <p class="text-white/40">Načítání kosmického zboží...</p>
+        <div class="psy-mono-eyebrow mb-4 text-[var(--psy-acid)]">načítám</div>
+        <div class="w-12 h-12 mx-auto rounded-full border border-[var(--psy-cream)]/15 border-t-[var(--psy-acid)] animate-spin"></div>
       </div>
     </div>
-    <div v-else-if="error" class="glass-card mx-4 md:mx-8 mt-8 p-6 md:p-8 text-center">
-      <p class="text-red-400 text-lg">{{ error.message }}</p>
+
+    <div v-else-if="error" class="mx-5 md:mx-12 mt-12 p-6 border border-[var(--psy-rust)]/40 rounded-3xl text-[var(--psy-cream)]">
+      <p class="psy-serif text-lg">{{ error.message }}</p>
     </div>
+
     <template v-else>
-
       <!-- Hero -->
-      <div v-fly="{ direction: 'up', distance: 24, duration: 760 }">
-        <PageHero />
-      </div>
+      <PageHero />
 
-      <!-- Best Sellers Section -->
-      <section v-fly="{ direction: 'left', distance: 56 }" class="py-10 md:py-16 px-4 md:px-14">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
+      <!-- Featured carousel -->
+      <section v-fly="{ direction: 'up', distance: 40 }" class="psy-section relative">
+        <div class="flex items-end justify-between gap-4 mb-8 md:mb-12">
           <div>
-            <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-tight neon-text">
-              Naše nejprodávanější výtvory 🔥
+            <div class="psy-mono-eyebrow mb-2 md:mb-3">— Výběr</div>
+            <h2 class="psy-display-tight keyboard-title text-[2.4rem] sm:text-5xl md:text-6xl text-[var(--psy-cream)]">
+              <span v-for="(ch, i) in 'Best'" :key="'b'+i" class="key">{{ ch }}</span>
+              <span class="key">&nbsp;</span>
+              <span v-for="(ch, i) in 'Pieces'" :key="'p'+i" class="key psy-acid">{{ ch }}</span>
             </h2>
-            <p class="text-white/30 mt-1 md:mt-2 text-xs md:text-sm">Hvězdné kusy, které letí jako komety</p>
           </div>
-          <div class="flex gap-2">
+          <div class="flex gap-2 shrink-0">
             <button
               @click="carouselBest?.prev()"
-              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 micro-lift"
+              class="w-11 h-11 md:w-12 md:h-12 rounded-full border border-[var(--psy-cream)]/15 text-[var(--psy-cream)]/70 hover:text-[var(--psy-ink)] hover:bg-[var(--psy-cream)] hover:border-[var(--psy-cream)] transition-all flex items-center justify-center"
               aria-label="Předchozí"
             >
-              <Icon icon="ep:arrow-left-bold" height="18" />
+              <Icon icon="lucide:arrow-left" height="18" />
             </button>
             <button
               @click="carouselBest?.next()"
-              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 micro-lift"
+              class="w-11 h-11 md:w-12 md:h-12 rounded-full border border-[var(--psy-cream)]/15 text-[var(--psy-cream)]/70 hover:text-[var(--psy-ink)] hover:bg-[var(--psy-cream)] hover:border-[var(--psy-cream)] transition-all flex items-center justify-center"
               aria-label="Další"
             >
-              <Icon icon="ep:arrow-right-bold" height="18" />
+              <Icon icon="lucide:arrow-right" height="18" />
             </button>
           </div>
         </div>
 
-        <div v-fly="{ direction: 'up', delay: 80, distance: 38 }">
+        <div class="psy-prod-hover">
           <ProductCarousel
-            v-if="bestSellers.length > 0"
-            :products="bestSellers"
+            v-if="featured.length > 0"
+            :products="featured"
             ref="carouselBest"
           />
         </div>
       </section>
 
-      <!-- Cosmic Divider -->
-      <div class="cosmic-divider mx-4 md:mx-14"></div>
+      <!-- Wavy divider -->
+      <div class="px-5 md:px-12">
+        <div class="psy-wave-divider"></div>
+      </div>
 
-      <!-- Banner Section -->
-      <section v-fly="{ direction: 'right', delay: 40, distance: 60 }" class="relative mx-4 md:mx-14 rounded-2xl md:rounded-3xl overflow-hidden my-8 md:my-10">
-        <div class="relative min-h-[280px] md:h-[350px] flex items-center">
-          <div class="absolute inset-0 bg-gradient-to-br from-primary-900/50 via-secondary-900/30 to-accent-900/40"></div>
-          <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50"></div>
+      <!-- Editorial banner -->
+      <section v-fly="{ direction: 'up', distance: 30 }" class="psy-section banner-section">
+        <div class="relative rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/8 bg-black">
+          <!-- Mushroom-eye artwork as background -->
+          <img
+            src="/hero/mushroom-eye.png"
+            alt=""
+            class="banner-bg absolute inset-0 w-full h-full object-cover"
+          />
+          <!-- Darkening scrim on left for text readability -->
+          <div class="banner-scrim absolute inset-0"></div>
+          <!-- Decorative rotating rings (kryo2k/xbxjGP) -->
+          <RingOrnament class="banner-ring" style="top: -80px; left: -80px;" />
+          <RingOrnament class="banner-ring" style="bottom: -80px; right: -80px;" />
 
-          <div class="relative z-10 px-6 md:px-16 py-8 max-w-2xl">
-            <span class="cosmic-badge mb-3 md:mb-4">🍄 Novinka</span>
-            <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 md:mb-4 neon-text-pink">
-              Největší výběr gadgetů v Česku
-            </h2>
-            <p class="text-white/50 text-sm md:text-lg mb-5 md:mb-6">Objevte nové dimenze zábavy s naší kosmickou kolekcí</p>
-            <NuxtLink to="/category/vsechny" class="btn-cosmic micro-lift inline-flex items-center gap-2 group text-sm md:text-base px-6 py-3 md:px-8 md:py-3">
-              <span>Prohlédnout kolekci</span>
-              <Icon icon="ep:right" height="18" class="transition-transform group-hover:translate-x-1" />
-            </NuxtLink>
+          <div class="relative grid grid-cols-1 md:grid-cols-12 items-center gap-6 p-8 md:p-14 lg:p-20 min-h-[320px] md:min-h-[420px]">
+            <div class="md:col-span-7 banner-content">
+              <div class="psy-mono-eyebrow banner-eyebrow mb-3">— Jaro 2026</div>
+              <h3 class="psy-display-tight banner-title text-3xl sm:text-4xl md:text-6xl mb-4 md:mb-6">
+                Drobnosti, které <span class="psy-serif italic font-normal">změní</span> sestavu.
+              </h3>
+              <NuxtLink to="/category/vsechny" class="psy-pill psy-pill-ghost banner-cta">
+                <span>Otevřít</span>
+                <Icon icon="lucide:arrow-up-right" height="18" />
+              </NuxtLink>
+            </div>
           </div>
-
-          <!-- Floating decorations - hidden on very small screens -->
-          <div class="hidden sm:block absolute right-10 top-10 text-5xl hippie-float opacity-20">🌌</div>
-          <div class="hidden sm:block absolute right-32 bottom-10 text-4xl hippie-float-delayed opacity-15">🔮</div>
         </div>
       </section>
 
-      <!-- Cosmic Divider -->
-      <div class="cosmic-divider mx-4 md:mx-14"></div>
-
-      <!-- Featured Section -->
-      <section v-fly="{ direction: 'up', distance: 40 }" class="py-10 md:py-16 px-4 md:px-14">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
+      <!-- Full collection grid -->
+      <section id="kolekce" v-fly="{ direction: 'up', distance: 30 }" class="psy-section">
+        <div class="flex items-end justify-between gap-4 mb-8 md:mb-12">
           <div>
-            <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-tight neon-text-cyan">
-              Vybrané pro tebe ✨
+            <div class="psy-mono-eyebrow mb-2 md:mb-3">— Katalog</div>
+            <h2 class="psy-display-tight keyboard-title text-[2.4rem] sm:text-5xl md:text-6xl text-[var(--psy-cream)]">
+              <span v-for="(ch, i) in 'Všechny'" :key="'v'+i" class="key">{{ ch }}</span>
+              <span class="key">&nbsp;</span>
+              <span v-for="(ch, i) in 'kousky'" :key="'k'+i" class="key psy-acid">{{ ch }}</span>
             </h2>
-            <p class="text-white/30 mt-1 md:mt-2 text-xs md:text-sm">Must-have kousky pro každou dimenzi</p>
           </div>
-          <div class="flex gap-2">
-            <button
-              @click="carouselFeat?.prev()"
-              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 micro-lift"
-              aria-label="Předchozí"
-            >
-              <Icon icon="ep:arrow-left-bold" height="18" />
-            </button>
-            <button
-              @click="carouselFeat?.next()"
-              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 micro-lift"
-              aria-label="Další"
-            >
-              <Icon icon="ep:arrow-right-bold" height="18" />
-            </button>
+          <div class="text-right shrink-0">
+            <div class="psy-serif italic text-[var(--psy-cream)]/50 text-sm md:text-base">
+              {{ fullCollection.length }} kousků
+            </div>
           </div>
         </div>
 
-        <ProductCarousel
-          v-if="featured.length > 0"
-          :products="featured"
-          ref="carouselFeat"
-        />
-      </section>
-
-      <!-- Cosmic Divider -->
-      <div class="cosmic-divider mx-4 md:mx-14 opacity-50"></div>
-
-      <!-- New Arrivals Section -->
-      <section v-fly="{ direction: 'up', distance: 40 }" class="py-10 md:py-16 px-4 md:px-14">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
-          <div>
-            <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white tracking-tight text-secondary-400">
-              Absolutní novinky 🚀
-            </h2>
-            <p class="text-white/30 mt-1 md:mt-2 text-xs md:text-sm">Freshest kapky z jiného vesmíru</p>
-          </div>
-          <div class="flex gap-2">
-            <button
-              @click="carouselNew?.prev()"
-              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 micro-lift"
-            >
-              <Icon icon="ep:arrow-left-bold" height="18" />
-            </button>
-            <button
-              @click="carouselNew?.next()"
-              class="p-2.5 md:p-3 rounded-full glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 micro-lift"
-            >
-              <Icon icon="ep:arrow-right-bold" height="18" />
-            </button>
+        <div class="psy-prod-hover max-w-6xl mx-auto">
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5 md:gap-7">
+            <ProductCard
+              v-for="(prod, idx) in fullCollection"
+              :key="prod.id"
+              :product="prod"
+              :is-priority="idx < 4"
+            />
           </div>
         </div>
-
-        <ProductCarousel
-          v-if="newArrivals.length > 0"
-          :products="newArrivals"
-          ref="carouselNew"
-        />
       </section>
 
-      <!-- All Products Call to action -->
-      <section v-fly="{ direction: 'up', distance: 30 }" class="py-12 md:py-16 text-center px-4 flex flex-col items-center">
-        <h3 class="text-2xl text-white font-bold mb-6">Chceš prozkoumat celý vesmír?</h3>
-        <NuxtLink to="/category/vsechny" class="btn-cosmic micro-lift inline-flex items-center justify-center gap-3 group text-lg md:text-xl px-10 py-5">
-           <span>Zobrazit všechny produkty</span>
-           <Icon icon="lucide:sparkles" height="24" class="transition-transform group-hover:rotate-12 group-hover:scale-110 text-yellow-300" />
-        </NuxtLink>
-      </section>
-
-      <!-- Category Showcase Banner -->
-      <section class="relative mx-4 md:mx-14 rounded-2xl md:rounded-3xl overflow-hidden my-12 shadow-2xl">
-        <div class="relative min-h-[300px] flex items-center justify-center text-center p-8 bg-black/60 backdrop-blur-sm border border-white/10 group">
-          <div class="absolute inset-0 z-0">
-             <img src="https://images.unsplash.com/photo-1603513492128-ba7bc8b4fb7c?q=80&w=2000&auto=format&fit=crop" class="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-700" alt="Psychedelic Vibes" />
-          </div>
-          <div class="relative z-10 max-w-2xl">
-            <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-wider uppercase drop-shadow-lg">
-              Psy-Trance Kolekce
-            </h2>
-            <p class="text-lg md:text-xl text-white/80 mb-8 drop-shadow-md">
-              Připrav se na letní festivaly. Oblečení, které reflektuje tvůj vnitřní vesmír.
+      <!-- Tiles / values -->
+      <section v-fly="{ direction: 'up', distance: 30 }" class="psy-section">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+          <div class="psy-tile">
+            <span class="psy-tile-num">01</span>
+            <Icon icon="lucide:sprout" class="text-[var(--psy-acid)] w-7 h-7 mb-5" />
+            <h3 class="psy-display-tight text-xl text-[var(--psy-cream)] mb-2">Pečlivý výběr</h3>
+            <p class="text-[var(--psy-cream)]/55 text-sm leading-relaxed">
+              Každý kousek schválně vybíráme. Žádné náhody, žádný balast.
             </p>
-            <NuxtLink to="/category/moda" class="inline-flex items-center gap-2 bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-500 hover:to-secondary-500 text-white font-bold py-3 px-8 rounded-full shadow-lg shadow-primary-500/50 transition-all hover:scale-105">
-              Objev módu
-              <Icon icon="ep:right" />
-            </NuxtLink>
           </div>
-        </div>
-      </section>
-
-      <!-- Brand Philosophy / Values -->
-      <section class="py-12 md:py-20 px-4 md:px-14">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          <div class="glass-card p-8 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300">
-            <div class="w-16 h-16 bg-primary-500/20 rounded-full flex items-center justify-center mb-6">
-              <Icon icon="lucide:leaf" class="text-primary-400 w-8 h-8" />
-            </div>
-            <h3 class="text-xl font-bold text-white mb-3">Eko & Udržitelně</h3>
-            <p class="text-white/60">Záleží nám na Matce Zemi. Vybíráme produkty z udržitelných a šetrných materiálů.</p>
-          </div>
-          <div class="glass-card p-8 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300">
-            <div class="w-16 h-16 bg-secondary-500/20 rounded-full flex items-center justify-center mb-6">
-              <Icon icon="lucide:rocket" class="text-secondary-400 w-8 h-8" />
-            </div>
-            <h3 class="text-xl font-bold text-white mb-3">Rychlá Teleportace</h3>
-            <p class="text-white/60">Tvůj balíček odstartuje rychlostí světla. Expresní doručení na vybrané pobočky.</p>
-          </div>
-          <div class="glass-card p-8 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300">
-            <div class="w-16 h-16 bg-accent-500/20 rounded-full flex items-center justify-center mb-6">
-              <Icon icon="lucide:heart" class="text-accent-400 w-8 h-8" />
-            </div>
-            <h3 class="text-xl font-bold text-white mb-3">100% Lásky</h3>
-            <p class="text-white/60">Každý produkt je pečlivě vybrán a zabalen s pozitivní energií a aurou.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Newsletter Section -->
-      <section class="relative py-16 md:py-24 overflow-hidden border-y border-white/5 bg-[#120025] shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]">
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-[100px] pointer-events-none"></div>
-        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-secondary-500/10 rounded-full blur-[100px] pointer-events-none"></div>
-
-        <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
-          <Icon icon="lucide:mail" class="w-12 h-12 text-primary-400 mx-auto mb-6" />
-          <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6">
-            Komunikátor z hlubokého vesmíru 🛸
-          </h2>
-          <p class="text-white/60 text-lg md:text-xl mb-10 max-w-2xl mx-auto font-light">
-            Přihlas se k našemu newsletteru. Žádný spam, jen zprávy o nových dimenzích produktů a slevách.
-          </p>
-          
-          <form @submit.prevent class="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-xl mx-auto">
-            <input type="email" placeholder="Tvůj e-mail pro telepatické spojení..." required 
-              class="w-full sm:flex-1 px-6 py-4 bg-black/40 border border-white/10 rounded-2xl text-white placeholder:text-white/30 focus:border-primary-500/50 outline-none" />
-            <button type="button" class="btn-cosmic w-full sm:w-auto px-8 py-4 whitespace-nowrap">
-              Odebírat
-            </button>
-          </form>
-        </div>
-      </section>
-
-      <!-- Contact Form Section -->
-      <section class="py-16 md:py-24 px-4 md:px-14 relative">
-        <div class="max-w-5xl mx-auto glass-card p-8 md:p-12 flex flex-col md:flex-row gap-12 relative overflow-hidden">
-          <div class="absolute -right-20 -top-20 text-9xl text-white/5">💬</div>
-          
-          <div class="w-full md:w-5/12 z-10">
-            <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-4 neon-text">Napiš nám na domovskou planetu</h2>
-            <p class="text-white/60 mb-8">
-              Máš dotaz ohledně objednávky? Hledáš konkrétní krystal? Nebo nám jen chceš poslat dobrou energii? Jsme tu pro tebe.
+          <div class="psy-tile">
+            <span class="psy-tile-num">02</span>
+            <Icon icon="lucide:package" class="text-[var(--psy-acid)] w-7 h-7 mb-5" />
+            <h3 class="psy-display-tight text-xl text-[var(--psy-cream)] mb-2">Z Prahy do dvou dnů</h3>
+            <p class="text-[var(--psy-cream)]/55 text-sm leading-relaxed">
+              Balíme stejný den, posíláme přes Zásilkovnu nebo Českou poštu.
             </p>
-            
-            <div class="space-y-4">
-              <div class="flex items-center gap-4 text-white/80">
-                <div class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
-                  <Icon icon="lucide:user" class="text-primary-400" />
-                </div>
-                <span>Kristýna Egnerová</span>
-              </div>
-              <div class="flex items-center gap-4 text-white/80">
-                <div class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
-                  <Icon icon="lucide:map-pin" class="text-primary-400" />
-                </div>
-                <span>Kosmická 42, 110 00 Praha</span>
-              </div>
-              <div class="flex items-center gap-4 text-white/80">
-                <div class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
-                  <Icon icon="lucide:phone" class="text-primary-400" />
-                </div>
-                <span>+420 777 888 999</span>
-              </div>
-              <div class="flex items-center gap-4 text-white/80">
-                <div class="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center">
-                  <Icon icon="lucide:mail" class="text-primary-400" />
-                </div>
-                <span>hello@shopik.space</span>
-              </div>
-            </div>
           </div>
-          
-          <div class="w-full md:w-7/12 z-10">
-            <form @submit.prevent class="space-y-4">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="space-y-1">
-                  <label class="text-xs text-white/50 uppercase tracking-wider pl-1">Jméno</label>
-                  <input type="text" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary-500/50 outline-none transition-colors" placeholder="Tvé pozemské jméno" required>
-                </div>
-                <div class="space-y-1">
-                  <label class="text-xs text-white/50 uppercase tracking-wider pl-1">E-mail</label>
-                  <input type="email" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary-500/50 outline-none transition-colors" placeholder="Tvůj e-mail" required>
-                </div>
-              </div>
-              <div class="space-y-1">
-                <label class="text-xs text-white/50 uppercase tracking-wider pl-1">Zpráva</label>
-                <textarea rows="4" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-primary-500/50 outline-none transition-colors resize-none" placeholder="Co máš na srdci?..." required></textarea>
-              </div>
-              <button type="button" class="w-full bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-500 hover:to-secondary-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all hover:-translate-y-1 mt-2">
-                Odeslat zprávu
-              </button>
-            </form>
+          <div class="psy-tile">
+            <span class="psy-tile-num">03</span>
+            <Icon icon="lucide:hand-heart" class="text-[var(--psy-acid)] w-7 h-7 mb-5" />
+            <h3 class="psy-display-tight text-xl text-[var(--psy-cream)] mb-2">Bez šidítek</h3>
+            <p class="text-[var(--psy-cream)]/55 text-sm leading-relaxed">
+              Pokud něco nesedí, vyměníme nebo vrátíme. Bez otázek.
+            </p>
           </div>
         </div>
       </section>
-
     </template>
   </div>
 </template>
 
 <style scoped>
+/* ── Keyboard press animation on section headings ──
+   Each character is its own .key span and gets a unique press-down keyframe.
+   Durations + dip timings differ per nth-child so the effect is irregular
+   (looks like sporadic typing rather than a clean wave). */
+.keyboard-title .key {
+  display: inline-block;
+  letter-spacing: -0.04em;
+  transition: transform 0.18s ease;
+  transform-origin: 50% 100%;
+}
+
+@keyframes press-a {
+  0%, 30%, 45%, 100% { transform: translateY(0); }
+  35% { transform: translateY(8px); }
+}
+@keyframes press-b {
+  0%, 70%, 85%, 100% { transform: translateY(0); }
+  75% { transform: translateY(9px); }
+}
+@keyframes press-c {
+  0%, 15%, 30%, 100% { transform: translateY(0); }
+  20% { transform: translateY(7px); }
+}
+@keyframes press-d {
+  0%, 50%, 65%, 100% { transform: translateY(0); }
+  55% { transform: translateY(10px); }
+}
+@keyframes press-e {
+  0%, 25%, 40%, 100% { transform: translateY(0); }
+  30% { transform: translateY(8px); }
+}
+@keyframes press-f {
+  0%, 60%, 75%, 100% { transform: translateY(0); }
+  65% { transform: translateY(7px); }
+}
+@keyframes press-g {
+  0%, 10%, 25%, 100% { transform: translateY(0); }
+  15% { transform: translateY(9px); }
+}
+@keyframes press-h {
+  0%, 40%, 55%, 100% { transform: translateY(0); }
+  45% { transform: translateY(8px); }
+}
+
+.keyboard-title .key:nth-child(8n+1) { animation: press-a 2.0s infinite; }
+.keyboard-title .key:nth-child(8n+2) { animation: press-b 3.0s infinite; }
+.keyboard-title .key:nth-child(8n+3) { animation: press-c 4.0s infinite; }
+.keyboard-title .key:nth-child(8n+4) { animation: press-d 2.5s infinite; }
+.keyboard-title .key:nth-child(8n+5) { animation: press-e 2.5s infinite; }
+.keyboard-title .key:nth-child(8n+6) { animation: press-f 3.5s infinite; }
+.keyboard-title .key:nth-child(8n+7) { animation: press-g 2.2s infinite; }
+.keyboard-title .key:nth-child(8n+8) { animation: press-h 3.2s infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .keyboard-title .key { animation: none !important; }
+}
+
+/* ── Editorial banner with mushroom-eye artwork ── */
+.banner-section :deep(.banner-bg) {
+  object-position: right center;
+  opacity: 0.95;
+}
+.banner-section :deep(.banner-scrim) {
+  background:
+    linear-gradient(90deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.15) 65%, transparent 100%),
+    linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.45) 100%);
+  pointer-events: none;
+}
+.banner-section :deep(.banner-ring) {
+  mix-blend-mode: screen;
+  opacity: 0.22;
+}
+.banner-section :deep(.banner-eyebrow) {
+  color: var(--pop-pink) !important;
+  opacity: 1;
+}
+.banner-section :deep(.banner-title) {
+  color: #fff;
+}
+.banner-section :deep(.banner-cta) {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+.banner-section :deep(.banner-cta:hover) {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--pop-ink);
+}
+
+@media (max-width: 768px) {
+  .banner-section :deep(.banner-bg) {
+    object-position: 65% center;
+  }
+}
 </style>

@@ -1,92 +1,69 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 
-definePageMeta({
-  layout: 'admin'
-})
+definePageMeta({ layout: 'admin' })
 
 const { data: orders, pending, refresh } = await useFetch<any[]>('/api/admin/orders')
+const toast = useCosmicToast()
 
 const searchQuery = ref('')
 const statusFilter = ref('')
 
-const allStatuses = [
-  { value: 'pending', label: 'Čekající' },
-  { value: 'paid', label: 'Zaplaceno' },
-  { value: 'shipped', label: 'Odesláno' },
-  { value: 'delivered', label: 'Doručeno' },
-  { value: 'cancelled', label: 'Zrušeno' }
-]
+const STATUSES = [
+  { value: 'pending',   label: 'Čekající',  cls: 'badge-pending' },
+  { value: 'shipped',   label: 'Odesláno',  cls: 'badge-shipped' },
+  { value: 'delivered', label: 'Doručeno',  cls: 'badge-delivered' },
+] as const
 
-const paymentLabels: Record<string, string> = {
+const PAYMENT_LABELS: Record<string, string> = {
   unpaid: 'Nezaplaceno',
   paid: 'Zaplaceno',
-  refunded: 'Vráceno'
+  refunded: 'Vráceno',
 }
+const PAYMENT_CLASS: Record<string, string> = {
+  unpaid: 'badge-unpaid',
+  paid: 'badge-paid',
+  refunded: 'badge-refunded',
+}
+
+const statusMeta = (v: string) => STATUSES.find((s) => s.value === v) ?? { label: v, cls: 'badge-pending' }
 
 const filteredOrders = computed(() => {
   if (!orders.value) return []
-  let result = orders.value
+  let r = orders.value
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
-    result = result.filter((o: any) =>
+    r = r.filter((o: any) =>
       o.customerName.toLowerCase().includes(q) ||
       o.customerEmail.toLowerCase().includes(q) ||
-      String(o.id).includes(q)
+      String(o.id).includes(q),
     )
   }
-  if (statusFilter.value) {
-    result = result.filter((o: any) => o.status === statusFilter.value)
-  }
-  return result
+  if (statusFilter.value) r = r.filter((o: any) => o.status === statusFilter.value)
+  return r
 })
 
-const statusLabel = (status: string) => {
-  return allStatuses.find(s => s.value === status)?.label || status
-}
-
-const statusClass = (status: string) => {
-  const map: Record<string, string> = {
-    pending: 'badge-warning',
-    paid: 'badge-info',
-    shipped: 'badge-primary',
-    delivered: 'badge-success',
-    cancelled: 'badge-danger'
-  }
-  return map[status] || ''
-}
-
-const paymentClass = (status: string) => {
-  const map: Record<string, string> = {
-    unpaid: 'badge-warning',
-    paid: 'badge-success',
-    refunded: 'badge-danger'
-  }
-  return map[status] || ''
-}
-
 const updatingId = ref<number | null>(null)
-
 async function changeStatus(orderId: number, newStatus: string) {
   updatingId.value = orderId
   try {
-    let paymentStatus = undefined
-    if (newStatus === 'paid') paymentStatus = 'paid'
-    if (newStatus === 'cancelled') paymentStatus = 'refunded'
-
     await $fetch(`/api/admin/orders/${orderId}`, {
       method: 'PUT',
-      body: { status: newStatus, paymentStatus }
+      body: { status: newStatus },
     })
     await refresh()
-  } catch (e) {
-    console.error('Chyba při aktualizaci:', e)
+    if (newStatus === 'shipped' || newStatus === 'delivered') {
+      toast.success('Aktualizováno', `Status změněn, email zákazníkovi odeslán.`)
+    } else {
+      toast.success('Aktualizováno', 'Status objednávky změněn.')
+    }
+  } catch (e: any) {
+    toast.error('Chyba', e?.data?.statusMessage || e?.message || 'Nepodařilo se uložit.')
   } finally {
     updatingId.value = null
   }
 }
 
-// Detail modal
 const selectedOrder = ref<any>(null)
 </script>
 
@@ -95,34 +72,25 @@ const selectedOrder = ref<any>(null)
     <div class="page-header">
       <div>
         <h1 class="page-title">Objednávky</h1>
-        <p class="page-subtitle">Správa objednávek zákazníků</p>
+        <p class="page-subtitle">Aktualizace statusu rozešle zákazníkovi email</p>
       </div>
     </div>
 
-    <!-- Filters -->
     <div class="filters-row">
       <div class="search-box">
-        <Icon icon="lucide:search" height="18" class="search-icon" />
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Hledat dle jména, emailu, ID..."
-          class="search-input"
-        />
+        <Icon icon="lucide:search" height="16" class="search-icon" />
+        <input v-model="searchQuery" type="text" placeholder="Jméno, email, ID…" class="search-input" />
       </div>
       <select v-model="statusFilter" class="filter-select">
         <option value="">Všechny stavy</option>
-        <option v-for="s in allStatuses" :key="s.value" :value="s.value">{{ s.label }}</option>
+        <option v-for="s in STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
       </select>
     </div>
 
-    <p class="results-count" v-if="!pending">
-      {{ filteredOrders.length }} objednávek
-    </p>
+    <p class="results-count" v-if="!pending">{{ filteredOrders.length }} objednávek</p>
 
-    <div v-if="pending" class="text-center py-12 text-gray-400">
-      <Icon icon="lucide:loader-2" height="32" class="animate-spin mx-auto mb-3" />
-      Načítání...
+    <div v-if="pending" class="loading">
+      <Icon icon="lucide:loader-2" height="20" class="spin" /> Načítání…
     </div>
 
     <div v-else class="admin-card">
@@ -137,54 +105,48 @@ const selectedOrder = ref<any>(null)
               <th>Platba</th>
               <th>Stav</th>
               <th>Datum</th>
-              <th>Akce</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="order in filteredOrders" :key="order.id">
-              <td class="font-mono text-sm">#{{ order.id }}</td>
+            <tr v-for="o in filteredOrders" :key="o.id">
+              <td class="mono">#{{ o.id }}</td>
               <td>
                 <div class="customer-cell">
-                  <span class="customer-name">{{ order.customerName }}</span>
-                  <span class="customer-email">{{ order.customerEmail }}</span>
+                  <span class="customer-name">{{ o.customerName }}</span>
+                  <span class="customer-email">{{ o.customerEmail }}</span>
                 </div>
               </td>
               <td>
-                <div class="items-cell">
-                  <span v-for="(item, i) in order.items.slice(0, 2)" :key="i" class="item-tag">
-                    {{ item.title }} × {{ item.quantity }}
-                  </span>
-                  <span v-if="order.items.length > 2" class="item-more">
-                    +{{ order.items.length - 2 }} dalších
-                  </span>
-                </div>
+                <span v-for="(item, i) in (o.items || []).slice(0, 2)" :key="i" class="item-tag">
+                  {{ item.title }} × {{ item.quantity }}
+                </span>
+                <span v-if="(o.items?.length || 0) > 2" class="item-more">+{{ o.items.length - 2 }}</span>
               </td>
-              <td class="font-semibold">{{ order.totalPrice.toLocaleString('cs-CZ') }} Kč</td>
+              <td class="price">{{ o.totalPrice.toLocaleString('cs-CZ') }} Kč</td>
               <td>
-                <span :class="['badge', paymentClass(order.paymentStatus)]">
-                  {{ paymentLabels[order.paymentStatus] || order.paymentStatus }}
+                <span :class="['badge', PAYMENT_CLASS[o.paymentStatus] || 'badge-unpaid']">
+                  {{ PAYMENT_LABELS[o.paymentStatus] || o.paymentStatus }}
                 </span>
               </td>
               <td>
-                <span :class="['badge', statusClass(order.status)]">
-                  {{ statusLabel(order.status) }}
+                <span :class="['badge', statusMeta(o.status).cls]">
+                  {{ statusMeta(o.status).label }}
                 </span>
               </td>
-              <td class="text-sm text-gray-400">
-                {{ new Date(order.createdAt).toLocaleDateString('cs-CZ') }}
-              </td>
+              <td class="mono">{{ new Date(o.createdAt).toLocaleDateString('cs-CZ') }}</td>
               <td>
                 <div class="actions-cell">
-                  <button class="action-btn detail-btn" @click="selectedOrder = order" title="Detail">
-                    <Icon icon="lucide:eye" height="16" />
+                  <button class="action-btn" @click="selectedOrder = o" title="Detail">
+                    <Icon icon="lucide:eye" height="14" />
                   </button>
                   <select
-                    :value="order.status"
-                    @change="changeStatus(order.id, ($event.target as HTMLSelectElement).value)"
+                    :value="o.status"
+                    @change="changeStatus(o.id, ($event.target as HTMLSelectElement).value)"
                     class="status-select"
-                    :disabled="updatingId === order.id"
+                    :disabled="updatingId === o.id"
                   >
-                    <option v-for="s in allStatuses" :key="s.value" :value="s.value">{{ s.label }}</option>
+                    <option v-for="s in STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
                   </select>
                 </div>
               </td>
@@ -194,77 +156,61 @@ const selectedOrder = ref<any>(null)
       </div>
     </div>
 
-    <!-- Order Detail Modal -->
+    <!-- Detail Modal -->
     <Teleport to="body">
       <Transition name="fade">
-        <div v-if="selectedOrder" class="modal-overlay" @click.self="selectedOrder = null">
-          <div class="modal-content modal-lg">
+        <div v-if="selectedOrder" class="admin-modal-overlay" @click.self="selectedOrder = null">
+          <div class="admin-modal modal-lg">
             <div class="modal-header">
-              <h3 class="modal-title">
-                Objednávka #{{ selectedOrder.id }}
-              </h3>
-              <button @click="selectedOrder = null" class="modal-close">
-                <Icon icon="lucide:x" height="20" />
+              <h3 class="modal-title">Objednávka #{{ selectedOrder.id }}</h3>
+              <button @click="selectedOrder = null" class="modal-close" aria-label="Zavřít">
+                <Icon icon="lucide:x" height="18" />
               </button>
             </div>
-
             <div class="modal-body">
-              <!-- Customer info -->
+              <div class="detail-grid">
+                <div>
+                  <div class="detail-label">Zákazník</div>
+                  <div class="detail-value">{{ selectedOrder.customerName }}</div>
+                  <div class="detail-sub">{{ selectedOrder.customerEmail }}</div>
+                </div>
+                <div>
+                  <div class="detail-label">Adresa</div>
+                  <div class="detail-value">{{ selectedOrder.shippingAddress }}</div>
+                </div>
+                <div>
+                  <div class="detail-label">Stav</div>
+                  <span :class="['badge', statusMeta(selectedOrder.status).cls]">
+                    {{ statusMeta(selectedOrder.status).label }}
+                  </span>
+                </div>
+                <div>
+                  <div class="detail-label">Platba</div>
+                  <span :class="['badge', PAYMENT_CLASS[selectedOrder.paymentStatus] || 'badge-unpaid']">
+                    {{ PAYMENT_LABELS[selectedOrder.paymentStatus] || selectedOrder.paymentStatus }}
+                  </span>
+                </div>
+              </div>
+
               <div class="detail-section">
-                <h4 class="detail-section-title">
-                  <Icon icon="lucide:user" height="16" />
-                  Zákazník
-                </h4>
-                <div class="detail-grid">
-                  <div class="detail-item">
-                    <span class="detail-label">Jméno</span>
-                    <span class="detail-value">{{ selectedOrder.customerName }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">Email</span>
-                    <span class="detail-value">{{ selectedOrder.customerEmail }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <span class="detail-label">Adresa</span>
-                    <span class="detail-value">{{ selectedOrder.shippingAddress }}</span>
+                <div class="detail-label">Položky</div>
+                <div class="items-list">
+                  <div v-for="item in selectedOrder.items" :key="item.id" class="line-item">
+                    <div class="line-thumb">
+                      <img v-if="item.image" :src="`/${item.image}`" :alt="item.title" />
+                    </div>
+                    <div class="line-info">
+                      <div class="line-name">{{ item.title }}</div>
+                      <div class="line-qty">× {{ item.quantity }}</div>
+                    </div>
+                    <div class="line-price">{{ (item.price * item.quantity).toLocaleString('cs-CZ') }} Kč</div>
                   </div>
                 </div>
               </div>
 
-              <!-- Items -->
-              <div class="detail-section">
-                <h4 class="detail-section-title">
-                  <Icon icon="lucide:package" height="16" />
-                  Položky
-                </h4>
-                <div class="order-items-list">
-                  <div v-for="item in selectedOrder.items" :key="item.productId" class="order-item">
-                    <div class="order-item-thumb">
-                      <img :src="`/${item.image}`" :alt="item.title" />
-                    </div>
-                    <div class="order-item-info">
-                      <span class="order-item-name">{{ item.title }}</span>
-                      <span class="order-item-qty">× {{ item.quantity }}</span>
-                    </div>
-                    <span class="order-item-price">{{ (item.price * item.quantity).toLocaleString('cs-CZ') }} Kč</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Summary -->
-              <div class="detail-section summary-section">
-                <div class="summary-row">
-                  <span>Celkem</span>
-                  <span class="summary-total">{{ selectedOrder.totalPrice.toLocaleString('cs-CZ') }} Kč</span>
-                </div>
-                <div class="summary-row">
-                  <span>Stav</span>
-                  <span :class="['badge', statusClass(selectedOrder.status)]">{{ statusLabel(selectedOrder.status) }}</span>
-                </div>
-                <div class="summary-row">
-                  <span>Platba</span>
-                  <span :class="['badge', paymentClass(selectedOrder.paymentStatus)]">{{ paymentLabels[selectedOrder.paymentStatus] }}</span>
-                </div>
+              <div class="total-row">
+                <span>Celkem</span>
+                <span class="total-amount">{{ selectedOrder.totalPrice.toLocaleString('cs-CZ') }} Kč</span>
               </div>
             </div>
           </div>
@@ -275,360 +221,75 @@ const selectedOrder = ref<any>(null)
 </template>
 
 <style scoped>
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-.page-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #f1f5f9;
-  letter-spacing: -0.02em;
-}
-
-.page-subtitle {
-  color: #64748b;
-  margin-top: 0.25rem;
-  font-size: 0.95rem;
-}
-
-.filters-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.search-box {
-  position: relative;
-  flex: 1;
-  max-width: 400px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 0.875rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #64748b;
-}
-
-.search-input {
-  width: 100%;
-  padding: 0.625rem 0.875rem 0.625rem 2.5rem;
-  background: #1e2030;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.5rem;
-  color: #e2e8f0;
-  font-size: 0.875rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.search-input:focus { border-color: #6dc995; }
-
-.filter-select {
-  padding: 0.625rem 0.875rem;
-  background: #1e2030;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.5rem;
-  color: #e2e8f0;
-  font-size: 0.875rem;
-  outline: none;
-  cursor: pointer;
-}
-
-.results-count {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin-bottom: 0.75rem;
-}
-
-.admin-card {
-  background: #1e2030;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 0.75rem;
-  overflow: hidden;
-}
-
-.table-wrap { overflow-x: auto; }
-
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.admin-table th {
-  padding: 0.75rem 1.25rem;
-  text-align: left;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: rgba(0, 0, 0, 0.15);
-}
-
-.admin-table td {
-  padding: 0.75rem 1.25rem;
-  color: #cbd5e1;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.admin-table tbody tr { transition: background 0.15s; }
-.admin-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
-
-.customer-cell { display: flex; flex-direction: column; }
-.customer-name { font-weight: 500; color: #e2e8f0; }
-.customer-email { font-size: 0.8rem; color: #64748b; }
-
-.items-cell { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-
-.item-tag {
+.loading {
   display: inline-flex;
-  padding: 0.15rem 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  color: #94a3b8;
-}
-
-.item-more {
-  font-size: 0.75rem;
-  color: #64748b;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(42, 19, 64, 0.5);
   font-style: italic;
+  font-family: 'Petrona', Georgia, serif;
+  padding: 2rem 0;
 }
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.625rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
-.badge-info { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
-.badge-primary { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
-.badge-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
-.badge-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
-
-.actions-cell {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.action-btn {
-  padding: 0.4rem;
-  border-radius: 0.375rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.detail-btn {
-  background: rgba(139, 92, 246, 0.1);
-  color: #a78bfa;
-}
-
-.detail-btn:hover {
-  background: rgba(139, 92, 246, 0.2);
-}
-
-.status-select {
-  padding: 0.3rem 0.5rem;
-  background: #161822;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.375rem;
-  color: #cbd5e1;
-  font-size: 0.75rem;
-  outline: none;
-  cursor: pointer;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.modal-content {
-  width: 100%;
-  max-width: 540px;
-  background: #1e2030;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.75rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-lg { max-width: 620px; }
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  position: sticky;
-  top: 0;
-  background: #1e2030;
-  z-index: 1;
-}
-
-.modal-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #f1f5f9;
-}
-
-.modal-close {
-  padding: 0.375rem;
-  border-radius: 0.375rem;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.modal-close:hover {
-  color: #e2e8f0;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.modal-body { padding: 1.5rem; }
-
-.detail-section {
-  margin-bottom: 1.5rem;
-}
-
-.detail-section-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
+/* Modal-only styles (shell tokens applied via global admin classes) */
 .detail-grid {
   display: grid;
-  gap: 0.625rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
 }
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
 .detail-label {
-  font-size: 0.75rem;
-  color: #64748b;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(42, 19, 64, 0.55);
+  margin-bottom: 0.3rem;
+  font-weight: 600;
 }
+.detail-value { font-size: 0.95rem; color: #2a1340; line-height: 1.35; }
+.detail-sub { font-size: 0.82rem; color: rgba(42, 19, 64, 0.55); margin-top: 0.15rem; }
 
-.detail-value {
-  color: #e2e8f0;
-  font-size: 0.9rem;
-}
-
-.order-items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.order-item {
+.detail-section { margin-top: 1.25rem; }
+.items-list { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem; }
+.line-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.625rem;
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 0.5rem;
+  gap: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  background: rgba(42, 19, 64, 0.04);
+  border-radius: 9px;
+  border: 1px solid rgba(42, 19, 64, 0.06);
 }
-
-.order-item-thumb {
+.line-thumb {
   width: 36px;
   height: 36px;
-  border-radius: 0.25rem;
+  background: rgba(42, 19, 64, 0.04);
+  border-radius: 6px;
   overflow: hidden;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.05);
 }
+.line-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.line-info { flex: 1; }
+.line-name { font-size: 0.9rem; font-weight: 600; }
+.line-qty { font-size: 0.78rem; color: rgba(42, 19, 64, 0.55); }
+.line-price { font-family: 'Gloock', Georgia, serif; font-size: 0.95rem; }
 
-.order-item-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.order-item-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.order-item-name {
-  font-size: 0.875rem;
-  color: #e2e8f0;
-  font-weight: 500;
-}
-
-.order-item-qty {
-  font-size: 0.8rem;
-  color: #64748b;
-}
-
-.order-item-price {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #34d399;
-}
-
-.summary-section {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 0.5rem;
-  padding: 1rem;
-}
-
-.summary-row {
+.total-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.4rem 0;
-  color: #94a3b8;
+  padding: 0.85rem 1rem;
+  border-top: 1px solid rgba(42, 19, 64, 0.08);
+  margin-top: 1rem;
   font-size: 0.9rem;
+  color: rgba(42, 19, 64, 0.7);
+  font-weight: 600;
 }
-
-.summary-total {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #34d399;
+.total-amount {
+  font-family: 'Gloock', Georgia, serif;
+  font-size: 1.4rem;
+  color: #2a1340;
 }
-
-/* Transitions */
-.fade-enter-active,
-.fade-leave-active { transition: opacity 0.25s ease; }
-.fade-enter-from,
-.fade-leave-to { opacity: 0; }
 </style>

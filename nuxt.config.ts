@@ -55,6 +55,7 @@ export default defineNuxtConfig({
             supabaseKey: process.env.NUXT_PUBLIC_SUPABASE_KEY || process.env.SUPABASE_KEY || '',
             siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
             stripePublishableKey: process.env.NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_51T7UR8RP8U0Pyl9pxCD3lMU6FD91G1dOjxbx8B2pK6td8vITnWrU5YQrfvoH68s6EjF1Jofw9D5wxqX2HlgsCCR8005MUgWZXV',
+            packetaApiKey: process.env.NUXT_PUBLIC_PACKETA_API_KEY || '',
         }
     },
 
@@ -75,6 +76,7 @@ export default defineNuxtConfig({
         provider: 'ipx',
         format: ['webp'],
         quality: 80,
+        domains: ['picsum.photos', 'fastly.picsum.photos'],
         screens: {
             xs: 320,
             sm: 640,
