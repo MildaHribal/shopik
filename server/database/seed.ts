@@ -12,177 +12,147 @@ if (!DATABASE_URL) {
 const client = postgres(DATABASE_URL);
 const db = drizzle(client, { schema });
 
-// ── Helper ──────────────────────────────────────────────────────────────────────
 function slugify(str: string): string {
   return str
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 }
 
-// ── Seed Data ───────────────────────────────────────────────────────────────────
-const productSeed = [
-  { name: 'Stylové boty',         category: 'Obuv',      price: 1200, stock: 12 },
-  { name: 'Značkové boty',        category: 'Obuv',      price: 2500, stock: 8  },
-  { name: 'Letní sandály',        category: 'Obuv',      price: 950,  stock: 9  },
-  { name: 'Sportovní tenisky',    category: 'Obuv',      price: 1800, stock: 6  },
-  { name: 'Anime tričko',         category: 'Oblečení',  price: 600,  stock: 20 },
-  { name: 'Manga tričko',         category: 'Oblečení',  price: 550,  stock: 17 },
-  { name: 'Džínové kraťasy',      category: 'Oblečení',  price: 700,  stock: 22 },
-  { name: 'Tetovací rukáv',       category: 'Doplňky',   price: 450,  stock: 30 },
-  { name: 'Náhrdelník',           category: 'Šperky',    price: 450,  stock: 13 },
-  { name: 'Korálky',              category: 'Šperky',    price: 300,  stock: 18 },
-  { name: 'Pero',                 category: 'Kancelář',  price: 120,  stock: 50 },
-  { name: 'Luxusní pero',         category: 'Kancelář',  price: 500,  stock: 35 },
-  { name: 'Bambusový kartáček',   category: 'Hygiena',   price: 50,   stock: 40 },
-  { name: 'Ekologický set',       category: 'Hygiena',   price: 150,  stock: 28 },
-  { name: 'Plyšová chobotnice',   category: 'Hračky',    price: 250,  stock: 16 },
-  { name: 'Plyšový chameleón',    category: 'Hračky',    price: 350,  stock: 11 },
-  { name: 'Komiksový sešit',      category: 'Knihy',     price: 150,  stock: 25 },
-  { name: 'Sběratelský komiks',   category: 'Knihy',     price: 500,  stock: 7  },
-  { name: 'Obraz',                category: 'Umění',     price: 5000, stock: 1  },
-  { name: 'Abstraktní malba',     category: 'Umění',     price: 7500, stock: 1  },
+const IMG = '/uploads/products';
+
+type ProductSeed = {
+  name: string;
+  category: string;
+  price: number;
+  stock: number;
+  shortDescription: string;
+  description: string;
+  images: string[];
+};
+
+const productSeed: ProductSeed[] = [
+  {
+    name: 'Oko v listu',
+    category: 'Sochy',
+    price: 890,
+    stock: 1,
+    shortDescription: 'Nástěnná soška z papírmašé — zelený list s hlídajícím okem.',
+    description:
+      'Ručně tvarovaná nástěnná soška z papírmašé, natřená sytě zelenou akrylovou barvou. Uprostřed dominuje malované oko — talisman, který ti hlídá pokoj. Originál, jeden kus. Rozměr cca 25 cm.',
+    images: [
+      `${IMG}/oko-v-listu-1.jpg`,
+      `${IMG}/oko-v-listu-2.jpg`,
+      `${IMG}/oko-v-listu-3.jpg`,
+    ],
+  },
+  {
+    name: 'Klíčenka Medúza z hlubin',
+    category: 'Klíčenky',
+    price: 350,
+    stock: 1,
+    shortDescription: 'Ruční klíčenka s malovanou medúzou, minerály a mušlí.',
+    description:
+      'Klíčenka poskládaná ručně: kresba medúzy zalitá v resinu, mléčné minerály, mušlička a stříbrné hvězdičky. Modré tóny — pro mořské duše. Originál, jeden kus.',
+    images: [
+      `${IMG}/meduza-klicenka-1.jpg`,
+      `${IMG}/meduza-klicenka-2.jpg`,
+    ],
+  },
+  {
+    name: 'Klíčenka Hvězdný můr',
+    category: 'Klíčenky',
+    price: 350,
+    stock: 1,
+    shortDescription: 'Ruční klíčenka s kresbou noční můry, růžovými hvězdami a křídlem.',
+    description:
+      'Klíčenka s kresbou noční můry v resinu, růžovou pastelovou hvězdičkou, fialovým broušeným korálkem a andělským křídlem. Trochu snění, trochu tma. Originál, jeden kus.',
+    images: [
+      `${IMG}/hvezdny-mur-klicenka-1.jpg`,
+      `${IMG}/hvezdny-mur-klicenka-2.jpg`,
+    ],
+  },
+  {
+    name: 'Ganja elfka — obraz',
+    category: 'Obrazy',
+    price: 1490,
+    stock: 1,
+    shortDescription: 'Malba růžovovlasé elfky s koláží a srdíčkem.',
+    description:
+      'Akrylová malba na plátně kombinovaná s koláží — růžovovlasá elfka na pozadí modré oblohy a rostlinného motivu. Sytá barevnost, komiksový styl. Originál, signováno.',
+    images: [
+      `${IMG}/ganja-elfka-1.jpg`,
+    ],
+  },
+  {
+    name: 'Duhový drak — obraz',
+    category: 'Obrazy',
+    price: 1290,
+    stock: 1,
+    shortDescription: 'Frilled dragon v duhových plamenech pod měsícem.',
+    description:
+      'Akrylová malba na plátně — límcový drak (frilled dragon) v duhových plamenech, pod měsícem a mezi hvězdami. Psychedelické barvy, hodně energie. Originál na napnutém plátně.',
+    images: [
+      `${IMG}/duhovy-drak-1.jpg`,
+      `${IMG}/duhovy-drak-2.jpg`,
+    ],
+  },
+  {
+    name: 'Nazar set — houba a miska',
+    category: 'Sochy',
+    price: 1590,
+    stock: 1,
+    shortDescription: 'Ruční set: muchomůrka s očima a duhová miska s tureckým okem.',
+    description:
+      'Set dvou ručně modelovaných kousků z hmoty a akrylu: červená muchomůrka posetá zelenými očima + duhová miska s tureckými oky na zelené glazuře. Prodávané společně jako talisman-set. Originál, jeden kus.',
+    images: [
+      `${IMG}/nazar-set-1.jpg`,
+      `${IMG}/nazar-set-2.jpg`,
+      `${IMG}/nazar-set-3.jpg`,
+      `${IMG}/nazar-set-4.jpg`,
+      `${IMG}/nazar-set-5.jpg`,
+    ],
+  },
 ];
 
-const productData = productSeed.map((p) => ({
-  ...p,
-  image: `https://picsum.photos/seed/${slugify(p.name)}/600/800`,
-}));
-
-const orderData = [
-  {
-    customerName: 'Jan Novák',
-    customerEmail: 'jan.novak@email.cz',
-    shippingAddress: 'Vodičkova 12, Praha 1, 110 00',
-    totalPrice: 2100,
-    status: 'paid',
-    paymentStatus: 'paid',
-    items: [
-      { title: 'Stylové boty', price: 1200, quantity: 1, image: 'boty.png' },
-      { title: 'Tetovací rukáv', price: 450, quantity: 2, image: 'tetko.png' },
-    ],
-  },
-  {
-    customerName: 'Petra Svobodová',
-    customerEmail: 'petra.s@seznam.cz',
-    shippingAddress: 'Masarykova 45, Brno, 602 00',
-    totalPrice: 1500,
-    status: 'pending',
-    paymentStatus: 'unpaid',
-    items: [
-      { title: 'Dívka', price: 1500, quantity: 1, image: 'devka.png' },
-    ],
-  },
-  {
-    customerName: 'Tomáš Dvořák',
-    customerEmail: 'tomas.dvorak@gmail.com',
-    shippingAddress: 'Nádražní 8, Ostrava, 702 00',
-    totalPrice: 3150,
-    status: 'shipped',
-    paymentStatus: 'paid',
-    items: [
-      { title: 'Chameleón', price: 2000, quantity: 1, image: 'chamik.png' },
-      { title: 'Korálky', price: 300, quantity: 3, image: 'koralky.png' },
-      { title: 'Bambusový kartáček', price: 50, quantity: 5, image: 'bambus.png' },
-    ],
-  },
-  {
-    customerName: 'Marie Králová',
-    customerEmail: 'marie.k@post.cz',
-    shippingAddress: 'Žižkova 23, Plzeň, 301 00',
-    totalPrice: 2200,
-    status: 'delivered',
-    paymentStatus: 'paid',
-    items: [
-      { title: 'Gate', price: 800, quantity: 2, image: 'gate.png' },
-      { title: 'Anime tričko', price: 600, quantity: 1, image: 'anime.png' },
-    ],
-  },
-  {
-    customerName: 'Lukáš Procházka',
-    customerEmail: 'lukas.p@email.cz',
-    shippingAddress: 'Hlavní 1, Olomouc, 779 00',
-    totalPrice: 5000,
-    status: 'cancelled',
-    paymentStatus: 'refunded',
-    items: [
-      { title: 'Obraz', price: 5000, quantity: 1, image: 'obrazek.png' },
-    ],
-  },
-];
-
-// ── Main ────────────────────────────────────────────────────────────────────────
 async function seed() {
   console.log('🌱 Seeding database...');
 
-  // 1) Extract unique categories and insert
-  const uniqueCategories = [...new Set(productData.map((p) => p.category))];
+  console.log('🗑️  Clearing existing products & related data...');
+  await db.delete(schema.favorites);
+  await db.delete(schema.reviews);
+  await db.delete(schema.orderItems);
+  await db.delete(schema.orders);
+  await db.delete(schema.products);
+  await db.delete(schema.categories);
+
+  const uniqueCategories = [...new Set(productSeed.map((p) => p.category))];
   const insertedCategories = await db
     .insert(schema.categories)
     .values(uniqueCategories.map((name) => ({ name, slug: slugify(name) })))
-    .onConflictDoNothing()
     .returning();
+  const categoryMap = new Map(insertedCategories.map((c) => [c.name, c.id]));
+  console.log(`  ✅ ${insertedCategories.length} categories`);
 
-  // Build a lookup map
-  const allCategories = insertedCategories.length > 0
-    ? insertedCategories
-    : await db.select().from(schema.categories);
-  const categoryMap = new Map(allCategories.map((c) => [c.name, c.id]));
-  console.log(`  ✅ ${allCategories.length} categories`);
-
-  // 2) Insert products
   const insertedProducts = await db
     .insert(schema.products)
     .values(
-      productData.map((p) => ({
+      productSeed.map((p) => ({
         name: p.name,
         slug: slugify(p.name),
-        description: `Popis pro ${p.name}`,
+        description: p.description,
+        shortDescription: p.shortDescription,
         price: p.price,
         stock: p.stock,
-        image: p.image,
-        images: [p.image],
+        image: p.images[0],
+        images: p.images,
         categoryId: categoryMap.get(p.category) ?? null,
       })),
     )
-    .onConflictDoNothing()
     .returning();
   console.log(`  ✅ ${insertedProducts.length} products`);
-
-  // Build product name → id lookup for order items
-  const allProducts = insertedProducts.length > 0
-    ? insertedProducts
-    : await db.select().from(schema.products);
-  const productMap = new Map(allProducts.map((p) => [p.name, p.id]));
-
-  // 3) Insert orders + order items
-  for (const o of orderData) {
-    const [order] = await db
-      .insert(schema.orders)
-      .values({
-        customerName: o.customerName,
-        customerEmail: o.customerEmail,
-        shippingAddress: o.shippingAddress,
-        totalPrice: o.totalPrice,
-        status: o.status,
-        paymentStatus: o.paymentStatus,
-      })
-      .returning();
-
-    await db.insert(schema.orderItems).values(
-      o.items.map((item) => ({
-        orderId: order.id,
-        productId: productMap.get(item.title) ?? null,
-        title: item.title,
-        price: item.price,
-        quantity: item.quantity,
-        image: `https://picsum.photos/seed/${slugify(item.title)}/600/800`,
-      })),
-    );
-  }
-  console.log(`  ✅ ${orderData.length} orders with items`);
 
   console.log('🎉 Seed complete!');
   process.exit(0);

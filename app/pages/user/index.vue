@@ -8,6 +8,11 @@ definePageMeta({
   middleware: ['auth']
 })
 
+useSeoMeta({
+  title: 'Můj profil',
+  robots: 'noindex,nofollow',
+})
+
 const { currentUser, signOut } = useAuth()
 const router = useRouter()
 

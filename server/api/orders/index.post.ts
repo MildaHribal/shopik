@@ -11,13 +11,30 @@ export default defineEventHandler(async (event) => {
   userId = session?.user?.id ?? null
 
   // Validate required fields
-  const { customerName, customerEmail, phone, street, city, zip, paymentMethod, shippingMethod, items } = body;
+  const {
+    customerName,
+    customerEmail,
+    phone,
+    street,
+    city,
+    zip,
+    paymentMethod,
+    shippingMethod,
+    packetaBranchId,
+    packetaBranchName,
+    items,
+  } = body;
 
   if (!customerName || !customerEmail || !street || !city || !zip || !paymentMethod || !items?.length) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Všechna povinná pole musí být vyplněna',
     });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(customerEmail)) {
+    throw createError({ statusCode: 400, statusMessage: 'Zadaný email nemá správný formát' });
   }
 
   const shippingLabels: Record<string, string> = {
@@ -68,10 +85,10 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Determine payment status based on method
-  // For demo: card payment = "paid", cash on delivery = "unpaid"
-  const paymentStatus = paymentMethod === 'card' ? 'paid' : 'unpaid';
-  const status = paymentMethod === 'card' ? 'paid' : 'pending';
+  // Card payments never go through this endpoint (they use create-checkout-session).
+  // Bank transfer and cash-on-delivery are unpaid until manual confirmation.
+  const paymentStatus = 'unpaid';
+  const status = 'pending';
 
   // Create order
   const [newOrder] = await db
@@ -79,7 +96,12 @@ export default defineEventHandler(async (event) => {
     .values({
       customerName,
       customerEmail,
+      customerPhone: phone ?? null,
       shippingAddress,
+      shippingMethod: shippingMethod ?? null,
+      paymentMethod: paymentMethod ?? null,
+      packetaBranchId: packetaBranchId ?? null,
+      packetaBranchName: packetaBranchName ?? null,
       totalPrice,
       status,
       paymentStatus,

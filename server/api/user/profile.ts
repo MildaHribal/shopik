@@ -1,87 +1,39 @@
 import { db } from '../../utils/db';
-import { users } from '../../database/schema';
+import { user as userTable } from '../../database/schema';
 import { eq } from 'drizzle-orm';
 import { requireSession } from '../../utils/session';
 
 export default defineEventHandler(async (event) => {
   const session = await requireSession(event)
-  const userId = session.user?.id
-  if (!userId) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
-  }
-  const userName = session.user?.name || ''
-  const userEmail = session.user?.email || ''
+  const userId = session.user.id
   const method = getMethod(event)
 
-  // --- GET: Načtení profilu ---
   if (method === 'GET') {
-    const user = await db.query.users.findFirst({
-      where: eq(users.supabaseAuthId, userId),
-    });
-
-    if (user) return user;
-
-    // Uživatel v DB ještě není – vrátíme základní data ze session
-    return {
-      id: null,
-      name: userName,
-      email: userEmail,
-      supabaseAuthId: userId,
-      phone: null,
-      street: null,
-      city: null,
-      zip: null,
-      createdAt: null,
-      updatedAt: null,
-    };
+    const u = await db.query.user.findFirst({ where: eq(userTable.id, userId) });
+    if (u) return u;
+    return null;
   }
 
-  // --- PATCH: Uložení profilu ---
   if (method === 'PATCH') {
     const body = await readBody(event);
-    const name = String(body?.name || userName || 'Uživatel').trim()
-    const phone = body?.phone ? String(body.phone).trim() : null
-    const street = body?.street ? String(body.street).trim() : null
-    const city = body?.city ? String(body.city).trim() : null
-    const zip = body?.zip ? String(body.zip).trim() : null
-    const email = userEmail || `${userId}@no-email.local`
+    const name = body?.name ? String(body.name).trim() : undefined
+    const phone = body?.phone !== undefined ? (body.phone ? String(body.phone).trim() : null) : undefined
+    const street = body?.street !== undefined ? (body.street ? String(body.street).trim() : null) : undefined
+    const city = body?.city !== undefined ? (body.city ? String(body.city).trim() : null) : undefined
+    const zip = body?.zip !== undefined ? (body.zip ? String(body.zip).trim() : null) : undefined
 
-    const existing = await db.query.users.findFirst({
-      where: eq(users.supabaseAuthId, userId),
-    });
+    const patch: Record<string, unknown> = { updatedAt: new Date() }
+    if (name !== undefined) patch.name = name
+    if (phone !== undefined) patch.phone = phone
+    if (street !== undefined) patch.street = street
+    if (city !== undefined) patch.city = city
+    if (zip !== undefined) patch.zip = zip
 
-    if (existing) {
-      const [updated] = await db.update(users)
-        .set({ name, phone, street, city, zip, updatedAt: new Date() })
-        .where(eq(users.supabaseAuthId, userId))
-        .returning();
-      return updated;
-    }
-
-    const [created] = await db.insert(users)
-      .values({
-        name,
-        email,
-        supabaseAuthId: userId,
-        phone,
-        street,
-        city,
-        zip,
-      })
-      .onConflictDoUpdate({
-        target: users.email,
-        set: {
-          supabaseAuthId: userId,
-          name,
-          phone,
-          street,
-          city,
-          zip,
-          updatedAt: new Date(),
-        },
-      })
+    const [updated] = await db.update(userTable)
+      .set(patch)
+      .where(eq(userTable.id, userId))
       .returning();
-    return created;
+    return updated;
   }
 
   throw createError({ statusCode: 405, statusMessage: 'Method Not Allowed' })

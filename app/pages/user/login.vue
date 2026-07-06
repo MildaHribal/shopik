@@ -3,9 +3,15 @@ import { ref } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { Icon } from '@iconify/vue'
 
-const { refreshSession, supabase } = useAuth()
+const { signInWithPassword, signInWithGoogle } = useAuth()
 const router = useRouter()
 const toast = useCosmicToast()
+
+useSeoMeta({
+  title: 'Přihlášení',
+  description: 'Přihlaste se ke svému účtu v Shopik.',
+  robots: 'noindex,nofollow',
+})
 
 const email = ref('')
 const password = ref('')
@@ -17,20 +23,14 @@ const handleLogin = async () => {
   error.value = ''
 
   try {
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: email.value,
-      password: password.value,
-    })
-
-    if (authError) {
-      error.value = authError.message || 'Nesprávný email nebo heslo.'
+    const result = await signInWithPassword(email.value, password.value)
+    if (result.error) {
+      error.value = result.error
     } else {
-      await refreshSession()
       toast.success('Přihlášení', 'Vítejte zpět v kosmické dimenzi! 👽')
       await router.push('/')
     }
   } catch (e: any) {
-    console.error(e)
     error.value = 'Nastala chyba při přihlašování: ' + (e.message || 'Neznámá chyba')
   } finally {
     loading.value = false
@@ -42,18 +42,10 @@ const handleGoogleLogin = async () => {
   error.value = ''
 
   try {
-    const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    })
-    if (authError) {
-      error.value = 'Chyba při přihlašování přes Google: ' + authError.message
-    }
+    const result = await signInWithGoogle()
+    if (result.error) error.value = result.error
   } catch (e: any) {
-    console.error(e)
-    error.value = 'Chyba při přihlašování přes Google: ' + e.message
+    error.value = 'Chyba při přihlašování přes Google: ' + (e.message || 'Neznámá chyba')
   } finally {
     loading.value = false
   }
@@ -69,17 +61,17 @@ const handleGoogleLogin = async () => {
 
     <div class="w-full max-w-md">
       <!-- Header -->
-      <div class="text-center mb-10">
+      <div class="text-center mb-8 md:mb-10">
         <div class="text-4xl md:text-5xl mb-3 md:mb-4">🔮</div>
         <h2 class="text-2xl md:text-3xl font-extrabold text-white neon-text">Přihlášení</h2>
-        <p class="mt-1 md:mt-2 text-white/30 text-xs md:text-sm">Vstupte do kosmické dimenze</p>
+        <p class="mt-2 text-white/70 text-sm md:text-base">Vstupte do kosmické dimenze</p>
       </div>
 
       <!-- Form Card -->
       <div class="glass-card-strong p-5 md:p-8 gradient-border">
         <form class="space-y-5" @submit.prevent="handleLogin">
           <div>
-            <label for="email" class="block text-sm font-medium text-white/60 mb-2">Email</label>
+            <label for="email" class="block text-sm font-semibold text-white/90 mb-2">Email</label>
             <input
               id="email"
               v-model="email"
@@ -93,9 +85,7 @@ const handleGoogleLogin = async () => {
           </div>
 
           <div>
-            <div class="mb-2">
-              <label for="password" class="block text-sm font-medium text-white/60">Heslo</label>
-            </div>
+            <label for="password" class="block text-sm font-semibold text-white/90 mb-2">Heslo</label>
             <input
               id="password"
               v-model="password"
@@ -108,8 +98,8 @@ const handleGoogleLogin = async () => {
             >
           </div>
 
-          <div v-if="error" class="glass-card p-3 border-red-500/30 text-center">
-            <p class="text-red-400 text-sm">{{ error }}</p>
+          <div v-if="error" class="glass-card p-3 border-red-500/40 text-center">
+            <p class="text-red-300 text-sm">{{ error }}</p>
           </div>
 
           <button
@@ -126,7 +116,7 @@ const handleGoogleLogin = async () => {
         <div class="relative my-8">
           <div class="cosmic-divider"></div>
           <div class="absolute inset-0 flex items-center justify-center">
-            <span class="px-4 text-sm text-white/30 bg-[#0d0020]">nebo pokračujte přes</span>
+            <span class="px-4 text-sm text-white/70 bg-[#0d0020]">nebo pokračujte přes</span>
           </div>
         </div>
 
@@ -143,9 +133,9 @@ const handleGoogleLogin = async () => {
       </div>
 
       <!-- Footer link -->
-      <p class="mt-8 text-center text-sm text-white/30">
+      <p class="mt-8 text-center text-sm text-white/75">
         Nemáte účet?
-        <NuxtLink to="/user/register" class="font-semibold text-primary-400 hover:text-primary-300 transition-colors">
+        <NuxtLink to="/user/register" class="font-semibold text-primary-300 hover:text-primary-200 transition-colors">
           Zaregistrujte se ☮
         </NuxtLink>
       </p>
@@ -154,4 +144,11 @@ const handleGoogleLogin = async () => {
 </template>
 
 <style scoped>
+.input-cosmic {
+  font-size: 1rem;
+  padding: 0.85rem 1rem;
+}
+.input-cosmic::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
 </style>

@@ -1,83 +1,90 @@
 import { ref } from 'vue'
-import { getSupabase } from '~~/lib/auth'
-import { useCookie } from '#app'
+import { authClient } from '~~/lib/auth-client'
 
-// Shared reactive state across components
-const currentUser = ref<{ id: string; name: string; email: string } | null>(null)
+type AppUser = { id: string; name: string; email: string }
+
+const currentUser = ref<AppUser | null>(null)
 const isAuthLoading = ref(true)
-
 let initialized = false
 
-function updateTokenCookie(token: string | null) {
-  if (import.meta.client) {
-    const secureFlag = window.location.protocol === 'https:' ? '; Secure' : ''
-    // Set domain to top level if not localhost to share across subdomains, or just rely on default.
-    // Default (no domain) is usually best to avoid issues locally vs prod unless subdomains are needed.
-    if (token) {
-      document.cookie = `sb-access-token=${token}; path=/; max-age=604800; SameSite=Lax${secureFlag}`
-    } else {
-      document.cookie = `sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT${secureFlag}`
-    }
-  }
-}
-
-async function refreshSession() {
-  const supabase = getSupabase()
+async function fetchSession() {
   try {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session?.user) {
+    const client = authClient()
+    const { data } = await client.getSession()
+    if (data?.user) {
       currentUser.value = {
-        id: session.user.id,
-        name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
-        email: session.user.email || '',
+        id: data.user.id,
+        name: data.user.name || '',
+        email: data.user.email || '',
       }
-      updateTokenCookie(session.access_token)
     } else {
       currentUser.value = null
-      updateTokenCookie(null)
     }
-  } catch {
+  } catch (err) {
     currentUser.value = null
-    updateTokenCookie(null)
   } finally {
     isAuthLoading.value = false
   }
 }
 
 export function useAuth() {
-  const supabase = getSupabase()
-
   if (!initialized && import.meta.client) {
     initialized = true
-    refreshSession()
+    fetchSession()
+  }
 
-    // Listen for auth state changes (login, logout, token refresh)
-    supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        currentUser.value = {
-          id: session.user.id,
-          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
-          email: session.user.email || '',
-        }
-        updateTokenCookie(session.access_token)
-      } else {
-        currentUser.value = null
-        updateTokenCookie(null)
+  const client = authClient()
+
+  const signInWithPassword = async (email: string, password: string) => {
+    const res = await client.signIn.email({ email, password })
+    if (res.error) {
+      return { error: res.error.message || 'Nesprávný email nebo heslo.' }
+    }
+    await fetchSession()
+    return { error: null }
+  }
+
+  const signUpWithPassword = async (email: string, password: string) => {
+    const name = email.split('@')[0] || email
+    const res = await client.signUp.email({ email, password, name })
+    if (res.error) {
+      const msg = res.error.message || ''
+      if (/exist|already|in use/i.test(msg)) {
+        return { error: 'Uživatel s tímto emailem již existuje.' }
       }
-    })
+      return { error: msg || 'Nastala chyba při registraci.' }
+    }
+    await fetchSession()
+    return { error: null }
+  }
+
+  const signInWithGoogle = async () => {
+    try {
+      const res = await client.signIn.social({
+        provider: 'google',
+        callbackURL: '/',
+      })
+      if (res?.error) {
+        return { error: res.error.message || 'Google OAuth není dostupné.' }
+      }
+      return { error: null }
+    } catch (e: any) {
+      return { error: 'Google OAuth není nastavené. Doplň GOOGLE_CLIENT_ID a GOOGLE_CLIENT_SECRET v .env.' }
+    }
   }
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    await client.signOut()
     currentUser.value = null
-    updateTokenCookie(null)
   }
 
   return {
     currentUser,
     isAuthLoading,
+    signInWithPassword,
+    signUpWithPassword,
+    signInWithGoogle,
     signOut,
-    refreshSession,
-    supabase,
+    refreshSession: fetchSession,
   }
 }

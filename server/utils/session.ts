@@ -1,59 +1,39 @@
 import type { H3Event } from 'h3'
-import { getCookie, getRequestHeader } from 'h3'
-import { getSupabaseAdmin } from './auth'
+import { getHeaders } from 'h3'
+import { auth } from './auth'
 
-type SupabaseSession = {
-  user?: {
-    id?: string
-    name?: string | null
-    email?: string | null
+export type AppSession = {
+  user: {
+    id: string
+    name: string | null
+    email: string | null
+    role?: string
   }
 } | null
 
-async function fetchSupabaseSession(event: H3Event): Promise<SupabaseSession> {
-  const authHeader = getRequestHeader(event, 'authorization') || getRequestHeader(event, 'Authorization')
-
-  // Try to get token from Authorization header or cookie
-  let token = ''
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.slice(7)
-  } else {
-    token = getCookie(event, 'sb-access-token') || ''
+function toHeaders(event: H3Event): Headers {
+  const raw = getHeaders(event)
+  const h = new Headers()
+  for (const [k, v] of Object.entries(raw)) {
+    if (typeof v === 'string') h.set(k, v)
   }
-
-  if (!token) return null
-
-  try {
-    const supabase = getSupabaseAdmin()
-    const { data: { user }, error } = await supabase.auth.getUser(token)
-
-    if (error) {
-      console.error('Supabase getUser error:', error.message)
-      return null
-    }
-
-    if (!user) {
-       console.error('Supabase user is null')
-       return null
-    }
-
-    return {
-      user: {
-        id: user.id,
-        name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-        email: user.email || null,
-      }
-    }
-  } catch (err) {
-    console.error('Session exception:', err)
-    return null
-  }
+  return h
 }
 
-export async function getOptionalSession(event: H3Event): Promise<SupabaseSession> {
+export async function getOptionalSession(event: H3Event): Promise<AppSession> {
   try {
-    return await fetchSupabaseSession(event)
-  } catch {
+    const result = await auth.api.getSession({ headers: toHeaders(event) })
+    if (!result?.user) return null
+    return {
+      user: {
+        id: result.user.id,
+        name: result.user.name ?? null,
+        email: result.user.email ?? null,
+        role: (result.user as any).role ?? 'user',
+      },
+    }
+  } catch (err) {
+    console.error('getOptionalSession error:', err)
     return null
   }
 }
@@ -63,6 +43,7 @@ export type AuthenticatedSession = {
     id: string
     name: string | null
     email: string | null
+    role?: string
   }
 }
 
@@ -71,11 +52,13 @@ export async function requireSession(event: H3Event): Promise<AuthenticatedSessi
   if (!session?.user?.id) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
   }
-  return {
-    user: {
-      id: session.user.id,
-      name: session.user.name ?? null,
-      email: session.user.email ?? null,
-    }
+  return session
+}
+
+export async function requireAdmin(event: H3Event): Promise<AuthenticatedSession> {
+  const session = await requireSession(event)
+  if (session.user.role !== 'admin') {
+    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
+  return session
 }

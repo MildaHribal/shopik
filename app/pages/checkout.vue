@@ -2,406 +2,257 @@
 import { useCartStore } from "~/stores/cart";
 import { Icon } from "@iconify/vue";
 import { useAuth } from "~/composables/useAuth";
-import QrcodeVue from 'qrcode.vue';
 
 const cart = useCartStore();
 const { currentUser } = useAuth();
-const toast = useCosmicToast()
+const toast = useCosmicToast();
+const router = useRouter();
 
-const step = ref<'details' | 'payment' | 'success'>('details');
+useSeoMeta({
+  title: 'Pokladna',
+  description: 'Dokončení objednávky v Shopik.',
+  robots: 'noindex,nofollow',
+});
+
+const step = ref<'form' | 'success'>('form');
 const orderId = ref<number | null>(null);
 const isSubmitting = ref(false);
 const agreedToTerms = ref(false);
 
-const route = useRoute();
-const router = useRouter();
-
-// Kontrola návratu ze Stripe
-onMounted(() => {
-  if (route.query.success === 'true' && route.query.orderId) {
-    orderId.value = Number(route.query.orderId);
-    cart.clearCart();
-    step.value = 'success';
-    
-    // Vyčistit URL (router.replace zachová historii ale smaže query)
-    router.replace({ query: {} });
-  } else if (route.query.cancel === 'true') {
-    toast.error('Platba byla zrušena', 'Můžete to zkusit znovu nebo zvolit jinou metodu.');
-    router.replace({ query: {} });
-  }
-});
-
-const packetaBranch = ref<{ id: string; name: string } | null>(null);
+type ZBox = { id: string; name: string; address: string };
+const zbox = ref<ZBox | null>(null);
 
 const form = ref({
   customerName: '',
   customerEmail: '',
   phone: '',
-  street: '',
-  city: '',
-  zip: '',
-  paymentMethod: 'card',
-  shippingMethod: 'zasilkovna',
 });
 
-// Zásilkovna Widget Config
+const SHIPPING_PRICE = 79;
+
+// ── Packeta widget: load script once ────────────────────────────────
 useHead({
   script: [
-    { src: 'https://widget.packeta.com/v6/www/js/library.js', async: true }
-  ]
+    { src: 'https://widget.packeta.com/v6/www/js/library.js', async: true },
+  ],
 });
 
 const openPacketaWidget = () => {
-  if (typeof (window as any).Packeta !== 'undefined') {
-    const packetaApiKey = useRuntimeConfig().public.packetaApiKey;
-    
-    (window as any).Packeta.Widget.pick(packetaApiKey, (pickupPoint: any) => {
-      if (pickupPoint) {
-        packetaBranch.value = {
-          id: pickupPoint.id,
-          name: pickupPoint.nameStreet || pickupPoint.name
-        };
-      }
-    }, {
-      country: "cz",
-      language: "cs",
-      theme: "dark"
-    });
-  } else {
-    toast.error('Widget Zásilkovny se nepodařilo načíst.', 'Zkuste prosím obnovit stránku.');
+  const w = window as any;
+  if (typeof w.Packeta === 'undefined') {
+    toast.error('Widget Zásilkovny se nepodařilo načíst.', 'Zkuste obnovit stránku.');
+    return;
   }
+  const apiKey = useRuntimeConfig().public.packetaApiKey;
+
+  w.Packeta.Widget.pick(
+    apiKey,
+    (point: any) => {
+      if (!point) return;
+      const address = [point.street, point.city, point.zip].filter(Boolean).join(', ');
+      zbox.value = {
+        id: String(point.id),
+        name: point.name || point.nameStreet || `Z-BOX ${point.id}`,
+        address,
+      };
+    },
+    {
+      country: 'cz',
+      language: 'cs',
+      // Filter to Z-BOX pickup points only
+      vendors: [{ country: 'cz', group: 'zbox' }],
+    },
+  );
 };
 
-watch(() => form.value.shippingMethod, (newMethod) => {
-  if (newMethod !== 'zasilkovna') {
-    packetaBranch.value = null;
-  }
-});
-
-// Předvyplnění z profilu pro přihlášené uživatele
+// ── Prefill from user profile ───────────────────────────────────────
 const { data: userProfile } = await useFetch(
   () => (currentUser.value ? '/api/user/profile' : ''),
-  { 
-    immediate: !!currentUser.value,
-    watch: [currentUser],
-    default: () => null 
-  }
+  { immediate: !!currentUser.value, watch: [currentUser], default: () => null },
 );
+
 watch(
   [userProfile, currentUser],
   ([profile, user]) => {
-    if (profile) {
-      form.value.customerName = (profile as any).name ?? '';
-      form.value.customerEmail = user?.email ?? (profile as any).email ?? '';
-      form.value.phone = (profile as any).phone ?? '';
-      form.value.street = (profile as any).street ?? '';
-      form.value.city = (profile as any).city ?? '';
-      form.value.zip = (profile as any).zip ?? '';
+    const p: any = profile;
+    if (p) {
+      form.value.customerName = p.name ?? form.value.customerName;
+      form.value.customerEmail = user?.email ?? p.email ?? form.value.customerEmail;
+      form.value.phone = p.phone ?? form.value.phone;
     } else if (user?.email && !form.value.customerEmail) {
       form.value.customerEmail = user.email;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
-const paymentMethods = [
-  { value: 'card',      label: 'Platební karta', note: 'Visa, Mastercard, Maestro', icon: 'mdi:credit-card-outline' },
-  { value: 'transfer',  label: 'Bankovní převod', note: 'Platba předem na účet', icon: 'mdi:bank-outline' },
-  { value: 'cash',      label: 'Dobírka',         note: 'Platba při převzetí',       icon: 'mdi:cash-multiple' },
-];
+// ── Validation & totals ─────────────────────────────────────────────
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const totalWithShipping = computed(() => cart.totalPrice + SHIPPING_PRICE);
 
-const shippingMethods = [
-  {
-    value: 'zasilkovna',
-    label: 'Zásilkovna',
-    note: 'Výdejní místo dle výběru',
-    price: 79,
-    logo: 'zasilkovna',
-  },
-  {
-    value: 'ceska-posta',
-    label: 'Česká pošta',
-    note: 'Doručení do 2–3 pracovních dní',
-    price: 99,
-    logo: 'ceska-posta',
-  },
-  {
-    value: 'balikovna',
-    label: 'Balíkovna',
-    note: 'Výdejní místo Balíkovny',
-    price: 69,
-    logo: 'balikovna',
-  },
-  {
-    value: 'osobni',
-    label: 'Osobní vyzvednutí',
-    note: 'Praha, Vesmírná 42 – zdarma',
-    price: 0,
-    logo: 'osobni',
-  },
-];
-
-const selectedShipping = computed(() =>
-  shippingMethods.find(s => s.value === form.value.shippingMethod)
-);
-
-const totalWithShipping = computed(() => {
-  return cart.totalPrice + (selectedShipping.value?.price ?? 0);
-});
-
-const paymentLabel = computed(() =>
-  paymentMethods.find(p => p.value === form.value.paymentMethod)?.label ?? ''
-);
-
-const detailsValid = computed(() => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const isFormValid = (
-    form.value.customerName &&
-    form.value.customerEmail &&
+const formValid = computed(() => {
+  return (
+    form.value.customerName.trim().length > 1 &&
     emailRegex.test(form.value.customerEmail) &&
-    form.value.street &&
-    form.value.city &&
-    form.value.zip
+    form.value.phone.trim().length >= 9 &&
+    !!zbox.value &&
+    agreedToTerms.value
   );
-  
-  if (form.value.shippingMethod === 'zasilkovna' && !packetaBranch.value) {
-    return false;
-  }
-  
-  return isFormValid;
 });
 
+// ── Submit ──────────────────────────────────────────────────────────
 async function placeOrder() {
-  if (cart.items.length === 0) return;
+  if (!formValid.value || cart.items.length === 0 || !zbox.value) return;
   isSubmitting.value = true;
   try {
-    if (form.value.paymentMethod === 'card') {
-      // Stripe platba
-      const response: any = await $fetch('/api/create-checkout-session', {
-        method: 'POST',
-        body: {
-          ...form.value,
-          packetaBranchId: packetaBranch.value?.id,
-          packetaBranchName: packetaBranch.value?.name,
-          items: cart.items.map(item => ({ id: item.id, quantity: item.quantity })),
-          shippingPrice: selectedShipping.value?.price || 0,
-        }
-      });
-      if (response.url) {
-        window.location.href = response.url;
-      }
-    } else {
-      // Ostatní metody (Dobírka apod.)
-      const response: any = await $fetch('/api/orders', {
-        method: 'POST',
-        body: {
-          ...form.value,
-          packetaBranchId: packetaBranch.value?.id,
-          packetaBranchName: packetaBranch.value?.name,
-          items: cart.items.map(item => ({ id: item.id, quantity: item.quantity }))
-        }
-      });
-      orderId.value = response.orderId;
-      cart.clearCart();
-      step.value = 'success';
-    }
+    const shippingAddressText = `${zbox.value.name} — ${zbox.value.address}`;
+    const response: any = await $fetch('/api/orders', {
+      method: 'POST',
+      body: {
+        customerName: form.value.customerName,
+        customerEmail: form.value.customerEmail,
+        phone: form.value.phone,
+        street: shippingAddressText,
+        city: 'Z-BOX',
+        zip: '',
+        paymentMethod: 'cash',
+        shippingMethod: 'packeta-zbox',
+        packetaBranchId: zbox.value.id,
+        packetaBranchName: shippingAddressText,
+        items: cart.items.map((item) => ({ id: item.id, quantity: item.quantity })),
+      },
+    });
+    orderId.value = response.orderId;
+    cart.clearCart();
+    step.value = 'success';
   } catch (err: any) {
-    toast.error('Objednávku se nepodařilo odeslat', err?.data?.statusMessage || 'Zkuste to znovu.');
+    toast.error(
+      'Objednávku se nepodařilo odeslat',
+      err?.data?.statusMessage || err?.statusMessage || 'Zkuste to znovu.',
+    );
   } finally {
     isSubmitting.value = false;
   }
 }
-
-function isSelected(field: 'paymentMethod' | 'shippingMethod', val: string) {
-  return form.value[field] === val;
-}
-
-function selectedStyle(active: boolean) {
-  return active
-    ? 'border-color: rgba(139,92,246,0.7); background: rgba(139,92,246,0.08);'
-    : 'border-color: rgba(255,255,255,0.07); background: rgba(255,255,255,0.02);';
-}
-
-const spaydString = computed(() => {
-  if (!orderId.value) return '';
-  return `SPD*1.0*ACC:CZ7355000000008294444956*AM:${totalWithShipping.value}*CC:CZK*X-VS:${orderId.value}*MSG:Objednavka ${orderId.value}`;
-});
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto px-4 md:px-8 py-8 md:py-14">
-
-    <!-- ─── KROK 1: Dodací údaje ──────────────────────────────────── -->
-    <div v-if="step === 'details'" class="flex flex-col lg:flex-row gap-8">
+  <div class="checkout-page mx-auto max-w-5xl px-4 md:px-8 py-8 md:py-12">
+    <!-- ─── Form ─────────────────────────────────────────────────── -->
+    <div v-if="step === 'form'" class="flex flex-col lg:flex-row gap-6">
       <div class="flex-grow min-w-0">
-
-        <!-- Header -->
-        <div class="flex items-center gap-3 mb-7">
-          <NuxtLink to="/cart" class="text-white/30 hover:text-white transition-colors" aria-label="Zpět do košíku">
+        <div class="flex items-center gap-3 mb-6">
+          <NuxtLink to="/cart" class="checkout-back" aria-label="Zpět do košíku">
             <Icon icon="ep:arrow-left-bold" height="18" />
           </NuxtLink>
-          <h1 class="text-2xl md:text-3xl font-extrabold text-white neon-text">Pokladna 🛒</h1>
+          <h1 class="checkout-title">Pokladna</h1>
         </div>
 
         <!-- Osobní údaje -->
-        <div class="glass-card-strong p-5 md:p-7 mb-5">
-          <h2 class="text-base font-bold text-white mb-5 pb-3 border-b border-white/10 flex items-center gap-2">
-            <Icon icon="mdi:account-outline" class="text-primary-400" height="18" />
-            Osobní a doručovací údaje
+        <section class="checkout-card mb-4">
+          <h2 class="checkout-section-title">
+            <Icon icon="mdi:account-outline" class="checkout-section-icon" height="18" />
+            Kontaktní údaje
           </h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs text-white/40 mb-1.5 font-medium">Celé jméno *</label>
-              <input v-model="form.customerName" type="text" required placeholder="Jan Novák" class="input-cosmic" />
+              <label class="checkout-label">Jméno a příjmení *</label>
+              <input v-model="form.customerName" type="text" required placeholder="Jan Novák" class="checkout-input" />
             </div>
             <div>
-              <label class="block text-xs text-white/40 mb-1.5 font-medium">Email *</label>
-              <input v-model="form.customerEmail" type="email" required placeholder="jan@email.cz" class="input-cosmic" />
+              <label class="checkout-label">Email *</label>
+              <input v-model="form.customerEmail" type="email" required placeholder="jan@email.cz" class="checkout-input" />
+            </div>
+            <div class="md:col-span-2">
+              <label class="checkout-label">Telefon *</label>
+              <input v-model="form.phone" type="tel" required placeholder="+420 123 456 789" class="checkout-input" />
             </div>
           </div>
-          <div class="mb-4">
-            <label class="block text-xs text-white/40 mb-1.5 font-medium">Telefon</label>
-            <input v-model="form.phone" type="tel" placeholder="+420 123 456 789" class="input-cosmic" />
-          </div>
-          <div class="mb-4">
-            <label class="block text-xs text-white/40 mb-1.5 font-medium">Ulice a číslo popisné *</label>
-            <input v-model="form.street" type="text" required placeholder="Vesmírná 42" class="input-cosmic" />
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-white/40 mb-1.5 font-medium">Město *</label>
-              <input v-model="form.city" type="text" required placeholder="Praha" class="input-cosmic" />
-            </div>
-            <div>
-              <label class="block text-xs text-white/40 mb-1.5 font-medium">PSČ *</label>
-              <input v-model="form.zip" type="text" required placeholder="100 00" class="input-cosmic" />
-            </div>
-          </div>
-        </div>
+        </section>
 
-        <!-- Způsob dopravy -->
-        <div class="glass-card-strong p-5 md:p-7 mb-5">
-          <h2 class="text-base font-bold text-white mb-5 pb-3 border-b border-white/10 flex items-center gap-2">
-            <Icon icon="mdi:truck-outline" class="text-primary-400" height="18" />
-            Způsob dopravy
+        <!-- Z-BOX výběr -->
+        <section class="checkout-card mb-4">
+          <h2 class="checkout-section-title">
+            <Icon icon="mdi:package-variant-closed" class="checkout-section-icon" height="18" />
+            Doručení do Z-BOXu
           </h2>
-          <div class="space-y-2.5">
-            <label v-for="method in shippingMethods" :key="method.value" class="cursor-pointer block">
-              <input type="radio" v-model="form.shippingMethod" :value="method.value" class="hidden" />
-              <div class="rounded-xl border transition-all duration-200 flex items-center gap-3 px-4 py-3"
-                :style="selectedStyle(isSelected('shippingMethod', method.value))">
+          <p class="checkout-note">
+            Doručení Zásilkovnou do samoobslužného Z-BOXu. Balík si vyzvednete pomocí PIN kódu 24/7.
+          </p>
 
-                <!-- Logo -->
-                <!-- Zásilkovna -->
-                <div v-if="method.logo === 'zasilkovna'" class="flex-shrink-0 h-8 w-24 flex items-center justify-center rounded-md overflow-hidden" style="background: #cc0000;">
-                  <span class="text-white font-bold text-[11px] tracking-tight leading-none px-1">🚚 Zásilkovna</span>
-                </div>
-                <!-- Česká pošta -->
-                <div v-else-if="method.logo === 'ceska-posta'" class="flex-shrink-0 h-8 w-24 flex items-center justify-center rounded-md overflow-hidden gap-1" style="background: #1a3a6b;">
-                  <span class="text-[18px] leading-none">📯</span>
-                  <span class="text-white font-bold text-[10px] tracking-tight leading-tight">Česká<br>pošta</span>
-                </div>
-                <!-- Balíkovna -->
-                <div v-else-if="method.logo === 'balikovna'" class="flex-shrink-0 h-8 w-24 flex items-center justify-center rounded-md gap-1 overflow-hidden" style="background: #fff;">
-                  <div class="flex flex-col gap-0.5">
-                    <div class="flex gap-0.5">
-                      <div class="w-2 h-2 rounded-sm" style="background: #f5c800;"></div>
-                      <div class="w-2 h-2 rounded-sm" style="background: #0d3880;"></div>
-                    </div>
-                    <div class="flex gap-0.5">
-                      <div class="w-2 h-2 rounded-sm" style="background: #0d3880;"></div>
-                      <div class="w-2 h-2 rounded-sm" style="background: #0d3880;"></div>
-                    </div>
+          <div class="zbox-row">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="zbox-icon">
+                <Icon icon="mdi:archive-outline" height="24" />
+              </div>
+              <div class="min-w-0">
+                <div class="checkout-caption">Vybraný Z-BOX</div>
+                <template v-if="zbox">
+                  <div class="zbox-name">
+                    <Icon icon="mdi:check-decagram" class="zbox-check" />
+                    {{ zbox.name }}
                   </div>
-                  <span class="text-[11px] font-bold tracking-tight" style="color: #0d3880;">Balíkovna</span>
-                </div>
-                <!-- Osobní vyzvednutí -->
-                <div v-else class="flex-shrink-0 h-8 w-24 flex items-center justify-center gap-1 rounded-md" style="background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3);">
-                  <Icon icon="mdi:store-marker-outline" class="text-primary-300" height="16" />
-                  <span class="text-primary-300 font-semibold text-[10px] leading-tight">Osobní<br>vyzvednutí</span>
-                </div>
-
-                <!-- Info -->
-                <div class="flex-grow min-w-0">
-                  <div class="font-semibold text-white text-sm">{{ method.label }}</div>
-                  <div class="text-[11px] text-white/40">{{ method.note }}</div>
-                </div>
-
-                <!-- Cena -->
-                <div class="flex-shrink-0 text-right">
-                  <span v-if="method.price === 0" class="text-green-400 font-bold text-sm">Zdarma</span>
-                  <span v-else class="text-white font-semibold text-sm">{{ method.price }} Kč</span>
-                </div>
-
-                <!-- Check -->
-                <Icon v-if="isSelected('shippingMethod', method.value)" icon="mdi:check-circle" height="18" class="text-primary-400 flex-shrink-0" />
-                <div v-else class="w-[18px] flex-shrink-0"></div>
+                  <div class="zbox-address">{{ zbox.address }}</div>
+                </template>
+                <div v-else class="zbox-empty">Ještě není vybráno</div>
               </div>
-              
-              <!-- Zásilkovna Widget Tlačítko (zobrazí se jen pokud je vybrána Packeta) -->
-              <div v-if="isSelected('shippingMethod', 'zasilkovna') && method.value === 'zasilkovna'" class="mt-3 pl-4 pr-2">
-                <div class="glass-card-strong p-4 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 border border-white/5">
-                  <div class="flex items-center gap-3">
-                    <Icon icon="mdi:store-search" height="24" class="text-white/40" />
-                    <div>
-                      <div class="text-xs text-white/50 mb-0.5">Vybrané výdejní místo:</div>
-                      <div v-if="packetaBranch" class="text-sm font-bold text-white flex items-center gap-1.5">
-                        <Icon icon="mdi:check-decagram" class="text-green-400" />
-                        {{ packetaBranch.name }}
-                      </div>
-                      <div v-else class="text-sm font-semibold text-red-400/80">Není vybráno žádné místo!</div>
-                    </div>
-                  </div>
-                  <button 
-                    @click.prevent="openPacketaWidget"
-                    class="btn-cosmic px-4 py-2 flex items-center gap-2 text-sm whitespace-nowrap w-full md:w-auto mt-2 md:mt-0"
-                  >
-                    Vybrat z mapy
-                  </button>
-                </div>
-              </div>
-            </label>
+            </div>
+            <button @click.prevent="openPacketaWidget" class="btn-primary-pop whitespace-nowrap">
+              <Icon icon="mdi:map-marker" height="18" />
+              {{ zbox ? 'Změnit' : 'Vybrat Z-BOX' }}
+            </button>
           </div>
-        </div>
+        </section>
 
-        <!-- Způsob platby -->
-        <div class="glass-card-strong p-5 md:p-7 mb-6">
-          <h2 class="text-base font-bold text-white mb-5 pb-3 border-b border-white/10 flex items-center gap-2">
-            <Icon icon="mdi:credit-card-outline" class="text-primary-400" height="18" />
-            Způsob platby
+        <!-- Platba -->
+        <section class="checkout-card mb-4">
+          <h2 class="checkout-section-title">
+            <Icon icon="mdi:cash-multiple" class="checkout-section-icon" height="18" />
+            Platba
           </h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label v-for="pm in paymentMethods" :key="pm.value" class="cursor-pointer">
-              <input type="radio" v-model="form.paymentMethod" :value="pm.value" class="hidden" />
-              <div class="rounded-xl border transition-all duration-200 flex items-center gap-3 px-4 py-3 h-full"
-                :style="selectedStyle(isSelected('paymentMethod', pm.value))">
-                <Icon :icon="pm.icon" height="24" :style="isSelected('paymentMethod', pm.value) ? 'color:#a78bfa;' : 'color:rgba(255,255,255,0.4);'" />
-                <div class="flex-grow">
-                  <div class="font-semibold text-white text-sm">{{ pm.label }}</div>
-                  <div class="text-[11px] text-white/40">{{ pm.note }}</div>
-                </div>
-                <Icon v-if="isSelected('paymentMethod', pm.value)" icon="mdi:check-circle" height="16" class="text-primary-400 flex-shrink-0" />
-              </div>
-            </label>
+          <div class="payment-fixed">
+            <div class="payment-icon">
+              <Icon icon="mdi:cash-multiple" height="22" />
+            </div>
+            <div class="flex-grow">
+              <div class="payment-title">Dobírka</div>
+              <div class="payment-note">Zaplatíte při vyzvednutí v Z-BOXu.</div>
+            </div>
+            <Icon icon="mdi:check-circle" height="20" class="payment-check" />
           </div>
+        </section>
+
+        <!-- Souhlas -->
+        <div class="mb-5">
+          <label class="terms-row">
+            <input v-model="agreedToTerms" type="checkbox" class="terms-checkbox" />
+            <span class="terms-text">
+              Souhlasím s
+              <NuxtLink to="/obchodni-podminky" target="_blank" class="terms-link">obchodními podmínkami</NuxtLink>
+              a
+              <NuxtLink to="/ochrana-osobnich-udaju" target="_blank" class="terms-link">zásadami zpracování osobních údajů</NuxtLink>.
+            </span>
+          </label>
         </div>
 
         <button
-          @click="step = 'payment'"
-          :disabled="!detailsValid"
-          class="btn-cosmic w-full py-4 text-lg flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed">
-          <Icon icon="mdi:arrow-right" height="22" />
-          Pokračovat k potvrzení objednávky
+          @click="placeOrder"
+          :disabled="!formValid || isSubmitting"
+          class="btn-primary-pop w-full justify-center py-4 text-lg"
+        >
+          <Icon v-if="isSubmitting" icon="lucide:loader-2" height="22" class="animate-spin" />
+          <Icon v-else icon="mdi:check-decagram" height="22" />
+          {{ isSubmitting ? 'Odesíláme...' : 'Odeslat objednávku' }}
         </button>
       </div>
 
-      <!-- Souhrn košíku -->
-      <div class="lg:w-88 flex-shrink-0">
-        <div class="glass-card-strong p-5 sticky top-6 gradient-border">
-          <h3 class="text-base font-bold text-white mb-4 neon-text-cyan">Váš košík</h3>
-          <div class="space-y-3 mb-5 max-h-72 overflow-y-auto pr-1">
-            <div v-for="item in cart.items" :key="item.id" class="flex items-center gap-3">
-              <div class="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0" style="background:rgba(255,255,255,0.05);">
+      <!-- Souhrn -->
+      <aside class="lg:w-80 flex-shrink-0">
+        <div class="summary-card sticky top-24">
+          <h3 class="summary-title">Váš košík</h3>
+          <div class="summary-items">
+            <div v-for="item in cart.items" :key="item.id" class="summary-item">
+              <div class="summary-thumb">
                 <NuxtImg
                   v-if="item.image"
                   :src="item.image.startsWith('http') ? item.image : `/${item.image}`"
@@ -411,182 +262,410 @@ const spaydString = computed(() => {
                   format="webp"
                   loading="lazy"
                 />
-                <div v-else class="w-full h-full flex items-center justify-center text-white/20">
+                <div v-else class="summary-thumb-empty">
                   <Icon icon="mdi:image-off" height="14" />
                 </div>
               </div>
-              <div class="flex-grow min-w-0">
-                <div class="text-xs font-medium text-white truncate">{{ item.title }}</div>
-                <div class="text-[11px] text-white/40">{{ item.quantity }} × {{ item.price }} Kč</div>
+              <div class="min-w-0 flex-grow">
+                <div class="summary-item-title">{{ item.title }}</div>
+                <div class="summary-item-qty">{{ item.quantity }} × {{ item.price }} Kč</div>
               </div>
             </div>
           </div>
-          <div class="border-t border-white/10 pt-4 space-y-2">
-            <div class="flex justify-between text-sm text-white/40">
+
+          <div class="summary-totals">
+            <div class="summary-row">
               <span>Mezisoučet</span><span>{{ cart.totalPrice }} Kč</span>
             </div>
-            <div class="flex justify-between text-sm text-white/40">
-              <span>Doprava ({{ selectedShipping?.label }})</span>
-              <span :class="selectedShipping?.price === 0 ? 'text-green-400 font-medium' : 'text-white'">
-                {{ selectedShipping?.price === 0 ? 'Zdarma' : `${selectedShipping?.price} Kč` }}
-              </span>
+            <div class="summary-row">
+              <span>Doprava (Zásilkovna Z-BOX)</span><span>{{ SHIPPING_PRICE }} Kč</span>
             </div>
-            <div class="flex justify-between text-lg font-black pt-2">
-              <span class="text-white">Celkem</span>
-              <span class="neon-text-rainbow">{{ totalWithShipping }} Kč</span>
+            <div class="summary-row summary-total">
+              <span>Celkem</span>
+              <span>{{ totalWithShipping }} Kč</span>
             </div>
           </div>
         </div>
-      </div>
+      </aside>
     </div>
 
-    <!-- ─── KROK 2: Potvrzení (platba přeskočena) ─────────────────── -->
-    <div v-else-if="step === 'payment'" class="max-w-2xl mx-auto">
-      <div class="flex items-center gap-3 mb-7">
-        <button @click="step = 'details'" class="text-white/30 hover:text-white transition-colors">
-          <Icon icon="ep:arrow-left-bold" height="18" />
-        </button>
-        <h1 class="text-2xl md:text-3xl font-extrabold text-white neon-text">Potvrzení objednávky ✅</h1>
-      </div>
-
-      <!-- Informace o platbě -->
-      <div v-if="form.paymentMethod === 'card'" class="glass-card-strong p-6 mb-5 flex items-center gap-5">
-        <div class="h-16 w-16 rounded-2xl bg-primary-500/10 flex items-center justify-center flex-shrink-0">
-          <Icon icon="logos:stripe" height="24" />
-        </div>
-        <div>
-          <h2 class="text-lg font-bold text-white mb-1">Bezpečná platba kartou</h2>
-          <p class="text-white/50 text-sm">
-            Po kliknutí na tlačítko níže budete přesměrováni na zabezpečenou platební bránu <strong>Stripe</strong> pro dokončení vaší platby.
-          </p>
-        </div>
-      </div>
-      <div v-else class="glass-card-strong p-6 mb-5 text-center">
-        <h2 class="text-lg font-bold text-white mb-1">Potvrzení objednávky</h2>
-        <p class="text-white/50 text-sm">Zkontrolujte si prosím údaje níže před odesláním objednávky.</p>
-      </div>
-
-      <!-- Shrnutí -->
-      <div class="glass-card p-5 mb-5 space-y-3 text-sm">
-        <h3 class="text-white font-bold text-base mb-1">Shrnutí objednávky</h3>
-        <div class="flex justify-between">
-          <span class="text-white/40">Zákazník</span>
-          <span class="text-white">{{ form.customerName }}</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-white/40">Email</span>
-          <span class="text-white">{{ form.customerEmail }}</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-white/40">Adresa</span>
-          <span class="text-white text-right">{{ form.street }}, {{ form.zip }} {{ form.city }}</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-white/40">Doprava</span>
-          <div class="text-right">
-            <span class="text-white block">{{ selectedShipping?.label }} — {{ selectedShipping?.price === 0 ? 'Zdarma' : `${selectedShipping?.price} Kč` }}</span>
-            <span v-if="packetaBranch" class="text-primary-400 text-xs font-semibold block mt-0.5">{{ packetaBranch.name }}</span>
-          </div>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-white/40">Platba</span>
-          <span class="text-white">{{ paymentLabel }}</span>
-        </div>
-        <div class="flex justify-between pt-3 border-t border-white/10 text-base font-bold">
-          <span class="text-white">K zaplacení</span>
-          <span class="neon-text-rainbow text-xl font-black">{{ totalWithShipping }} Kč</span>
-        </div>
-      </div>
-
-      <!-- Podmínky souhlas -->
-      <div class="mb-5 px-1 py-3 border-t border-white/5 mt-5">
-        <label class="flex items-start gap-3 cursor-pointer group">
-          <div class="relative flex items-center h-5 mt-0.5">
-            <input 
-              v-model="agreedToTerms" 
-              type="checkbox" 
-              id="terms-checkbox"
-              class="w-5 h-5 rounded border-white/10 bg-white/5 text-primary-500 focus:ring-primary-500/50 transition-all cursor-pointer"
-            />
-          </div>
-          <span class="text-xs text-white/40 leading-relaxed group-hover:text-white/60 transition-colors">
-            Souhlasím s 
-            <NuxtLink to="/obchodni-podminky" target="_blank" class="text-primary-400 hover:underline">obchodními podmínkami</NuxtLink> 
-            a 
-            <NuxtLink to="/ochrana-osobnich-udaju" target="_blank" class="text-primary-400 hover:underline">zásadami GDPR</NuxtLink>.
-            Beru na vědomí, že tyto údaje budou zpracovány za účelem vyřízení objednávky.
-          </span>
-        </label>
-      </div>
-
-      <button
-        @click="placeOrder"
-        :disabled="isSubmitting || !agreedToTerms"
-        class="btn-cosmic w-full py-5 text-xl flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed">
-        <Icon v-if="isSubmitting" icon="lucide:loader-2" height="24" class="animate-spin" />
-        <Icon v-else icon="mdi:check-decagram" height="24" />
-          {{ isSubmitting ? 'Odesíláme...' : (form.paymentMethod === 'card' ? 'Zaplatit kartou' : 'Potvrdit a odeslat objednávku') }}
-      </button>
-    </div>
-
-    <!-- ─── KROK 3: Úspěch ─────────────────────────────────────────── -->
+    <!-- ─── Success ──────────────────────────────────────────────── -->
     <div v-else class="max-w-xl mx-auto text-center py-16">
-      <div class="relative inline-block mb-10">
-        <div class="absolute inset-0 rounded-full scale-150 animate-pulse" style="background:rgba(139,92,246,0.25);filter:blur(30px);"></div>
-        <div class="relative w-24 h-24 rounded-full flex items-center justify-center mx-auto text-white shadow-2xl"
-          style="background:linear-gradient(135deg,#8b5cf6,#ec4899);">
-          <Icon icon="mdi:check-bold" height="48" />
-        </div>
+      <div class="success-badge">
+        <Icon icon="mdi:check-bold" height="48" />
       </div>
-      <h1 class="text-4xl md:text-5xl font-black text-white mb-4 neon-text-rainbow">Objednáno! 🚀</h1>
-      <p class="text-lg text-white/60 mb-8">
-        Vaše objednávka <span class="text-primary-400 font-mono font-bold">#{{ orderId }}</span> byla přijata.
+      <h1 class="success-title">Objednáno! 🚀</h1>
+      <p class="success-subtitle">
+        Objednávka <span class="success-code">#{{ orderId }}</span> byla přijata.
       </p>
-      <div class="glass-card p-5 mb-8 text-left text-sm text-white/50">
+      <div class="success-panel">
+        Do e-mailu vám dorazí potvrzení. Platba proběhne při vyzvednutí v Z-BOXu.
         <template v-if="currentUser">
-          Objednávku vidíte v
-          <NuxtLink to="/user" class="text-primary-400 hover:underline">Můj profil → Moje objednávky</NuxtLink>.
-        </template>
-        <template v-else>
-          Objednávku vidíte v
-          <NuxtLink to="/admin/orders" class="text-primary-400 hover:underline">Admin panelu → Objednávky</NuxtLink>.
+          Objednávku najdete v
+          <NuxtLink to="/user" class="terms-link">Můj profil → Objednávky</NuxtLink>.
         </template>
       </div>
-
-      <!-- QR Platba pro bankovní převod -->
-      <div v-if="form.paymentMethod === 'transfer'" class="glass-card-strong p-8 mb-10 border border-primary-500/30 shadow-2xl shadow-primary-500/10">
-        <div class="flex flex-col md:flex-row items-center gap-10">
-          <div class="bg-white p-4 rounded-2xl shadow-xl">
-            <qrcode-vue :value="spaydString" :size="180" level="M" render-as="svg" />
-          </div>
-          <div class="text-left flex-grow space-y-4">
-            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-              <Icon icon="mdi:qrcode-scan" class="text-primary-400" />
-              Platební údaje
-            </h3>
-            <div class="space-y-2 font-mono text-sm">
-              <div class="flex flex-col">
-                <span class="text-white/30 text-[10px] uppercase font-sans font-bold">Číslo účtu</span>
-                <span class="text-white text-base">8294444956 / 5500</span>
-              </div>
-              <div class="flex flex-col">
-                <span class="text-white/30 text-[10px] uppercase font-sans font-bold">Částka</span>
-                <span class="text-primary-300 text-lg font-black">{{ totalWithShipping }} Kč</span>
-              </div>
-              <div class="flex flex-col">
-                <span class="text-white/30 text-[10px] uppercase font-sans font-bold">Variabilní symbol</span>
-                <span class="text-white text-lg font-bold">{{ orderId }}</span>
-              </div>
-            </div>
-            <p class="text-xs text-white/40 italic">Objednávku odešleme ihned po spárování platby.</p>
-          </div>
-        </div>
-      </div>
-      <NuxtLink to="/" class="btn-cosmic px-10 py-4 text-lg inline-flex items-center gap-3">
-        <Icon icon="mdi:store-outline" height="22" />
+      <NuxtLink to="/" class="btn-primary-pop px-8 py-3 inline-flex">
+        <Icon icon="mdi:store-outline" height="20" />
         Zpět k nakupování
       </NuxtLink>
     </div>
-
   </div>
 </template>
+
+<style scoped>
+/* ── Palette overrides (checkout uses dark text on pastel body) ── */
+.checkout-page {
+  color: var(--pop-ink, #2a1340);
+}
+
+.checkout-back {
+  color: rgba(42, 19, 64, 0.45);
+  transition: color 0.2s;
+}
+.checkout-back:hover {
+  color: var(--pop-ink, #2a1340);
+}
+
+.checkout-title {
+  font-family: 'Berkshire Swash', 'Petrona', cursive;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  line-height: 1;
+  color: var(--pop-ink, #2a1340);
+  letter-spacing: -0.02em;
+}
+
+/* ── Cards ── */
+.checkout-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(42, 19, 64, 0.1);
+  border-radius: 1.25rem;
+  padding: 1.25rem 1.25rem;
+  box-shadow: 0 2px 12px rgba(42, 19, 64, 0.06);
+}
+@media (min-width: 768px) {
+  .checkout-card { padding: 1.5rem 1.5rem; }
+}
+
+.checkout-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--pop-ink, #2a1340);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(42, 19, 64, 0.08);
+}
+.checkout-section-icon {
+  color: var(--pop-lavender, #6b4ea7);
+}
+
+.checkout-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(42, 19, 64, 0.6);
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
+.checkout-input {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(42, 19, 64, 0.15);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 0.65rem;
+  color: var(--pop-ink, #2a1340);
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.checkout-input::placeholder {
+  color: rgba(42, 19, 64, 0.35);
+}
+.checkout-input:focus {
+  outline: none;
+  border-color: rgba(107, 78, 167, 0.55);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(107, 78, 167, 0.12);
+}
+
+.checkout-note {
+  font-size: 0.85rem;
+  color: rgba(42, 19, 64, 0.65);
+  margin-bottom: 1rem;
+}
+.checkout-caption {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(42, 19, 64, 0.55);
+  font-weight: 700;
+  margin-bottom: 0.15rem;
+}
+
+/* ── Z-BOX row ── */
+.zbox-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: stretch;
+  padding: 0.9rem 1rem;
+  border-radius: 0.9rem;
+  background: rgba(189, 166, 206, 0.18);
+  border: 1px solid rgba(107, 78, 167, 0.2);
+}
+@media (min-width: 640px) {
+  .zbox-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+.zbox-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #cc0000, #ff3d3d);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(204, 0, 0, 0.25);
+}
+.zbox-name {
+  font-weight: 700;
+  color: var(--pop-ink, #2a1340);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+.zbox-check {
+  color: #2e7d32;
+}
+.zbox-address {
+  font-size: 0.8rem;
+  color: rgba(42, 19, 64, 0.7);
+  margin-top: 2px;
+}
+.zbox-empty {
+  color: #b3324c;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* ── Payment fixed ── */
+.payment-fixed {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.9rem;
+  background: rgba(168, 223, 142, 0.22);
+  border: 1px solid rgba(46, 125, 50, 0.22);
+}
+.payment-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(46, 125, 50, 0.15);
+  color: #2e7d32;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.payment-title {
+  font-weight: 700;
+  color: var(--pop-ink, #2a1340);
+  font-size: 0.98rem;
+}
+.payment-note {
+  font-size: 0.8rem;
+  color: rgba(42, 19, 64, 0.65);
+}
+.payment-check {
+  color: #2e7d32;
+  flex-shrink: 0;
+}
+
+/* ── Terms ── */
+.terms-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.5rem 0.25rem;
+  cursor: pointer;
+}
+.terms-checkbox {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: #6b4ea7;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.terms-text {
+  font-size: 0.85rem;
+  color: rgba(42, 19, 64, 0.75);
+  line-height: 1.5;
+}
+.terms-link {
+  color: #6b4ea7;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.terms-link:hover { color: #4c1d95; }
+
+/* ── Primary button (pastel-safe) ── */
+.btn-primary-pop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 1.2rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #6b4ea7, #b3324c);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 4px 18px rgba(107, 78, 167, 0.3);
+}
+.btn-primary-pop:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(107, 78, 167, 0.4);
+}
+.btn-primary-pop:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ── Summary card ── */
+.summary-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(42, 19, 64, 0.1);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  box-shadow: 0 4px 20px rgba(42, 19, 64, 0.08);
+}
+.summary-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--pop-ink, #2a1340);
+  margin-bottom: 1rem;
+}
+.summary-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 1rem;
+}
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.summary-thumb {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(42, 19, 64, 0.06);
+}
+.summary-thumb-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(42, 19, 64, 0.3);
+}
+.summary-item-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--pop-ink, #2a1340);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.summary-item-qty {
+  font-size: 0.72rem;
+  color: rgba(42, 19, 64, 0.55);
+}
+.summary-totals {
+  border-top: 1px solid rgba(42, 19, 64, 0.1);
+  padding-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: rgba(42, 19, 64, 0.65);
+}
+.summary-total {
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(42, 19, 64, 0.1);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--pop-ink, #2a1340);
+  margin-top: 0.2rem;
+}
+
+/* ── Success ── */
+.success-badge {
+  position: relative;
+  display: inline-flex;
+  width: 96px;
+  height: 96px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #6b4ea7, #b3324c);
+  color: #fff;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 2rem;
+  box-shadow: 0 12px 30px rgba(107, 78, 167, 0.35);
+}
+.success-title {
+  font-family: 'Berkshire Swash', 'Petrona', cursive;
+  font-size: clamp(2rem, 6vw, 3rem);
+  color: var(--pop-ink, #2a1340);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+.success-subtitle {
+  font-size: 1.05rem;
+  color: rgba(42, 19, 64, 0.7);
+  margin-bottom: 1.75rem;
+}
+.success-code {
+  font-family: 'Menlo', monospace;
+  font-weight: 700;
+  color: #6b4ea7;
+}
+.success-panel {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(42, 19, 64, 0.1);
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  color: rgba(42, 19, 64, 0.75);
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+</style>

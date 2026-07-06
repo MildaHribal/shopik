@@ -136,7 +136,7 @@ onUnmounted(() => {
 <template>
   <!-- Main Navbar -->
   <nav
-    class="navbar-main w-full grid grid-cols-[1fr_auto_1fr] items-center px-4 md:px-6 py-2 md:py-3 fixed top-0 z-50 transition-transform duration-300"
+    class="navbar-main w-full grid grid-cols-[1fr_auto_1fr] items-center px-4 md:px-6 py-1 md:py-1.5 fixed top-0 z-50 transition-transform duration-300"
     :class="{ 'navbar--hidden': !isVisible && !isSearchOpen && !isMobileMenuOpen, 'navbar--scrolled': isScrolled }"
   >
     <!-- Left: Tynky Tvorba subbrand (same style as brand, slightly smaller, frog) -->
@@ -375,32 +375,32 @@ onUnmounted(() => {
 
 /* Mushroom-eye artwork as brand symbol (instead of 🍄 emoji). */
 .brand-art {
-  width: 60px;
-  height: 60px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 14px rgba(106, 78, 167, 0.5));
+  filter: drop-shadow(0 3px 10px rgba(106, 78, 167, 0.45));
 }
 @media (min-width: 768px) {
-  .brand-art { width: 82px; height: 82px; }
+  .brand-art { width: 48px; height: 48px; }
 }
 @media (min-width: 1280px) {
-  .brand-art { width: 96px; height: 96px; }
+  .brand-art { width: 56px; height: 56px; }
 }
-.mobile-art { width: 48px; height: 48px; }
+.mobile-art { width: 32px; height: 32px; }
 
 .brand-text {
   font-family: 'Berkshire Swash', 'Petrona', cursive;
-  font-size: 1.85rem;
-  letter-spacing: -0.04em;
+  font-size: 1.4rem;
+  letter-spacing: -0.03em;
   color: inherit;
   line-height: 1;
-  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.35);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 @media (min-width: 768px) {
-  .brand-text { font-size: 2.5rem; }
+  .brand-text { font-size: 1.75rem; }
 }
 @media (min-width: 1280px) {
-  .brand-text { font-size: 2.9rem; }
+  .brand-text { font-size: 1.95rem; }
 }
 
 /* ── Left subbrand: "Tynky Tvorba" — same style as brand, smaller, frog ── */
@@ -410,24 +410,24 @@ onUnmounted(() => {
 }
 
 .subbrand-frog {
-  font-size: 1.45rem;
+  font-size: 1.1rem;
   line-height: 1;
-  filter: drop-shadow(0 3px 8px rgba(106, 78, 167, 0.3));
+  filter: drop-shadow(0 2px 6px rgba(106, 78, 167, 0.3));
 }
 @media (min-width: 768px) {
-  .subbrand-frog { font-size: 1.75rem; }
+  .subbrand-frog { font-size: 1.25rem; }
 }
 
 .subbrand-text {
   font-family: 'Berkshire Swash', 'Petrona', cursive;
-  font-size: 1.2rem;
-  letter-spacing: -0.04em;
+  font-size: 0.95rem;
+  letter-spacing: -0.03em;
   line-height: 1;
   color: inherit;
-  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.35);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 @media (min-width: 768px) {
-  .subbrand-text { font-size: 1.5rem; }
+  .subbrand-text { font-size: 1.05rem; }
 }
 
 .navbar--hidden {
@@ -439,7 +439,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.55rem;
+  padding: 0.4rem;
   border-radius: 9999px;
   color: var(--pop-ink);
   background: rgba(255, 255, 255, 0.5);

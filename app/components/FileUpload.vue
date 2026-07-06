@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 
-const supabase = useSupabase()
 const emit = defineEmits<{
   (e: 'upload-success', url: string): void
 }>()
@@ -18,28 +17,19 @@ const uploadImage = async (event: Event) => {
   error.value = ''
 
   try {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`
-    const filePath = `products/${fileName}`
-
-    const { data, error: uploadError } = await supabase.storage
-      .from('images')
-      .upload(filePath, file, { upsert: true })
-
-    if (uploadError) {
-      error.value = uploadError.message
-      return
-    }
-
-    const { data: urlData } = supabase.storage
-      .from('images')
-      .getPublicUrl(filePath)
-
-    emit('upload-success', urlData.publicUrl)
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await $fetch<{ url: string }>('/api/admin/upload', {
+      method: 'POST',
+      body: formData,
+    })
+    if (res?.url) emit('upload-success', res.url)
+    else error.value = 'Nahrávání selhalo.'
   } catch (e: any) {
-    error.value = e.message || 'Chyba při nahrávání'
+    error.value = e?.statusMessage || e?.message || 'Chyba při nahrávání'
   } finally {
     uploading.value = false
+    input.value = ''
   }
 }
 </script>

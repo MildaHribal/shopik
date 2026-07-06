@@ -7,8 +7,23 @@ import { getOptionalSession } from '../utils/session';
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
   const stripe = new Stripe(config.stripeSecretKey, { apiVersion: '2026-02-25.clover' });
+  if (!config.stripeSecretKey) {
+    throw createError({ statusCode: 503, statusMessage: 'Platební brána není nakonfigurovaná' });
+  }
+
   const body = await readBody(event);
-  const { items, customerName, customerEmail, shippingMethod, shippingPrice, ...form } = body;
+  const {
+    items,
+    customerName,
+    customerEmail,
+    shippingMethod,
+    shippingPrice,
+    packetaBranchId,
+    packetaBranchName,
+    phone,
+    paymentMethod,
+    ...form
+  } = body;
 
   if (!items?.length || !customerEmail) {
     throw createError({ statusCode: 400, statusMessage: 'Chybějící položky v košíku nebo email' });
@@ -62,7 +77,12 @@ export default defineEventHandler(async (event) => {
   const [newOrder] = await db.insert(orders).values({
     customerName,
     customerEmail,
+    customerPhone: phone ?? null,
     shippingAddress: `${form.street}, ${form.zip} ${form.city} | Doprava: ${shippingMethod}`,
+    shippingMethod: shippingMethod ?? null,
+    paymentMethod: paymentMethod ?? 'card',
+    packetaBranchId: packetaBranchId ?? null,
+    packetaBranchName: packetaBranchName ?? null,
     totalPrice: totalAmount,
     status: 'pending',
     paymentStatus: 'unpaid',
@@ -93,11 +113,13 @@ export default defineEventHandler(async (event) => {
     mode: 'payment',
     customer_email: customerEmail,
     success_url: `${origin}/checkout?success=true&orderId=${newOrder.id}`,
-    cancel_url: `${origin}/checkout?cancel=true`,
+    cancel_url: `${origin}/checkout?cancel=true&orderId=${newOrder.id}`,
     metadata: {
       orderId: newOrder.id.toString(),
     },
   });
+
+  await db.update(orders).set({ stripeSessionId: session.id }).where(eq(orders.id, newOrder.id));
 
   return { url: session.url };
 });

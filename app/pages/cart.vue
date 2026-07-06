@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import CartComponent from "~/components/products/CartComponent.vue";
+
+useSeoMeta({
+  title: 'Košík',
+  description: 'Obsah vašeho nákupního košíku.',
+  robots: 'noindex,nofollow',
+})
 </script>
 
 <template>

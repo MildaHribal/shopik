@@ -3,9 +3,15 @@ import { ref } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { Icon } from '@iconify/vue'
 
-const { refreshSession, supabase } = useAuth()
+const { signUpWithPassword, signInWithGoogle } = useAuth()
 const router = useRouter()
 const toast = useCosmicToast()
+
+useSeoMeta({
+  title: 'Registrace',
+  description: 'Vytvořte si účet v Shopik.',
+  robots: 'noindex,nofollow',
+})
 
 const email = ref('')
 const password = ref('')
@@ -30,29 +36,14 @@ const handleRegister = async () => {
   }
 
   try {
-    const { error: authError } = await supabase.auth.signUp({
-      email: email.value,
-      password: password.value,
-      options: {
-        data: {
-          full_name: email.value.split('@')[0] ?? email.value,
-        },
-      },
-    })
-
-    if (authError) {
-      if (authError.message?.includes('already')) {
-        error.value = 'Uživatel s tímto emailem již existuje.'
-      } else {
-        error.value = authError.message || 'Nastala chyba při registraci.'
-      }
+    const result = await signUpWithPassword(email.value, password.value)
+    if (result.error) {
+      error.value = result.error
     } else {
-      await refreshSession()
       toast.success('Registrace', 'Vítejte v naší kosmické komunitě! ✨')
       await router.push('/')
     }
   } catch (e: any) {
-    console.error(e)
     error.value = 'Nastala chyba při registraci: ' + (e.message || 'Neznámá chyba')
   } finally {
     loading.value = false
@@ -64,18 +55,10 @@ const handleGoogleRegister = async () => {
   error.value = ''
 
   try {
-    const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    })
-    if (authError) {
-      error.value = 'Chyba při registraci přes Google: ' + authError.message
-    }
+    const result = await signInWithGoogle()
+    if (result.error) error.value = result.error
   } catch (e: any) {
-    console.error(e)
-    error.value = 'Chyba při registraci přes Google: ' + e.message
+    error.value = 'Chyba při registraci přes Google: ' + (e.message || 'Neznámá chyba')
   } finally {
     loading.value = false
   }
@@ -91,17 +74,17 @@ const handleGoogleRegister = async () => {
 
     <div class="w-full max-w-md">
       <!-- Header -->
-      <div class="text-center mb-10">
+      <div class="text-center mb-8 md:mb-10">
         <div class="text-4xl md:text-5xl mb-3 md:mb-4">🌀</div>
         <h2 class="text-2xl md:text-3xl font-extrabold text-white neon-text-pink">Registrace</h2>
-        <p class="mt-1 md:mt-2 text-white/30 text-xs md:text-sm">Připojte se ke kosmické komunitě</p>
+        <p class="mt-2 text-white/70 text-sm md:text-base">Připojte se ke kosmické komunitě</p>
       </div>
 
       <!-- Form Card -->
       <div class="glass-card-strong p-5 md:p-8 gradient-border">
         <form class="space-y-5" @submit.prevent="handleRegister">
           <div>
-            <label for="email" class="block text-sm font-medium text-white/60 mb-2">Email</label>
+            <label for="email" class="block text-sm font-semibold text-white/90 mb-2">Email</label>
             <input
               id="email"
               v-model="email"
@@ -115,7 +98,7 @@ const handleGoogleRegister = async () => {
           </div>
 
           <div>
-            <label for="password" class="block text-sm font-medium text-white/60 mb-2">Heslo</label>
+            <label for="password" class="block text-sm font-semibold text-white/90 mb-2">Heslo</label>
             <input
               id="password"
               v-model="password"
@@ -124,12 +107,12 @@ const handleGoogleRegister = async () => {
               autocomplete="new-password"
               required
               class="input-cosmic"
-              placeholder="••••••••"
+              placeholder="alespoň 8 znaků"
             >
           </div>
 
           <div>
-            <label for="confirm-password" class="block text-sm font-medium text-white/60 mb-2">Potvrdit heslo</label>
+            <label for="confirm-password" class="block text-sm font-semibold text-white/90 mb-2">Potvrdit heslo</label>
             <input
               id="confirm-password"
               v-model="confirmPassword"
@@ -142,8 +125,8 @@ const handleGoogleRegister = async () => {
             >
           </div>
 
-          <div v-if="error" class="glass-card p-3 border-red-500/30 text-center">
-            <p class="text-red-400 text-sm">{{ error }}</p>
+          <div v-if="error" class="glass-card p-3 border-red-500/40 text-center">
+            <p class="text-red-300 text-sm">{{ error }}</p>
           </div>
 
           <button
@@ -160,7 +143,7 @@ const handleGoogleRegister = async () => {
         <div class="relative my-8">
           <div class="cosmic-divider"></div>
           <div class="absolute inset-0 flex items-center justify-center">
-            <span class="px-4 text-sm text-white/30 bg-[#0d0020]">nebo pokračujte přes</span>
+            <span class="px-4 text-sm text-white/70 bg-[#0d0020]">nebo pokračujte přes</span>
           </div>
         </div>
 
@@ -177,9 +160,9 @@ const handleGoogleRegister = async () => {
       </div>
 
       <!-- Footer link -->
-      <p class="mt-8 text-center text-sm text-white/30">
+      <p class="mt-8 text-center text-sm text-white/75">
         Již máte účet?
-        <NuxtLink to="/user/login" class="font-semibold text-primary-400 hover:text-primary-300 transition-colors">
+        <NuxtLink to="/user/login" class="font-semibold text-primary-300 hover:text-primary-200 transition-colors">
           Přihlaste se ✨
         </NuxtLink>
       </p>
@@ -188,4 +171,11 @@ const handleGoogleRegister = async () => {
 </template>
 
 <style scoped>
+.input-cosmic {
+  font-size: 1rem;
+  padding: 0.85rem 1rem;
+}
+.input-cosmic::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
 </style>

@@ -56,6 +56,13 @@ jobs:
     needs: build-and-push-image
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Webhook
+      - name: Trigger deploy webhook
         if: success()
-        run: curl -X POST https://n8n.turhobr.cz/webhook/80ca05d1-eb5d-41a4-b288-70504894e228
+        env:
+          DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DEPLOY_WEBHOOK_URL" ]; then
+            echo "DEPLOY_WEBHOOK_URL secret is not set — skipping deploy trigger."
+            exit 0
+          fi
+          curl -fsSL -X POST "$DEPLOY_WEBHOOK_URL"

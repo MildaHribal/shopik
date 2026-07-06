@@ -113,11 +113,40 @@ body {
   }
 }
 
-/* Mobile performance: reduce heavy animated backgrounds */
-@media (max-width: 640px) {
+/* Mobile performance: reduce heavy animated backgrounds + GPU-heavy effects */
+@media (max-width: 768px) {
   .cosmic-bg::before,
-  .cosmic-bg::after {
+  .cosmic-bg::after,
+  .nebula-glow,
+  .mandala-spin,
+  .cosmic-shimmer::after {
     animation: none !important;
+  }
+  .nebula-glow {
+    /* Keep static glow but kill the heavy 4.5x blur on mobile */
+    filter: blur(40px) !important;
+    opacity: 0.5 !important;
+  }
+  /* backdrop-filter blur is extremely expensive on mobile GPUs */
+  .glass-card,
+  .glass-card-strong,
+  .cosmic-badge,
+  .input-cosmic {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* Touch targets — bump min size for inputs/buttons on mobile (Apple HIG: 44px) */
+@media (max-width: 640px) {
+  .input-cosmic {
+    font-size: 16px; /* prevent iOS auto-zoom on focus */
+    min-height: 48px;
+  }
+  .btn-cosmic,
+  .btn-cosmic-outline,
+  .btn-cosmic-cyan {
+    min-height: 48px;
   }
 }
 
@@ -301,29 +330,39 @@ body {
 
 /* ══════════════════════════════════════════════════════════════
    NEON TEXT GLOWS
+   ── Each glow layer is stacked over a dark ink halo so white text
+      stays legible when it appears directly on the pastel body.
    ══════════════════════════════════════════════════════════════ */
 .neon-text {
   text-shadow:
-    0 0 10px rgba(139, 92, 246, 0.5),
-    0 0 40px rgba(139, 92, 246, 0.2);
+    0 1px 0 rgba(20, 8, 40, 0.85),
+    0 0 6px rgba(20, 8, 40, 0.55),
+    0 0 14px rgba(139, 92, 246, 0.55),
+    0 0 40px rgba(139, 92, 246, 0.25);
 }
 
 .neon-text-pink {
   text-shadow:
-    0 0 10px rgba(236, 72, 153, 0.5),
-    0 0 40px rgba(236, 72, 153, 0.2);
+    0 1px 0 rgba(20, 8, 40, 0.85),
+    0 0 6px rgba(20, 8, 40, 0.55),
+    0 0 14px rgba(236, 72, 153, 0.55),
+    0 0 40px rgba(236, 72, 153, 0.25);
 }
 
 .neon-text-cyan {
   text-shadow:
-    0 0 10px rgba(6, 182, 212, 0.5),
-    0 0 40px rgba(6, 182, 212, 0.2);
+    0 1px 0 rgba(20, 8, 40, 0.85),
+    0 0 6px rgba(20, 8, 40, 0.55),
+    0 0 14px rgba(6, 182, 212, 0.55),
+    0 0 40px rgba(6, 182, 212, 0.25);
 }
 
 .neon-text-gold {
   text-shadow:
-    0 0 10px rgba(251, 191, 36, 0.5),
-    0 0 40px rgba(251, 191, 36, 0.2);
+    0 1px 0 rgba(20, 8, 40, 0.85),
+    0 0 6px rgba(20, 8, 40, 0.55),
+    0 0 14px rgba(251, 191, 36, 0.55),
+    0 0 40px rgba(251, 191, 36, 0.25);
 }
 
 .neon-text-rainbow {
@@ -342,21 +381,26 @@ body {
 
 /* ══════════════════════════════════════════════════════════════
    GLASS CARDS
+   ── Dark translucent ink over the pastel body so that white text
+      (used across the whole app) stays legible without redesigning
+      every page individually.
    ══════════════════════════════════════════════════════════════ */
 .glass-card {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(26, 12, 46, 0.72);
   backdrop-filter: blur(var(--cosmic-blur));
   -webkit-backdrop-filter: blur(var(--cosmic-blur));
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1.25rem;
+  box-shadow: 0 6px 24px rgba(42, 19, 64, 0.18);
 }
 
 .glass-card-strong {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(20, 8, 40, 0.82);
   backdrop-filter: blur(var(--cosmic-blur));
   -webkit-backdrop-filter: blur(var(--cosmic-blur));
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 1.5rem;
+  box-shadow: 0 10px 32px rgba(42, 19, 64, 0.25);
 }
 
 .glass-card-hover {
@@ -364,11 +408,11 @@ body {
 }
 
 .glass-card-hover:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(139, 92, 246, 0.3);
+  background: rgba(30, 14, 54, 0.85);
+  border-color: rgba(139, 92, 246, 0.45);
   box-shadow:
-    0 8px 32px rgba(139, 92, 246, 0.15),
-    0 0 0 1px rgba(139, 92, 246, 0.1);
+    0 10px 32px rgba(42, 19, 64, 0.28),
+    0 0 0 1px rgba(139, 92, 246, 0.2);
   transform: translateY(-4px);
 }
 
@@ -484,29 +528,32 @@ body {
 
 /* ══════════════════════════════════════════════════════════════
    COSMIC INPUTS
+   ── Solid dark ink so white text is legible whether the input sits
+      directly on the pastel body or inside a glass-card.
    ══════════════════════════════════════════════════════════════ */
 .input-cosmic {
   width: 100%;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(15, 5, 30, 0.55);
   backdrop-filter: blur(var(--cosmic-blur));
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 0.75rem;
   padding: 0.75rem 1rem;
-  color: white;
+  color: #fff;
   font-family: "Space Grotesk", sans-serif;
   transition: all 0.3s ease;
 }
 
 .input-cosmic:focus {
   outline: none;
-  border-color: rgba(139, 92, 246, 0.6);
+  border-color: rgba(139, 92, 246, 0.7);
+  background: rgba(15, 5, 30, 0.7);
   box-shadow:
-    0 0 0 3px rgba(139, 92, 246, 0.15),
-    0 0 20px rgba(139, 92, 246, 0.1);
+    0 0 0 3px rgba(139, 92, 246, 0.2),
+    0 0 20px rgba(139, 92, 246, 0.15);
 }
 
 .input-cosmic::placeholder {
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.45);
 }
 
 /* ══════════════════════════════════════════════════════════════
