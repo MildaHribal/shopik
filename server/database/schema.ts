@@ -126,6 +126,17 @@ export const reviews = pgTable('reviews', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+// ── Email templates ─────────────────────────────────────────────────────────────
+// Editable in /admin/emails. Falls back to hardcoded defaults in server/utils/email.ts
+// when a row is missing.
+export const emailTemplates = pgTable('email_templates', {
+  key: text('key').primaryKey(), // 'created' | 'paid' | 'shipped' | 'delivered'
+  subject: text('subject').notNull(),
+  headline: text('headline').notNull(),
+  body: text('body').notNull(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
 // ── Favorites ───────────────────────────────────────────────────────────────────
 export const favorites = pgTable('favorites', {
   id: serial('id').primaryKey(),

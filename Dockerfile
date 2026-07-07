@@ -1,29 +1,24 @@
-# ── Stage 1: Install dependencies ──
-FROM node:20-alpine AS deps
+# Multi-stage Nuxt production build.
+#
+# Stage 1 — build: pulls dev deps, builds .output.
+# Stage 2 — runtime: minimal image running the compiled Nitro server + one-shot
+#                    migration/seed scripts via tsx.
 
+# ── Build stage ─────────────────────────────────────────────────────────────
+FROM node:22-alpine AS builder
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+# Install deps first — this layer is cached until package*.json changes.
+COPY package.json package-lock.json ./
 RUN npm ci
 
-# ── Stage 2: Build ──
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
+# Copy source and build.
 COPY . .
-
 ENV NUXT_TELEMETRY_DISABLED=1
-
 RUN npm run build
 
-# ── Stage 3: Production runner ──
-FROM node:20-alpine AS runner
-
-RUN apk add --no-cache msmtp ca-certificates \
-    && ln -sf /usr/bin/msmtp /usr/sbin/sendmail
-
+# ── Runtime stage ──────────────────────────────────────────────────────────
+FROM node:22-alpine AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -31,11 +26,14 @@ ENV NUXT_TELEMETRY_DISABLED=1
 ENV HOST=0.0.0.0
 ENV PORT=3000
 
-# Copy only what's needed to run
-# Nuxt production builds into .output
+# Compiled Nitro output.
 COPY --from=builder /app/.output ./.output
+# Migrations SQL + seed script — used at boot to prep the DB.
+COPY --from=builder /app/server/database ./server/database
+COPY --from=builder /app/package.json ./package.json
+
+# Small runtime deps for the seed / migration scripts (drizzle + tsx).
+RUN npm install --omit=dev --no-audit --no-fund tsx postgres dotenv drizzle-orm
 
 EXPOSE 3000
-
-# Run the Nitro server
 CMD ["node", ".output/server/index.mjs"]

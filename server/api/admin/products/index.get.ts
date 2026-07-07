@@ -1,8 +1,10 @@
 import { db } from '../../../utils/db';
 import { products, categories } from '../../../database/schema';
 import { eq } from 'drizzle-orm';
+import { requireAdmin } from '../../../utils/session';
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  await requireAdmin(event);
   const result = await db
     .select({
       id: products.id,

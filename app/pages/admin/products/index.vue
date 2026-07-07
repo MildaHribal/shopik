@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin', middleware: 'admin' })
 
 const { data: products, pending, refresh } = await useFetch<any[]>('/api/admin/products')
 const { data: allCategories } = await useFetch<any[]>('/api/categories')

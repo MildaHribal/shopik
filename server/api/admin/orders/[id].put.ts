@@ -2,11 +2,13 @@ import { db } from '../../../utils/db';
 import { orders, orderItems } from '../../../database/schema';
 import { eq } from 'drizzle-orm';
 import { sendOrderStatusEmail } from '../../../utils/email';
+import { requireAdmin } from '../../../utils/session';
 
 const VALID_STATUSES = ['pending', 'shipped', 'delivered'] as const;
 type OrderStatus = typeof VALID_STATUSES[number];
 
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event);
   const id = Number(getRouterParam(event, 'id'));
   const body = await readBody(event);
 
@@ -43,29 +45,40 @@ export default defineEventHandler(async (event) => {
 
   const updated = result[0];
 
-  // Email customer when status flips into shipped or delivered (don't spam on noop).
-  if (
-    (newStatus === 'shipped' || newStatus === 'delivered') &&
-    prevStatus !== newStatus &&
-    updated.customerEmail
-  ) {
+  const prevPaymentStatus = existing[0].paymentStatus as string;
+  const paymentStatusChanged =
+    body.paymentStatus && body.paymentStatus !== prevPaymentStatus;
+
+  // Load items once if we might send any email.
+  const willEmailStatus =
+    (newStatus === 'shipped' || newStatus === 'delivered') && prevStatus !== newStatus;
+  const willEmailPaid = paymentStatusChanged && body.paymentStatus === 'paid';
+
+  if ((willEmailStatus || willEmailPaid) && updated.customerEmail) {
     const items = await db
       .select()
       .from(orderItems)
       .where(eq(orderItems.orderId, id));
 
-    // Fire & forget — don't block the response if SMTP is slow.
-    sendOrderStatusEmail(
-      {
-        id: updated.id,
-        customerName: updated.customerName,
-        customerEmail: updated.customerEmail,
-        totalPrice: updated.totalPrice,
-        shippingAddress: updated.shippingAddress,
-        items: items.map((i) => ({ title: i.title, quantity: i.quantity, price: i.price })),
-      },
-      newStatus,
-    ).catch((err) => console.error('[orders] status email failed:', err));
+    const payload = {
+      id: updated.id,
+      customerName: updated.customerName,
+      customerEmail: updated.customerEmail,
+      totalPrice: updated.totalPrice,
+      shippingAddress: updated.shippingAddress,
+      items: items.map((i) => ({ title: i.title, quantity: i.quantity, price: i.price })),
+    };
+
+    if (willEmailPaid) {
+      sendOrderStatusEmail(payload, 'paid').catch((err) =>
+        console.error('[orders] paid email failed:', err),
+      );
+    }
+    if (willEmailStatus) {
+      sendOrderStatusEmail(payload, newStatus).catch((err) =>
+        console.error('[orders] status email failed:', err),
+      );
+    }
   }
 
   return updated;

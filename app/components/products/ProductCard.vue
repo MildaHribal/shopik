@@ -93,7 +93,7 @@ const handleAddToCart = (event: MouseEvent) => {
         width="600"
         height="750"
         format="webp"
-        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
+        sizes="sm:50vw md:33vw lg:25vw xl:20vw"
         :loading="isPriority ? 'eager' : 'lazy'"
         :preload="isPriority || undefined"
         :fetchpriority="isPriority ? 'high' : 'auto'"
@@ -129,10 +129,7 @@ const handleAddToCart = (event: MouseEvent) => {
     <div class="card-info">
       <div class="card-info-eyebrow">— No. {{ String((product.id ?? 0)).slice(-2).padStart(2, '0') }}</div>
 
-      <h3
-        class="glitch-title card-title"
-        :data-text="product.title"
-      >
+      <h3 class="card-title">
         {{ product.title }}
       </h3>
 
@@ -162,29 +159,28 @@ const handleAddToCart = (event: MouseEvent) => {
 .product-card {
   text-decoration: none;
   color: inherit;
-  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  background: #1a0f28;
+  border: 1px solid #2a1340;
+  border-radius: 1rem;
+  padding: 0.75rem 0.75rem 1rem;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease, border-color 0.3s ease;
+  box-shadow: 0 6px 16px rgba(42, 19, 64, 0.14);
 }
 .product-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
+  border-color: #4a2b66;
+  box-shadow: 0 16px 32px rgba(42, 19, 64, 0.22);
 }
 
-/* ── Image frame ─ matted polaroid-style frame ─────── */
+/* ── Image frame ── */
 .card-image {
-  background: #FFF5F7;
-  /* Layered "matted" frame: hairline ink ring + cream mat + drop shadow */
-  box-shadow:
-    inset 0 0 0 1px rgba(42, 19, 64, 0.12),
-    0 0 0 5px #FFF5F7,
-    0 0 0 6px rgba(42, 19, 64, 0.18),
-    0 8px 18px rgba(42, 19, 64, 0.14);
-  transition: box-shadow 0.4s ease, transform 0.4s ease;
+  background: #0f0620;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  transition: border-color 0.3s ease;
 }
 .product-card:hover .card-image {
-  box-shadow:
-    inset 0 0 0 1px rgba(42, 19, 64, 0.18),
-    0 0 0 5px #FFF5F7,
-    0 0 0 6px var(--pop-ink, #2a1340),
-    0 16px 32px rgba(42, 19, 64, 0.25);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .card-img {
@@ -236,20 +232,20 @@ const handleAddToCart = (event: MouseEvent) => {
 
 /* ── Info ──────────────────────────────────────────── */
 .card-info {
-  margin-top: 0.9rem;
+  margin-top: 0.75rem;
   padding: 0 0.15rem;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.5rem;
   flex-grow: 1;
 }
 
 .card-info-eyebrow {
   font-family: var(--psy-body);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(42, 19, 64, 0.6);
+  color: rgba(255, 255, 255, 0.5);
   font-weight: 600;
 }
 
@@ -257,19 +253,18 @@ const handleAddToCart = (event: MouseEvent) => {
   font-family: 'Petrona', Georgia, serif;
   font-style: italic;
   font-weight: 500;
-  font-size: 1.2rem;
-  line-height: 1.18;
+  font-size: 1.15rem;
+  line-height: 1.2;
   letter-spacing: -0.005em;
-  color: var(--pop-ink, #2a1340);
+  color: #ffffff;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 2.5em;
-  transition: color 0.3s ease;
 }
 @media (min-width: 768px) {
-  .card-title { font-size: 1.35rem; }
+  .card-title { font-size: 1.3rem; }
 }
 
 .card-info-bottom {
@@ -279,7 +274,7 @@ const handleAddToCart = (event: MouseEvent) => {
   align-items: flex-end;
   justify-content: space-between;
   gap: 0.75rem;
-  border-top: 1px solid rgba(42, 19, 64, 0.15);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .card-price {
@@ -292,20 +287,20 @@ const handleAddToCart = (event: MouseEvent) => {
 .price-num {
   font-family: 'Gloock', Georgia, serif;
   font-weight: 400;
-  font-size: 1.8rem;
+  font-size: 1.75rem;
   letter-spacing: -0.02em;
-  color: var(--pop-ink, #2a1340);
+  color: #ffffff;
   line-height: 1;
 }
 @media (min-width: 768px) {
-  .price-num { font-size: 2rem; }
+  .price-num { font-size: 1.95rem; }
 }
 
 .price-currency {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(42, 19, 64, 0.6);
+  color: rgba(255, 255, 255, 0.55);
   font-weight: 600;
 }
 
@@ -313,76 +308,18 @@ const handleAddToCart = (event: MouseEvent) => {
   font-size: 0.78rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(42, 19, 64, 0.7);
+  color: rgba(255, 255, 255, 0.7);
   padding: 0.45rem 0;
   background: none;
   border: none;
   cursor: pointer;
   transition: color 0.2s ease;
 }
-.mobile-cta:hover { color: var(--pop-ink, #2a1340); }
-.mobile-cta.is-added { color: #1f7a3a; }
-
-/* ── Glitch hover on title (palette-tinted) ───────── */
-.glitch-title {
-  position: relative;
-  display: inline-block;
-  z-index: 1;
-}
-.glitch-title::before,
-.glitch-title::after {
-  content: attr(data-text);
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  visibility: hidden;
-  font-family: inherit;
-  font-style: inherit;
-  font-weight: inherit;
-  font-size: inherit;
-  line-height: inherit;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.glitch-title::before {
-  color: #00ffff;
-  z-index: -1;
-}
-.glitch-title::after {
-  color: #ff00ff;
-  z-index: -2;
-}
-.product-card:hover .glitch-title::before {
-  visibility: visible;
-  animation: glitchy 0.3s ease 0.05s infinite;
-}
-.product-card:hover .glitch-title::after {
-  visibility: visible;
-  animation: glitchy 0.3s ease infinite reverse;
-}
-
-@keyframes glitchy {
-  0%   { transform: translate(-2px, 2px); }
-  25%  { transform: translate(-2px, -2px); }
-  50%  { transform: translate(2px, 2px); }
-  75%  { transform: translate(2px, -2px); }
-  100% { transform: translate(-2px, 2px); }
-}
+.mobile-cta:hover { color: #ffffff; }
+.mobile-cta.is-added { color: #7ee0a1; }
 
 @media (prefers-reduced-motion: reduce) {
   .product-card:hover { transform: none; }
   .product-card:hover .card-img { transform: none; }
-  .product-card:hover .glitch-title::before,
-  .product-card:hover .glitch-title::after { animation: none; visibility: hidden; }
-}
-
-/* Low-end devices: drop expensive effects */
-:where(html.is-low-end, html.is-mid-end) .product-card:hover .card-image {
-  box-shadow: none;
 }
 </style>

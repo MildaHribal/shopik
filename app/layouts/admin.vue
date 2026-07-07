@@ -9,6 +9,7 @@ const navItems = [
   { label: 'Produkty',   icon: 'lucide:package',          to: '/admin/products' },
   { label: 'Objednávky', icon: 'lucide:shopping-bag',     to: '/admin/orders' },
   { label: 'Zákazníci',  icon: 'lucide:users',            to: '/admin/customers' },
+  { label: 'E-maily',    icon: 'lucide:mail',             to: '/admin/emails' },
 ]
 
 const isActive = (path: string) => {

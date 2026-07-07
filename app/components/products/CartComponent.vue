@@ -39,7 +39,7 @@ const cart = useCartStore()
             <div class="h-16 w-16 md:h-20 md:w-20 flex-shrink-0 overflow-hidden rounded-lg md:rounded-xl bg-white/5 border border-white/10">
               <img
                 v-if="item.image"
-                :src="item.image.startsWith('http') ? item.image : `/${item.image}`"
+                :src="item.image.startsWith('http') || item.image.startsWith('/') ? item.image : `/${item.image}`"
                 :alt="item.title"
                 class="h-full w-full object-cover"
               >

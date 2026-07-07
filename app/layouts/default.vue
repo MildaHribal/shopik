@@ -13,84 +13,66 @@ import { Icon } from "@iconify/vue";
       </main>
 
       <!-- Footer -->
-      <footer class="trippy-footer mt-20 pt-16 pb-8 px-5 md:px-12 border-t border-[var(--psy-cream)]/8 relative">
-        <div class="max-w-7xl mx-auto relative z-10">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-14 text-left">
-            <!-- Brand Column -->
-            <div class="space-y-5">
-              <div class="flex items-center gap-3">
-                <img src="/hero/logo-mushroom.png" alt="" class="w-10 h-10 object-contain footer-logo" />
-                <span class="psy-display-tight text-2xl text-[var(--psy-cream)] tracking-tight">Tynky Bordel</span>
-              </div>
-              <p class="text-[var(--psy-cream)]/55 text-sm leading-relaxed max-w-xs">
-                Tištěné, šité, malované. Kousky pro ty, co si všímají detailů.
-              </p>
-            </div>
+      <footer class="site-footer">
+        <div class="site-footer-inner">
+          <!-- Big brand row -->
+          <div class="footer-brand-row">
+            <NuxtLink to="/" class="footer-brand">
+              <img src="/hero/logo-mushroom.png" alt="" class="footer-brand-logo" />
+              <span class="footer-brand-name">Tynky Bordel</span>
+            </NuxtLink>
+            <p class="footer-tagline">
+              Ručně dělané originály — obrazy, sochy, klíčenky.<br />
+              Každý kousek je jeden na světě.
+            </p>
+          </div>
 
-            <!-- Shop Links -->
-            <div>
-              <h3 class="psy-mono-eyebrow mb-5">— Nakupování</h3>
-              <ul class="space-y-3 text-sm">
-                <li><NuxtLink to="/" class="psy-link">Hlavní stránka</NuxtLink></li>
-                <li><NuxtLink to="/cart" class="psy-link">Košík</NuxtLink></li>
-                <li><NuxtLink to="/my-account" class="psy-link">Můj účet</NuxtLink></li>
+          <!-- Link columns -->
+          <div class="footer-columns">
+            <div class="footer-col">
+              <h4 class="footer-heading">Nakupování</h4>
+              <ul class="footer-links">
+                <li><NuxtLink to="/" class="footer-link">Domů</NuxtLink></li>
+                <li><NuxtLink to="/#kolekce" class="footer-link">Katalog</NuxtLink></li>
+                <li><NuxtLink to="/cart" class="footer-link">Košík</NuxtLink></li>
+                <li><NuxtLink to="/user" class="footer-link">Můj účet</NuxtLink></li>
               </ul>
             </div>
 
-            <!-- Customer Service -->
-            <div>
-              <h3 class="psy-mono-eyebrow mb-5">— Podpora</h3>
-              <ul class="space-y-3 text-sm">
-                <li><NuxtLink to="/reklamace" class="psy-link">Doprava a reklamace</NuxtLink></li>
-                <li><NuxtLink to="/obchodni-podminky" class="psy-link">Obchodní podmínky</NuxtLink></li>
-                <li><NuxtLink to="/ochrana-osobnich-udaju" class="psy-link">Ochrana soukromí</NuxtLink></li>
+            <div class="footer-col">
+              <h4 class="footer-heading">Podpora</h4>
+              <ul class="footer-links">
+                <li><NuxtLink to="/reklamace" class="footer-link">Doprava &amp; reklamace</NuxtLink></li>
+                <li><NuxtLink to="/obchodni-podminky" class="footer-link">Obchodní podmínky</NuxtLink></li>
+                <li><NuxtLink to="/ochrana-osobnich-udaju" class="footer-link">Ochrana soukromí</NuxtLink></li>
               </ul>
             </div>
 
-            <!-- Social Media Column -->
-            <div class="psy-tile">
-              <h3 class="psy-mono-eyebrow mb-5">— Sledujte nás</h3>
-              <div class="space-y-3">
-                <a href="https://www.instagram.com/_kristyna_aaa/" target="_blank" rel="noopener noreferrer"
-                   class="social-card flex items-center gap-3 p-3 rounded-xl border border-[var(--psy-cream)]/10 bg-[var(--psy-cream)]/2 hover:bg-[var(--psy-cream)]/5 transition-all">
-                  <div class="bg-gradient-to-br from-[#833ab4] via-[#fd1d1d] to-[#fcb045] p-2 rounded-lg shadow-lg">
-                    <Icon icon="mdi:instagram" class="text-white text-xl" />
-                  </div>
-                  <div>
-                    <div class="psy-mono-eyebrow text-[9px]">Instagram</div>
-                    <div class="text-sm font-medium text-[var(--psy-cream)]">@_kristyna_aaa</div>
-                  </div>
+            <div class="footer-col">
+              <h4 class="footer-heading">Sleduj</h4>
+              <div class="footer-socials">
+                <a href="https://www.instagram.com/_kristyna_aaa/" target="_blank" rel="noopener noreferrer" class="footer-social" aria-label="Instagram">
+                  <Icon icon="mdi:instagram" height="18" />
+                  <span>Instagram</span>
                 </a>
-
-                <a href="https://www.tiktok.com/@_kristyna_aaa" target="_blank" rel="noopener noreferrer"
-                   class="social-card flex items-center gap-3 p-3 rounded-xl border border-[var(--psy-cream)]/10 bg-[var(--psy-cream)]/2 hover:bg-[var(--psy-cream)]/5 transition-all">
-                  <div class="bg-white p-2 rounded-lg shadow-lg">
-                    <Icon icon="ic:baseline-tiktok" class="text-black text-xl" />
-                  </div>
-                  <div>
-                    <div class="psy-mono-eyebrow text-[9px]">TikTok</div>
-                    <div class="text-sm font-medium text-[var(--psy-cream)]">@_kristyna_aaa</div>
-                  </div>
+                <a href="https://www.tiktok.com/@_kristyna_aaa" target="_blank" rel="noopener noreferrer" class="footer-social" aria-label="TikTok">
+                  <Icon icon="ic:baseline-tiktok" height="18" />
+                  <span>TikTok</span>
                 </a>
               </div>
             </div>
           </div>
 
-          <!-- Bottom Footer -->
-          <div class="pt-8 border-t border-[var(--psy-cream)]/8 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="order-2 md:order-1">
-              <p class="text-[var(--psy-cream)]/35 text-xs">© 2026 Shopik</p>
+          <!-- Bottom bar -->
+          <div class="footer-bottom">
+            <div class="footer-copyright">
+              © {{ new Date().getFullYear() }} Tynky Bordel · Ručně dělané v Praze
             </div>
-
-            <!-- Payment Icons -->
-            <div class="order-1 md:order-2 flex flex-col items-center md:items-end gap-3">
-              <span class="psy-mono-eyebrow text-[9px]">— Bezpečné platby</span>
-              <div class="flex flex-wrap items-center gap-4 px-4 py-2 rounded-xl border border-[var(--psy-cream)]/8">
-                <Icon icon="logos:visa" class="h-4 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all" />
-                <Icon icon="logos:mastercard" class="h-6 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all" />
-                <Icon icon="logos:google-pay" class="h-5 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all" />
-                <Icon icon="logos:apple-pay" class="h-5 w-auto grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all" />
-              </div>
+            <div class="footer-payments">
+              <span class="footer-payments-label">Platby</span>
+              <Icon icon="mdi:bank-transfer" class="footer-pay-icon" height="22" />
+              <Icon icon="mdi:cash" class="footer-pay-icon" height="22" />
+              <Icon icon="mdi:qrcode" class="footer-pay-icon" height="20" />
             </div>
           </div>
         </div>
@@ -104,22 +86,190 @@ import { Icon } from "@iconify/vue";
   background: transparent;
 }
 
-.footer-logo {
-  filter: drop-shadow(0 4px 14px rgba(189, 166, 206, 0.45));
+/* ── Footer ──────────────────────────────────────────── */
+.site-footer {
+  margin-top: 6rem;
+  background: #1a0f28;
+  color: #F1EBDF;
+  padding: 4rem 1.25rem 2rem;
+  position: relative;
+}
+.site-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+}
+@media (min-width: 768px) {
+  .site-footer { padding: 5.5rem 2rem 2rem; }
 }
 
-/* Footer — dark band against pastel page */
-.trippy-footer {
-  background: linear-gradient(180deg, rgba(42, 19, 64, 0.92), rgba(42, 19, 64, 1));
-  color: #f6e9c1;
-  backdrop-filter: blur(8px);
-  --psy-cream: #f6e9c1;
-}
-.trippy-footer :deep(.psy-mono-eyebrow) {
-  color: rgba(246, 233, 193, 0.55);
+.site-footer-inner {
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-.social-card:hover {
+/* Brand row */
+.footer-brand-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 3rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+@media (min-width: 900px) {
+  .footer-brand-row {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 3rem;
+  }
+}
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+}
+.footer-brand-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+.footer-brand-name {
+  font-family: 'Bricolage Grotesque', system-ui;
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.footer-tagline {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: rgba(241, 235, 223, 0.75);
+  max-width: 34ch;
+  margin: 0;
+}
+
+/* Link columns */
+.footer-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem 2rem;
+  padding: 3rem 0 2.5rem;
+}
+@media (min-width: 700px) {
+  .footer-columns { grid-template-columns: repeat(3, 1fr); }
+}
+
+.footer-heading {
+  font-family: 'Manrope', system-ui;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(241, 235, 223, 0.55);
+  margin: 0 0 1.25rem;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.footer-link {
+  font-family: 'Manrope', system-ui;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: rgba(241, 235, 223, 0.85);
+  text-decoration: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+  display: inline-block;
+}
+.footer-link:hover {
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+/* Socials */
+.footer-socials {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.footer-social {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(241, 235, 223, 0.9);
+  font-family: 'Manrope', system-ui;
+  font-weight: 600;
+  font-size: 0.82rem;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  width: fit-content;
+}
+.footer-social:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
+  color: #ffffff;
 }
+
+/* Bottom bar */
+.footer-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  align-items: center;
+  justify-content: space-between;
+}
+@media (min-width: 700px) {
+  .footer-bottom { flex-direction: row; }
+}
+.footer-copyright {
+  font-family: 'Manrope', system-ui;
+  font-weight: 500;
+  font-size: 0.78rem;
+  color: rgba(241, 235, 223, 0.5);
+}
+.footer-payments {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.footer-payments-label {
+  font-family: 'Manrope', system-ui;
+  font-weight: 700;
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(241, 235, 223, 0.5);
+  margin-right: 0.2rem;
+}
+.footer-pay-icon {
+  color: rgba(241, 235, 223, 0.7);
+  transition: color 0.2s ease;
+}
+.footer-pay-icon:hover { color: #ffffff; }
 </style>

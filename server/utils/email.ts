@@ -71,7 +71,18 @@ type OrderForEmail = {
   items?: Array<{ title: string; quantity: number; price: number }>;
 };
 
-const STATUS_COPY: Record<string, { subject: string; headline: string; body: string }> = {
+// Hardcoded defaults — used as fallback when a template row is missing in DB.
+export const DEFAULT_TEMPLATES: Record<string, { subject: string; headline: string; body: string }> = {
+  created: {
+    subject: 'Objednávka přijata ✨',
+    headline: 'Díky za objednávku!',
+    body: 'Tvoji objednávku jsem přijala a chystám ji k odeslání. Ozvu se, jakmile balíček vyrazí.',
+  },
+  paid: {
+    subject: 'Platba přijata 💜',
+    headline: 'Platba byla přijata',
+    body: 'Peníze dorazily. Chystám balíček a brzy ti dám vědět, že vyrazil na cestu.',
+  },
   shipped: {
     subject: 'Tvoje objednávka je na cestě 💌',
     headline: 'Tvoje objednávka je odeslána',
@@ -84,8 +95,50 @@ const STATUS_COPY: Record<string, { subject: string; headline: string; body: str
   },
 };
 
-function renderHtml(order: OrderForEmail, status: 'shipped' | 'delivered') {
-  const copy = STATUS_COPY[status];
+export type OrderStatusKey = keyof typeof DEFAULT_TEMPLATES;
+export const TEMPLATE_KEYS = Object.keys(DEFAULT_TEMPLATES) as OrderStatusKey[];
+
+// In-memory cache of custom template overrides. TTL keeps admin edits reflected
+// within seconds without hammering the DB on every email send.
+const TEMPLATE_CACHE_TTL_MS = 30_000;
+let cachedTemplates: Record<string, { subject: string; headline: string; body: string }> | null = null;
+let cacheExpiresAt = 0;
+
+export function invalidateTemplateCache() {
+  cachedTemplates = null;
+  cacheExpiresAt = 0;
+}
+
+async function getTemplate(key: OrderStatusKey): Promise<{ subject: string; headline: string; body: string }> {
+  const def = DEFAULT_TEMPLATES[key];
+  const now = Date.now();
+
+  if (!cachedTemplates || now > cacheExpiresAt) {
+    try {
+      const { db } = await import('./db');
+      const { emailTemplates } = await import('../database/schema');
+      const rows = await db.select().from(emailTemplates);
+      const map: Record<string, { subject: string; headline: string; body: string }> = {};
+      for (const row of rows) {
+        map[row.key] = { subject: row.subject, headline: row.headline, body: row.body };
+      }
+      cachedTemplates = map;
+      cacheExpiresAt = now + TEMPLATE_CACHE_TTL_MS;
+    } catch (err) {
+      console.warn('[mail] template DB load failed, using defaults:', err);
+      cachedTemplates = {};
+      cacheExpiresAt = now + TEMPLATE_CACHE_TTL_MS;
+    }
+  }
+
+  return cachedTemplates[key] || def;
+}
+
+function renderHtml(
+  order: OrderForEmail,
+  copy: { subject: string; headline: string; body: string },
+  extra?: BankTransferBlock,
+) {
   const itemsRows = (order.items || [])
     .map(
       (i) => `
@@ -124,6 +177,19 @@ function renderHtml(order: OrderForEmail, status: 'shipped' | 'delivered') {
           <strong>Doručovací adresa:</strong><br>
           ${order.shippingAddress.replace(/\n/g, '<br>')}
         </td></tr>
+        ${extra ? `
+        <tr><td style="padding:0 32px 24px 32px;">
+          <div style="background:#fff;border:1px solid rgba(42,19,64,0.12);border-radius:12px;padding:16px 18px;">
+            <div style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#7a5f8a;font-weight:600;margin-bottom:6px;">Platební údaje</div>
+            <div style="font-size:14px;color:#2a1340;line-height:1.55;">
+              <strong>Číslo účtu (IBAN):</strong> ${extra.iban}<br>
+              <strong>Částka:</strong> ${extra.amount.toFixed(0)} Kč<br>
+              <strong>Variabilní symbol:</strong> ${extra.variableSymbol}<br>
+              <strong>Zpráva pro příjemce:</strong> Objednavka ${extra.variableSymbol}
+            </div>
+            ${extra.qrDataUrl ? `<div style="text-align:center;margin-top:14px;"><img src="${extra.qrDataUrl}" alt="QR kód pro platbu" width="180" height="180" style="display:inline-block;border-radius:8px;"></div>` : ''}
+          </div>
+        </td></tr>` : ''}
         <tr><td style="padding:20px 32px;background:rgba(42,19,64,0.05);font-size:12px;color:#5a3f6a;text-align:center;">
           Pssst — shopik ještě není legal 🤫 &nbsp;|&nbsp; Tynky Bordel
         </td></tr>
@@ -133,18 +199,26 @@ function renderHtml(order: OrderForEmail, status: 'shipped' | 'delivered') {
 </body></html>`;
 }
 
+export type BankTransferBlock = {
+  iban: string;
+  amount: number;
+  variableSymbol: string | number;
+  qrDataUrl?: string | null;
+};
+
 export async function sendOrderStatusEmail(
   order: OrderForEmail,
-  status: 'shipped' | 'delivered',
+  status: OrderStatusKey,
+  extra?: BankTransferBlock,
 ): Promise<boolean> {
   if (!order.customerEmail) return false;
-  const copy = STATUS_COPY[status];
+  const copy = await getTemplate(status);
   if (!copy) return false;
 
   return sendMail({
     to: order.customerEmail,
     subject: copy.subject,
-    html: renderHtml(order, status),
+    html: renderHtml(order, copy, extra),
     text: `${copy.headline}\n\n${copy.body}\n\nObjednávka #${order.id}, celkem ${order.totalPrice.toFixed(0)} Kč.`,
   });
 }

@@ -62,7 +62,6 @@ const handleGoogleLogin = async () => {
     <div class="w-full max-w-md">
       <!-- Header -->
       <div class="text-center mb-8 md:mb-10">
-        <div class="text-4xl md:text-5xl mb-3 md:mb-4">🔮</div>
         <h2 class="text-2xl md:text-3xl font-extrabold text-white neon-text">Přihlášení</h2>
         <p class="mt-2 text-white/70 text-sm md:text-base">Vstupte do kosmické dimenze</p>
       </div>

@@ -51,7 +51,7 @@ const mainImageWrapRef = ref<HTMLElement | null>(null)
 const addToCartButtonRef = ref<HTMLButtonElement | null>(null)
 const selectedImageIndex = ref(0);
 const imageSlideDirection = ref<'next' | 'prev'>('next');
-const isMainImageLoading = ref(true);
+const isMainImageLoading = ref(false);
 const isMainImageError = ref(false);
 const thumbnailLoading = ref<Record<number, boolean>>({});
 const thumbnailError = ref<Record<number, boolean>>({});
@@ -124,11 +124,9 @@ const setSelectedImage = (index: number) => {
 
 watch(
   () => selectedImage.value,
-  (nextImage) => {
-    isMainImageLoading.value = Boolean(nextImage);
+  () => {
     isMainImageError.value = false;
   },
-  { immediate: true },
 );
 
 watch(
@@ -138,15 +136,12 @@ watch(
       selectedImageIndex.value = 0;
     }
 
-    const nextLoading: Record<number, boolean> = {};
     const nextError: Record<number, boolean> = {};
-
     images.forEach((_, index) => {
-      nextLoading[index] = true;
       nextError[index] = false;
     });
 
-    thumbnailLoading.value = nextLoading;
+    thumbnailLoading.value = {};
     thumbnailError.value = nextError;
   },
   { immediate: true },
@@ -424,12 +419,11 @@ const submitReview = async () => {
                     v-if="selectedImage && !isMainImageError"
                     :src="selectedImage"
                     :alt="product.title || product.name"
-                    class="h-full w-full object-cover object-center transition-all duration-500"
-                    :class="isMainImageLoading ? 'opacity-0 scale-[1.03]' : 'opacity-100 scale-100'"
+                    class="h-full w-full object-cover object-center"
                     width="1200"
                     height="1200"
                     format="webp"
-                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    sizes="sm:100vw md:100vw lg:50vw xl:50vw"
                     loading="eager"
                     @load="onMainImageLoaded"
                     @error="onMainImageError"
@@ -469,13 +463,11 @@ const submitReview = async () => {
                   v-if="!thumbnailError[idx]"
                   :src="img"
                   :alt="`${product.title || product.name} - ${idx + 1}`"
-                  class="w-full h-full object-cover transition-opacity duration-300"
-                  :class="thumbnailLoading[idx] ? 'opacity-0' : 'opacity-100'"
+                  class="w-full h-full object-cover"
                   width="160"
                   height="160"
                   format="webp"
                   loading="lazy"
-                  @load="onThumbnailLoaded(idx)"
                   @error="onThumbnailError(idx)"
                 />
 

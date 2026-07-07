@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
 
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin', middleware: 'admin' })
 
 const { data: orders, pending, refresh } = await useFetch<any[]>('/api/admin/orders')
 const toast = useCosmicToast()
@@ -197,7 +197,7 @@ const selectedOrder = ref<any>(null)
                 <div class="items-list">
                   <div v-for="item in selectedOrder.items" :key="item.id" class="line-item">
                     <div class="line-thumb">
-                      <img v-if="item.image" :src="`/${item.image}`" :alt="item.title" />
+                      <img v-if="item.image" :src="item.image.startsWith('http') || item.image.startsWith('/') ? item.image : `/${item.image}`" :alt="item.title" />
                     </div>
                     <div class="line-info">
                       <div class="line-name">{{ item.title }}</div>

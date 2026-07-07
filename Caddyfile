@@ -1,0 +1,31 @@
+# Reverse proxy in front of the Nuxt app.
+# Caddy auto-provisions Let's Encrypt certs for the domains listed below.
+#
+# Cloudflare SSL/TLS mode must be "Full (strict)" — Caddy answers with a valid
+# LE cert on the origin, and Cloudflare re-encrypts to the visitor.
+# If you keep Cloudflare "orange cloud" (proxied), LE HTTP-01 challenge still
+# works because CF forwards :80/:443 traffic through.
+
+{
+    # Contact for LE expiration warnings.
+    email panic8612@gmail.com
+}
+
+# Redirect www → apex.
+www.tynkybordel.shop {
+    redir https://tynkybordel.shop{uri} permanent
+}
+
+tynkybordel.shop {
+    encode zstd gzip
+
+    # Long cache for immutable Nuxt build assets + optimized images.
+    @static path /_nuxt/* /_ipx/* /favicon.ico /manifest.webmanifest /pwa/*
+    header @static Cache-Control "public, max-age=31536000, immutable"
+
+    # Uploaded product images — moderate cache, allow revalidation.
+    @uploads path /uploads/*
+    header @uploads Cache-Control "public, max-age=86400"
+
+    reverse_proxy app:3000
+}

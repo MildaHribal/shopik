@@ -1,7 +1,9 @@
 import { db } from '../../../utils/db';
 import { orders } from '../../../database/schema';
+import { requireAdmin } from '../../../utils/session';
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  await requireAdmin(event);
   const allOrders = await db.select().from(orders);
 
   const customerMap = new Map<string, { name: string; email: string; orders: number; totalSpent: number }>();

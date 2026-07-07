@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..125,400..800&family=Manrope:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=Gloock&family=Maname&family=Petrona:ital,wght@0,300..700;1,300..700&family=Berkshire+Swash&family=Caprasimo&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..125,400..800&family=Manrope:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Gloock&family=Maname&family=Petrona:ital,wght@0,300..700;1,300..700&family=Berkshire+Swash&family=Caprasimo&display=swap');
 
 @theme {
   /* ── Cosmic Purple (Primary) ──────────────────────────────── */
@@ -84,22 +84,21 @@
 }
 
 body {
-  /* Dreamy light-blue → blush pastel — extra stops smooth the midpoint mixing
-     and avoid the muddy gray that two distant pastels can produce. */
-  background: linear-gradient(
-    145deg,
-    var(--pop-blue)  0%,
-    #C7DAE0          18%,
-    #DECCD5          48%,
-    #FCD5DC          78%,
-    var(--pop-blush) 100%
-  );
-  background-color: var(--pop-blue);
+  /* Off-white paper with visible dotted grid pattern. */
+  background-color: #F1EBDF;
+  background-image:
+    radial-gradient(rgba(42, 19, 64, 0.18) 1.4px, transparent 1.6px),
+    radial-gradient(rgba(42, 19, 64, 0.10) 1px, transparent 1.2px);
+  background-size: 28px 28px, 56px 56px;
+  background-position: 0 0, 14px 14px;
   background-attachment: fixed;
   min-height: 100vh;
-  font-family: var(--font-maname), Georgia, serif;
+  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
+  font-weight: 500;
   color: var(--pop-ink);
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -710,7 +709,7 @@ body {
 
 html {
   scroll-behavior: auto;
-  background-color: #050008;
+  background-color: #F5F1EA;
 }
 
 html.is-scrolling-smooth {
@@ -1076,8 +1075,12 @@ html:active-view-transition-type(shop-category-shift)::view-transition-new(root)
 }
 
 body {
-  font-family: var(--psy-body);
   letter-spacing: -0.005em;
+}
+body :where(h1, h2, h3, h4, h5, h6) {
+  font-family: 'Fraunces', 'Instrument Serif', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 /* Display headings — Bricolage variable, wide + slightly wonky */

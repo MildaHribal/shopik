@@ -18,6 +18,17 @@ const step = ref<'form' | 'success'>('form');
 const orderId = ref<number | null>(null);
 const isSubmitting = ref(false);
 const agreedToTerms = ref(false);
+const paymentMethod = ref<'cash' | 'bank-transfer'>('cash');
+
+type BankInfo = {
+  iban: string;
+  holder: string;
+  amount: number;
+  variableSymbol: number | string;
+  qrDataUrl: string | null;
+};
+const successBank = ref<BankInfo | null>(null);
+const successPaymentMethod = ref<'cash' | 'bank-transfer'>('cash');
 
 type ZBox = { id: string; name: string; address: string };
 const zbox = ref<ZBox | null>(null);
@@ -29,6 +40,7 @@ const form = ref({
 });
 
 const SHIPPING_PRICE = 79;
+const COD_FEE = 60;
 
 // ── Packeta widget: load script once ────────────────────────────────
 useHead({
@@ -88,13 +100,15 @@ watch(
 
 // ── Validation & totals ─────────────────────────────────────────────
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const totalWithShipping = computed(() => cart.totalPrice + SHIPPING_PRICE);
+const phoneRegex = /^\+?[\d\s()\-]{9,20}$/;
+const codFee = computed(() => (paymentMethod.value === 'cash' ? COD_FEE : 0));
+const totalWithShipping = computed(() => cart.totalPrice + SHIPPING_PRICE + codFee.value);
 
 const formValid = computed(() => {
   return (
     form.value.customerName.trim().length > 1 &&
     emailRegex.test(form.value.customerEmail) &&
-    form.value.phone.trim().length >= 9 &&
+    phoneRegex.test(form.value.phone.trim()) &&
     !!zbox.value &&
     agreedToTerms.value
   );
@@ -115,7 +129,7 @@ async function placeOrder() {
         street: shippingAddressText,
         city: 'Z-BOX',
         zip: '',
-        paymentMethod: 'cash',
+        paymentMethod: paymentMethod.value,
         shippingMethod: 'packeta-zbox',
         packetaBranchId: zbox.value.id,
         packetaBranchName: shippingAddressText,
@@ -123,6 +137,8 @@ async function placeOrder() {
       },
     });
     orderId.value = response.orderId;
+    successPaymentMethod.value = paymentMethod.value;
+    successBank.value = response.bank || null;
     cart.clearCart();
     step.value = 'success';
   } catch (err: any) {
@@ -210,15 +226,30 @@ async function placeOrder() {
             <Icon icon="mdi:cash-multiple" class="checkout-section-icon" height="18" />
             Platba
           </h2>
-          <div class="payment-fixed">
-            <div class="payment-icon">
-              <Icon icon="mdi:cash-multiple" height="22" />
-            </div>
-            <div class="flex-grow">
-              <div class="payment-title">Dobírka</div>
-              <div class="payment-note">Zaplatíte při vyzvednutí v Z-BOXu.</div>
-            </div>
-            <Icon icon="mdi:check-circle" height="20" class="payment-check" />
+          <div class="payment-options">
+            <label class="payment-option" :class="{ 'is-active': paymentMethod === 'cash' }">
+              <input type="radio" v-model="paymentMethod" value="cash" class="payment-radio" />
+              <div class="payment-icon">
+                <Icon icon="mdi:cash-multiple" height="22" />
+              </div>
+              <div class="flex-grow">
+                <div class="payment-title">
+                  Dobírka
+                  <span class="payment-fee">+{{ COD_FEE }} Kč</span>
+                </div>
+                <div class="payment-note">Zaplatíte při vyzvednutí v Z-BOXu.</div>
+              </div>
+            </label>
+            <label class="payment-option" :class="{ 'is-active': paymentMethod === 'bank-transfer' }">
+              <input type="radio" v-model="paymentMethod" value="bank-transfer" class="payment-radio" />
+              <div class="payment-icon payment-icon--bank">
+                <Icon icon="mdi:bank-transfer" height="22" />
+              </div>
+              <div class="flex-grow">
+                <div class="payment-title">Převod na účet</div>
+                <div class="payment-note">Zobrazí se QR kód pro rychlou platbu. Objednávka se odešle po přijetí platby.</div>
+              </div>
+            </label>
           </div>
         </section>
 
@@ -280,6 +311,9 @@ async function placeOrder() {
             <div class="summary-row">
               <span>Doprava (Zásilkovna Z-BOX)</span><span>{{ SHIPPING_PRICE }} Kč</span>
             </div>
+            <div v-if="codFee > 0" class="summary-row">
+              <span>Dobírka</span><span>{{ codFee }} Kč</span>
+            </div>
             <div class="summary-row summary-total">
               <span>Celkem</span>
               <span>{{ totalWithShipping }} Kč</span>
@@ -298,13 +332,42 @@ async function placeOrder() {
       <p class="success-subtitle">
         Objednávka <span class="success-code">#{{ orderId }}</span> byla přijata.
       </p>
-      <div class="success-panel">
-        Do e-mailu vám dorazí potvrzení. Platba proběhne při vyzvednutí v Z-BOXu.
+
+      <!-- Bank transfer: show QR + payment details -->
+      <div v-if="successPaymentMethod === 'bank-transfer'" class="success-panel bank-panel">
+        <h3 class="bank-title">Zaplať převodem</h3>
+        <p class="bank-lead">
+          Naskenuj QR kód v mobilním bankovnictví nebo použij údaje níže. Objednávka se zpracuje po přijetí platby.
+        </p>
+
+        <div v-if="successBank && successBank.qrDataUrl" class="bank-qr-wrap">
+          <img :src="successBank.qrDataUrl" alt="QR kód pro platbu převodem" class="bank-qr" width="220" height="220" />
+        </div>
+
+        <div v-if="successBank" class="bank-details">
+          <div class="bank-row"><span>IBAN</span><strong>{{ successBank.iban }}</strong></div>
+          <div class="bank-row"><span>Částka</span><strong>{{ successBank.amount.toLocaleString('cs-CZ') }} Kč</strong></div>
+          <div class="bank-row"><span>Variabilní symbol</span><strong>{{ successBank.variableSymbol }}</strong></div>
+          <div class="bank-row"><span>Zpráva pro příjemce</span><strong>Objednávka {{ successBank.variableSymbol }}</strong></div>
+        </div>
+        <div v-else class="bank-warning">
+          <Icon icon="mdi:alert-circle-outline" height="18" />
+          Platební údaje nejsou nakonfigurovány — pošlu ti je e-mailem.
+        </div>
+
+        <div class="bank-footer">
+          Potvrzení objednávky ti dorazí na e-mail. Po přijetí platby přijde další potvrzení.
+        </div>
+      </div>
+
+      <div v-else class="success-panel">
+        Do e-mailu ti dorazí potvrzení. Platba proběhne při vyzvednutí v Z-BOXu.
         <template v-if="currentUser">
-          Objednávku najdete v
+          Objednávku najdeš v
           <NuxtLink to="/user" class="terms-link">Můj profil → Objednávky</NuxtLink>.
         </template>
       </div>
+
       <NuxtLink to="/" class="btn-primary-pop px-8 py-3 inline-flex">
         <Icon icon="mdi:store-outline" height="20" />
         Zpět k nakupování
@@ -458,15 +521,31 @@ async function placeOrder() {
   font-size: 0.9rem;
 }
 
-/* ── Payment fixed ── */
-.payment-fixed {
+/* ── Payment options ── */
+.payment-options { display: flex; flex-direction: column; gap: 0.6rem; }
+.payment-option {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: 0.9rem 1rem;
+  padding: 0.85rem 1rem;
   border-radius: 0.9rem;
-  background: rgba(168, 223, 142, 0.22);
-  border: 1px solid rgba(46, 125, 50, 0.22);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(42, 19, 64, 0.12);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.payment-option:hover { border-color: rgba(42, 19, 64, 0.3); }
+.payment-option.is-active {
+  border-color: #b3324c;
+  background: rgba(179, 50, 76, 0.06);
+  box-shadow: 0 0 0 3px rgba(179, 50, 76, 0.08);
+}
+.payment-radio {
+  width: 18px;
+  height: 18px;
+  accent-color: #b3324c;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 .payment-icon {
   flex-shrink: 0;
@@ -479,18 +558,102 @@ async function placeOrder() {
   align-items: center;
   justify-content: center;
 }
+.payment-icon--bank {
+  background: rgba(107, 78, 167, 0.15);
+  color: #6b4ea7;
+}
 .payment-title {
   font-weight: 700;
   color: var(--pop-ink, #2a1340);
   font-size: 0.98rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.payment-fee {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #b3324c;
+  background: rgba(179, 50, 76, 0.1);
+  border: 1px solid rgba(179, 50, 76, 0.25);
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
 }
 .payment-note {
   font-size: 0.8rem;
-  color: rgba(42, 19, 64, 0.65);
+  color: rgba(42, 19, 64, 0.7);
 }
-.payment-check {
-  color: #2e7d32;
-  flex-shrink: 0;
+
+/* ── Bank transfer success panel ── */
+.bank-panel {
+  text-align: left;
+}
+.bank-title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--pop-ink);
+  margin: 0 0 0.75rem;
+  text-align: center;
+}
+.bank-lead {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: rgba(42, 19, 64, 0.75);
+  margin: 0 0 1.25rem;
+  text-align: center;
+}
+.bank-qr-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+.bank-qr {
+  border-radius: 0.75rem;
+  background: #ffffff;
+  padding: 0.75rem;
+  box-shadow: 0 4px 18px rgba(42, 19, 64, 0.14);
+  border: 1px solid rgba(42, 19, 64, 0.1);
+}
+.bank-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(42, 19, 64, 0.1);
+}
+.bank-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: rgba(42, 19, 64, 0.7);
+}
+.bank-row strong {
+  color: var(--pop-ink);
+  font-weight: 700;
+  word-break: break-all;
+  text-align: right;
+}
+.bank-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 200, 80, 0.18);
+  border: 1px solid rgba(138, 90, 0, 0.25);
+  color: #6a4400;
+  border-radius: 0.75rem;
+  font-size: 0.88rem;
+}
+.bank-footer {
+  margin-top: 1.25rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(42, 19, 64, 0.08);
+  font-size: 0.82rem;
+  color: rgba(42, 19, 64, 0.6);
+  text-align: center;
 }
 
 /* ── Terms ── */
