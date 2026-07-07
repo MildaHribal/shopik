@@ -30,10 +30,14 @@ ENV PORT=3000
 COPY --from=builder /app/.output ./.output
 # Migrations SQL + seed script — used at boot to prep the DB.
 COPY --from=builder /app/server/database ./server/database
-COPY --from=builder /app/package.json ./package.json
 
 # Small runtime deps for the seed / migration scripts (drizzle + tsx).
-RUN npm install --omit=dev --no-audit --no-fund tsx postgres dotenv drizzle-orm
+# Use an isolated, pinned package.json — NOT the app's — so npm resolves only
+# these four packages. The app package.json pulls drizzle-kit's deprecated
+# @esbuild-kit chain (esbuild 0.18.20) which collides with tsx's newer esbuild
+# during postinstall ("Expected 0.18.20 but got ..."). Isolating avoids it.
+COPY docker/runtime-package.json ./package.json
+RUN npm install --omit=dev --no-audit --no-fund
 
 EXPOSE 3000
 CMD ["node", ".output/server/index.mjs"]

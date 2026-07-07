@@ -1,0 +1,12 @@
+{
+  "name": "shopik-runtime-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Minimal, pinned deps for the one-shot migration/seed scripts run in the runtime image. Kept isolated from the app package.json so npm never re-resolves drizzle-kit's deprecated @esbuild-kit chain (which collides with tsx's esbuild). See Dockerfile runtime stage.",
+  "dependencies": {
+    "tsx": "4.21.0",
+    "postgres": "3.4.8",
+    "dotenv": "17.3.1",
+    "drizzle-orm": "0.45.2"
+  }
+}
