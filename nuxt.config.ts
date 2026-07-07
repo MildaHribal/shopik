@@ -96,11 +96,11 @@ export default defineNuxtConfig({
             debug: fileURLToPath(new URL("./server/mocks/debug.ts", import.meta.url)),
             typeorm: fileURLToPath(new URL("./server/mocks/typeorm.ts", import.meta.url)),
         },*/
-        prerender: {
-            crawlLinks: true,
-            failOnError: false,
-            routes: ["/"],
-        },
+        // No build-time prerendering: this is a DB-driven storefront and the
+        // database is NOT available during the Docker build, so prerendering
+        // `/` (and crawlLinks-reachable pages) baked a 500 error page into the
+        // static output. Pages are rendered on-demand at runtime instead and
+        // cached via the `swr` routeRules below, where the DB IS available.
     },
 
     routeRules: {
