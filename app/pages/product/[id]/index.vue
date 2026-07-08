@@ -189,7 +189,7 @@ const canonicalUrl = computed(() => {
 })
 
 useSeoMeta({
-  title: () => (product.value ? `${(product.value as any).title || (product.value as any).name} | Tynky Bordel` : 'Produkt | Tynky Bordel'),
+  title: () => (product.value ? `${(product.value as any).title || (product.value as any).name}` : 'Produkt'),
   description: () => {
     const p: any = product.value
     const desc = p?.shortDescription || p?.description || ''

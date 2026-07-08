@@ -27,6 +27,29 @@ const goto = (i: number) => {
   index.value = i;
 };
 
+// Swipe navigation for phones (arrows are hidden there).
+let touchStartX = 0;
+let touchStartY = 0;
+let touchActive = false;
+const onTouchStart = (e: TouchEvent) => {
+  if (!e.touches[0]) return;
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+  touchActive = true;
+  isPaused.value = true;
+};
+const onTouchEnd = (e: TouchEvent) => {
+  isPaused.value = false;
+  if (!touchActive || !e.changedTouches[0]) return;
+  touchActive = false;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)) {
+    if (dx < 0) next();
+    else prev();
+  }
+};
+
 const resolveImage = (src?: string | null) => {
   if (!src) return null;
   return src.startsWith('http') || src.startsWith('/') ? src : `/${src}`;
@@ -57,6 +80,8 @@ defineExpose({ next, prev });
     @mouseleave="isPaused = false"
     aria-roledescription="carousel"
     :aria-label="`Nejlepší kousky (${products.length})`"
+    @touchstart.passive="onTouchStart"
+    @touchend.passive="onTouchEnd"
   >
     <Transition name="slide-fade" mode="out-in">
       <article :key="current.id" class="slide">
@@ -141,12 +166,11 @@ defineExpose({ next, prev });
   border: 1px solid rgba(42, 19, 64, 0.1);
 }
 
-/* Mobile: image fills the frame, the white card floats over the bottom with a
-   scrim. (The old single-column grid squashed the image to nothing.) */
+/* Mobile: stacked — a square image on top (product fully visible on black), the
+   card in normal flow below. (Overlaying the card hid small product photos.) */
 .slide {
   position: relative;
   display: block;
-  aspect-ratio: 4 / 5;
   overflow: hidden;
   background: #000000;
 }
@@ -159,14 +183,15 @@ defineExpose({ next, prev });
 }
 
 .slide-image-link {
-  position: absolute;
-  inset: 0;
+  position: relative;
   display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
   background: #000000;
   overflow: hidden;
 }
 @media (min-width: 768px) {
-  .slide-image-link { position: relative; inset: auto; height: 100%; min-height: 0; }
+  .slide-image-link { aspect-ratio: auto; height: 100%; min-height: 0; }
 }
 .slide-image {
   display: block;
@@ -174,35 +199,30 @@ defineExpose({ next, prev });
   height: 100%;
   object-fit: contain;
   object-position: center;
-  padding: 1.25rem;
+  /* Generous padding "zooms the product out" so it's fully visible; the black
+     frame fills whatever space is left (product photos are shot on black). */
+  padding: 1rem;
   transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (min-width: 768px) {
-  .slide-image { padding: 2rem; }
+  .slide-image { padding: 3.25rem; }
 }
 .slide-image-link:hover .slide-image {
   transform: scale(1.02);
 }
 
-/* Right-side description column — card sits toward the LEFT so the next arrow
-   has room to breathe against the outer edge. */
 .slide-side {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: flex-end;
-  padding: 1rem;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0) 80%);
+  position: static;
+  display: block;
+  padding: 0.6rem 0.6rem 2rem;
+  background: #000000;
 }
 @media (min-width: 768px) {
   .slide-side {
-    position: static;
+    display: flex;
     align-items: center;
     justify-content: flex-start;
     padding: 2rem 4rem 2rem 1rem;
-    background: #000000;
   }
 }
 
@@ -216,7 +236,23 @@ defineExpose({ next, prev });
   box-shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
 }
 @media (min-width: 768px) {
-  .slide-card { padding: 2rem 1.75rem 1.5rem; }
+  .slide-card {
+    padding: 2.15rem 2rem 1.75rem;
+    max-width: 470px;
+    /* Nudge the card a touch down and left (toward the image) for a more
+       editorial, overlapping composition. */
+    transform: translate(-2rem, 1.4rem);
+  }
+}
+/* Phones: tighter card + smaller type so the slider isn't so tall. */
+@media (max-width: 767px) {
+  .slide-card { padding: 0.95rem 1.05rem 0.85rem; max-width: none; border-radius: 0.85rem; }
+  .slide-eyebrow { margin-bottom: 0.45rem; }
+  .slide-title { font-size: 1.2rem; margin-bottom: 0.45rem; }
+  .slide-desc { font-size: 0.83rem; line-height: 1.45; margin-bottom: 0.85rem; }
+  .slide-meta { padding-top: 0.7rem; }
+  .slide-price { font-size: 1.2rem; }
+  .slide-cta { padding: 0.55rem 0.9rem; font-size: 0.68rem; }
 }
 
 .slide-eyebrow {
@@ -239,7 +275,7 @@ defineExpose({ next, prev });
   margin: 0 0 0.75rem;
 }
 @media (min-width: 768px) {
-  .slide-title { font-size: 1.85rem; }
+  .slide-title { font-size: 2.05rem; }
 }
 
 .slide-desc {
@@ -255,7 +291,7 @@ defineExpose({ next, prev });
   overflow: hidden;
 }
 @media (min-width: 768px) {
-  .slide-desc { -webkit-line-clamp: 4; }
+  .slide-desc { -webkit-line-clamp: 4; font-size: 1rem; }
 }
 
 .slide-meta {
@@ -319,10 +355,9 @@ defineExpose({ next, prev });
 }
 .slide-arrow--prev { left: 1.25rem; }
 .slide-arrow--next { right: 1.25rem; }
-@media (max-width: 768px) {
-  .slide-arrow { width: 38px; height: 38px; }
-  .slide-arrow--prev { left: 0.75rem; }
-  .slide-arrow--next { right: 0.75rem; }
+/* Phones use swipe + dots instead of the side arrows. */
+@media (max-width: 767px) {
+  .slide-arrow { display: none; }
 }
 
 /* Dots — sit in a small dark pill so they stay visible on both image + card */
@@ -338,6 +373,15 @@ defineExpose({ next, prev });
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(6px);
   border-radius: 9999px;
+}
+/* On phones the dots sit on the black card area, so drop the pill background. */
+@media (max-width: 767px) {
+  .slide-dots {
+    bottom: 0.9rem;
+    background: transparent;
+    backdrop-filter: none;
+    padding: 0;
+  }
 }
 .slide-dot {
   width: 8px;

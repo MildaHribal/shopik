@@ -15,7 +15,7 @@ const currentSlug = computed(() => route.params.slug as string || 'vsechny')
 const config = useRuntimeConfig()
 const siteUrl = config.public.siteUrl || useRequestURL().origin
 useSeoMeta({
-  title: 'Produkty — Tynky Bordel',
+  title: 'Produkty',
   description: 'Nejlepší kousky v našem kosmickém obchodě. Vyberte si podle kategorie.',
   ogTitle: 'Produkty — Tynky Bordel',
   ogType: 'website',

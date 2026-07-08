@@ -14,7 +14,7 @@ const { data: products, pending, error } = useLazyFetch<Product[]>('/api/product
     <div v-else-if="error" class="text-red-500 text-center">
       {{ error.message }}
     </div>
-    <div v-else-if="products && products.length > 0" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+    <div v-else-if="products && products.length > 0" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
       <div
           v-for="product in products"
           :key="product.id"

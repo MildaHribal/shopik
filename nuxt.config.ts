@@ -25,10 +25,10 @@ export default defineNuxtConfig({
                 { name: 'robots', content: 'index,follow,max-image-preview:large' },
             ],
         },
-        // Simple, reliable fade between pages. Native View Transitions were
-        // disabled: they snapshotted loading skeletons, causing a "blank page
-        // then content pops in" flash on product navigation.
-        pageTransition: { name: 'page', mode: 'out-in' },
+        // Page transitions removed entirely: the fade (and the View Transitions
+        // before it) fought with lazy content + scroll restoration and read as
+        // janky. Instant swaps feel snappier and let scroll/image restore cleanly.
+        pageTransition: false,
         layoutTransition: false,
         viewTransition: false,
     },
@@ -64,8 +64,8 @@ export default defineNuxtConfig({
 
     site: {
         url: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-        name: 'Shopik — kosmický shop',
-        description: 'Kosmické zboží, gadgety a doplňky.',
+        name: 'Tynky Bordel',
+        description: 'Ručně dělané originály — obrazy, sochy, klíčenky. Každý kousek je unikát.',
         defaultLocale: 'cs',
     },
 

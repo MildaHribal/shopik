@@ -50,6 +50,18 @@ const onImageError = () => {
   isImageError.value = true
 }
 
+// When navigating back, product images are already in the browser cache, so the
+// <img> is `complete` before Vue attaches the @load listener and the load event
+// never fires — leaving the image stuck at opacity:0. Detect that on mount.
+onMounted(async () => {
+  await nextTick()
+  const img = imageWrapRef.value?.querySelector('img') as HTMLImageElement | null
+  if (img?.complete) {
+    if (img.naturalWidth > 0) isImageLoading.value = false
+    else onImageError()
+  }
+})
+
 const showAddedState = () => {
   isAddedToCart.value = true
 
@@ -90,9 +102,10 @@ const handleAddToCart = (event: MouseEvent) => {
         :alt="product.title"
         class="card-img w-full h-full object-cover"
         :class="[ isImageLoading ? 'is-loading' : '' ]"
-        width="600"
-        height="750"
+        width="500"
+        height="625"
         format="webp"
+        quality="72"
         sizes="sm:50vw md:33vw lg:25vw xl:20vw"
         :loading="isPriority ? 'eager' : 'lazy'"
         :preload="isPriority || undefined"
@@ -133,23 +146,13 @@ const handleAddToCart = (event: MouseEvent) => {
         {{ product.title }}
       </h3>
 
+      <!-- Add-to-cart on the card is desktop-only (the hover pill over the image).
+           On mobile the whole card links to the product detail. -->
       <div class="card-info-bottom">
         <div class="card-price">
           <span class="psy-display price-num">{{ product.price }}</span>
           <span class="price-currency">Kč</span>
         </div>
-
-        <button
-          v-if="!isAddedToCart"
-          @click.prevent.stop="handleAddToCart"
-          class="lg:hidden mobile-cta"
-          :aria-label="'Přidat do košíku: ' + product.title"
-        >
-          + Do košíku
-        </button>
-        <span v-else class="lg:hidden mobile-cta is-added">
-          ✓ Přidáno
-        </span>
       </div>
     </div>
   </NuxtLink>
@@ -160,27 +163,28 @@ const handleAddToCart = (event: MouseEvent) => {
   text-decoration: none;
   color: inherit;
   background: #1a0f28;
-  border: 1px solid #2a1340;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1rem;
-  padding: 0.75rem 0.75rem 1rem;
+  padding: 0.55rem 0.55rem 0.6rem;
   transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease, border-color 0.3s ease;
-  box-shadow: 0 6px 16px rgba(42, 19, 64, 0.14);
+  box-shadow: 0 6px 18px rgba(20, 8, 36, 0.28);
 }
 .product-card:hover {
   transform: translateY(-4px);
-  border-color: #4a2b66;
-  box-shadow: 0 16px 32px rgba(42, 19, 64, 0.22);
+  border-color: rgba(255, 107, 181, 0.35);
+  box-shadow: 0 18px 36px rgba(20, 8, 36, 0.4);
 }
 
-/* ── Image frame ── */
+/* ── Image frame ── black so the product photos (shot on black) blend in, like
+   the slider. ── */
 .card-image {
-  background: #0f0620;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 0.75rem;
   transition: border-color 0.3s ease;
 }
 .product-card:hover .card-image {
-  border-color: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .card-img {
@@ -232,17 +236,17 @@ const handleAddToCart = (event: MouseEvent) => {
 
 /* ── Info ──────────────────────────────────────────── */
 .card-info {
-  margin-top: 0.75rem;
+  margin-top: 0.55rem;
   padding: 0 0.15rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
   flex-grow: 1;
 }
 
 .card-info-eyebrow {
   font-family: var(--psy-body);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.5);
@@ -261,14 +265,24 @@ const handleAddToCart = (event: MouseEvent) => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 2.5em;
+  min-height: 2.3em;
 }
 @media (min-width: 768px) {
-  .card-title { font-size: 1.3rem; }
+  .card-title { font-size: 1.22rem; }
 }
-/* Phones: hide product name to keep the grid compact (image + price only). */
+/* Phones: tighter card so the image dominates; show the title (not the number),
+   price underneath, no add button. */
 @media (max-width: 639px) {
-  .card-title { display: none; }
+  .product-card { padding: 0.3rem 0.3rem 0.55rem; border-radius: 0.85rem; }
+  .card-info { margin-top: 0.5rem; gap: 0.25rem; padding: 0 0.1rem; }
+  .card-info-eyebrow { display: none; }
+  .card-title {
+    font-size: 0.95rem;
+    line-height: 1.22;
+    min-height: 0;
+    -webkit-line-clamp: 2;
+  }
+  .card-info-bottom { padding-top: 0.35rem; }
 }
 
 .card-info-bottom {
@@ -278,7 +292,7 @@ const handleAddToCart = (event: MouseEvent) => {
   align-items: flex-end;
   justify-content: space-between;
   gap: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .card-price {
@@ -297,14 +311,14 @@ const handleAddToCart = (event: MouseEvent) => {
   line-height: 1;
 }
 @media (min-width: 768px) {
-  .price-num { font-size: 1.95rem; }
+  .price-num { font-size: 1.85rem; }
 }
 
 .price-currency {
   font-size: 0.75rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.5);
   font-weight: 600;
 }
 

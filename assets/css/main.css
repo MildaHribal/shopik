@@ -954,50 +954,45 @@ html:active-view-transition-type(shop-category-shift)::view-transition-new(root)
    SCROLL FLY-IN REVEAL
    ══════════════════════════════════════════════════════════════ */
 .fly-in {
-  --fly-distance: 48px;
-  --fly-duration: 820ms;
+  --fly-distance: 26px;
+  --fly-duration: 620ms;
   --fly-delay: 0ms;
   --fly-x: 0px;
   --fly-y: 0px;
-  --fly-scale: 0.965;
-  --fly-tilt: 0deg;
+  --fly-scale: 0.985;
   opacity: 0;
-  transform: translate3d(var(--fly-x), var(--fly-y), 0) scale(var(--fly-scale)) rotate(var(--fly-tilt));
+  transform: translate3d(var(--fly-x), var(--fly-y), 0) scale(var(--fly-scale));
   transition:
-    opacity var(--fly-duration) var(--ease-fluid),
-    transform var(--fly-duration) var(--ease-fluid);
+    opacity var(--fly-duration) cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--fly-duration) cubic-bezier(0.22, 1, 0.36, 1);
   transition-delay: var(--fly-delay);
+  will-change: opacity, transform;
 }
 
 .fly-in--visible {
   opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  transform: translate3d(0, 0, 0) scale(1);
 }
 
 .fly-in--up {
   --fly-y: var(--fly-distance);
-  --fly-tilt: -1.1deg;
 }
 
 .fly-in--down {
   --fly-y: calc(var(--fly-distance) * -1);
-  --fly-tilt: 1.1deg;
 }
 
 .fly-in--left {
   --fly-x: calc(var(--fly-distance) * -1);
-  --fly-tilt: -1.4deg;
 }
 
 .fly-in--right {
   --fly-x: var(--fly-distance);
-  --fly-tilt: 1.4deg;
 }
 
 .fly-in--zoom {
-  --fly-y: calc(var(--fly-distance) * 0.45);
-  --fly-scale: 0.9;
-  --fly-tilt: -0.8deg;
+  --fly-y: calc(var(--fly-distance) * 0.35);
+  --fly-scale: 0.955;
 }
 
 /* ══════════════════════════════════════════════════════════════

@@ -199,3 +199,10 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   reviews: many(reviews),
   favorites: many(favorites),
 }));
+
+// ── Newsletter subscribers ───────────────────────────────────────────────────
+export const newsletterSubscribers = pgTable('newsletter_subscribers', {
+  id: serial('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});

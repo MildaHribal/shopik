@@ -20,7 +20,7 @@ import { Icon } from "@iconify/vue";
           <!-- Big brand row -->
           <div class="footer-brand-row">
             <NuxtLink to="/" class="footer-brand">
-              <img src="/hero/logo-mushroom.png" alt="" class="footer-brand-logo" />
+              <NuxtImg src="/hero/logo-mushroom.png" alt="" class="footer-brand-logo" width="72" height="72" format="webp" quality="85" loading="lazy" />
               <span class="footer-brand-name">Tynky Bordel</span>
             </NuxtLink>
             <p class="footer-tagline">

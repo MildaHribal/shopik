@@ -101,7 +101,7 @@ onUnmounted(() => {
   <div class="navbar-shell">
     <!-- Left: Brand -->
     <NuxtLink to="/" class="brand-link" @click="isMobileMenuOpen = false">
-      <img src="/hero/logo-mushroom.png" alt="" class="brand-art" />
+      <NuxtImg src="/hero/logo-mushroom.png" alt="" class="brand-art" width="40" height="40" format="webp" quality="85" loading="eager" />
       <span class="brand-text">Tynky Bordel</span>
     </NuxtLink>
 
@@ -322,7 +322,11 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.75rem 1rem 0;
+  padding: 0.6rem 1rem;
+  min-height: 60px;
+}
+@media (min-width: 768px) {
+  .navbar-shell { padding: 0.75rem 1rem; }
 }
 @media (min-width: 768px) {
   .navbar-shell { gap: 1.5rem; padding: 1rem 2rem 0; }

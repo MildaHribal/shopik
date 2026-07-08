@@ -10,7 +10,7 @@ const config = useRuntimeConfig()
 const siteUrl = config.public.siteUrl || useRequestURL().origin
 
 useSeoMeta({
-  title: 'Tynky Bordel — Ruční tvorba, obrazy, klíčenky a sochy',
+  title: 'Ruční tvorba — obrazy, klíčenky a sochy',
   description: 'Malý autorský eshop s ručně malovanými obrazy, sochami z papírmašé, klíčenkami a dalšími originály. Každý kousek je unikát. Doprava po celé ČR.',
   keywords: 'ruční tvorba, autorský eshop, obrazy, klíčenky, sochy, papírmašé, originály, umění',
   ogTitle: 'Tynky Bordel — Ruční tvorba a originály',
@@ -185,10 +185,16 @@ const carouselBest = ref<InstanceType<typeof ProductCarousel> | null>(null);
       <!-- Editorial banner (mushroom-eye artwork) -->
       <section class="section banner-section" v-fly="{ direction: 'up', distance: 32 }">
         <div class="banner">
-          <img
+          <NuxtImg
             src="/hero/mushroom-eye.png"
             alt=""
             class="banner-bg"
+            width="1200"
+            height="800"
+            sizes="sm:100vw md:100vw lg:1200px"
+            format="webp"
+            quality="80"
+            loading="lazy"
           />
           <div class="banner-scrim"></div>
           <RingOrnament class="banner-ring banner-ring--tl" />
@@ -218,7 +224,7 @@ const carouselBest = ref<InstanceType<typeof ProductCarousel> | null>(null);
         </div>
 
         <div class="max-w-6xl mx-auto">
-          <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-7">
+          <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-5">
             <ProductCard
               v-for="(prod, idx) in fullCollection"
               :key="prod.id"
@@ -252,6 +258,9 @@ const carouselBest = ref<InstanceType<typeof ProductCarousel> | null>(null);
           </div>
         </div>
       </section>
+
+      <!-- Newsletter signup -->
+      <NewsletterSignup />
     </template>
   </div>
 </template>
