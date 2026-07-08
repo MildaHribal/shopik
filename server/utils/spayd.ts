@@ -53,7 +53,7 @@ export function getBankAccount() {
   return {
     iban,
     holder: process.env.BANK_ACCOUNT_HOLDER || 'Tynky Bordel',
-    // Local-format display (e.g. "8294444959/5500") for humans reading the details.
+    // Local-format display (e.g. "8294444956/5500") for humans reading the details.
     localFormat: process.env.BANK_ACCOUNT_NUMBER && process.env.BANK_ACCOUNT_BANK_CODE
       ? `${process.env.BANK_ACCOUNT_PREFIX ? process.env.BANK_ACCOUNT_PREFIX + '-' : ''}${process.env.BANK_ACCOUNT_NUMBER}/${process.env.BANK_ACCOUNT_BANK_CODE}`
       : '',
@@ -108,6 +108,33 @@ export async function spaydToDataUrl(spayd: string): Promise<string | null> {
     });
   } catch (err) {
     console.error('[spayd] QR generation failed:', err);
+    return null;
+  }
+}
+
+/**
+ * Generate a PNG Buffer QR code for the given SPAYD string.
+ * Used for email — inbox clients (Gmail, Seznam, Outlook) block `data:` URI
+ * images, so the QR must be sent as a CID inline attachment instead.
+ * Returns null if generation fails or the payload is empty.
+ */
+export async function spaydToBuffer(spayd: string): Promise<Buffer | null> {
+  if (!spayd) return null;
+  try {
+    const mod: any = await import('qrcode');
+    const toBuffer = mod.toBuffer || mod.default?.toBuffer;
+    if (typeof toBuffer !== 'function') {
+      console.error('[spayd] qrcode.toBuffer not found on module');
+      return null;
+    }
+    return await toBuffer(spayd, {
+      errorCorrectionLevel: 'M',
+      margin: 1,
+      width: 400,
+      color: { dark: '#000000', light: '#FFFFFF' },
+    });
+  } catch (err) {
+    console.error('[spayd] QR buffer generation failed:', err);
     return null;
   }
 }

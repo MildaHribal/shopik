@@ -17,6 +17,13 @@ type SendArgs = {
   subject: string;
   html: string;
   text?: string;
+  // Inline (CID) or regular attachments, passed straight to nodemailer.
+  attachments?: Array<{
+    filename: string;
+    content: Buffer;
+    cid?: string;
+    contentType?: string;
+  }>;
 };
 
 let cachedTransport: any = null;
@@ -47,7 +54,7 @@ async function getTransport() {
   return cachedTransport;
 }
 
-export async function sendMail({ to, subject, html, text }: SendArgs): Promise<boolean> {
+export async function sendMail({ to, subject, html, text, attachments }: SendArgs): Promise<boolean> {
   try {
     const transport = await getTransport();
     if (!transport) {
@@ -55,7 +62,7 @@ export async function sendMail({ to, subject, html, text }: SendArgs): Promise<b
       return false;
     }
     const from = process.env.MAIL_FROM || 'Tynky Bordel <noreply@localhost>';
-    await transport.sendMail({ from, to, subject, html, text });
+    await transport.sendMail({ from, to, subject, html, text, attachments });
     return true;
   } catch (err) {
     console.error('[mail] send failed:', err);
@@ -315,11 +322,14 @@ function renderHtml(
     <div style="margin-top:16px;padding:18px 20px;background:#fff;border:1px solid rgba(255,92,138,0.3);border-radius:14px;">
       <div style="font-family:${FONT_SANS};font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#b3305f;font-weight:700;margin-bottom:10px;">Platební údaje — převod na účet</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:${FONT_SERIF};font-size:15px;color:#2a1340;line-height:1.7;">
+        ${extra.accountNumber ? `<tr><td style="color:#8a6f9a;padding-right:12px;">Číslo účtu</td><td style="text-align:right;font-weight:bold;">${extra.accountNumber}</td></tr>` : ''}
         <tr><td style="color:#8a6f9a;padding-right:12px;">IBAN</td><td style="text-align:right;font-weight:bold;">${extra.iban}</td></tr>
         <tr><td style="color:#8a6f9a;padding-right:12px;">Částka</td><td style="text-align:right;font-weight:bold;">${extra.amount.toLocaleString('cs-CZ')} Kč</td></tr>
         <tr><td style="color:#8a6f9a;padding-right:12px;">Variabilní symbol</td><td style="text-align:right;font-weight:bold;">${extra.variableSymbol}</td></tr>
       </table>
-      ${extra.qrDataUrl ? `<div style="text-align:center;margin-top:14px;"><img src="${extra.qrDataUrl}" alt="QR kód pro platbu" width="172" height="172" style="display:inline-block;border-radius:10px;border:1px solid rgba(42,19,64,0.08);"></div>` : ''}
+      ${extra.qrBuffer
+        ? `<div style="text-align:center;margin-top:14px;"><img src="cid:${QR_CID}" alt="QR kód pro platbu" width="172" height="172" style="display:inline-block;border-radius:10px;border:1px solid rgba(42,19,64,0.08);"></div>`
+        : (extra.qrDataUrl ? `<div style="text-align:center;margin-top:14px;"><img src="${extra.qrDataUrl}" alt="QR kód pro platbu" width="172" height="172" style="display:inline-block;border-radius:10px;border:1px solid rgba(42,19,64,0.08);"></div>` : '')}
     </div>` : ''}`;
 
   return emailShell({ subject: copy.subject, preheader: copy.body.slice(0, 90), content });
@@ -329,8 +339,17 @@ export type BankTransferBlock = {
   iban: string;
   amount: number;
   variableSymbol: string | number;
+  // Local Czech account format for humans (e.g. "8294444956/5500").
+  accountNumber?: string | null;
+  // data: URL — used for the on-screen checkout confirmation (browsers render it).
   qrDataUrl?: string | null;
+  // PNG buffer — used for the email, sent as a CID inline attachment because
+  // inbox clients block data: URI <img> tags.
+  qrBuffer?: Buffer | null;
 };
+
+// CID referenced by the email QR <img> and set on the inline attachment.
+const QR_CID = 'payment-qr';
 
 export async function sendOrderStatusEmail(
   order: OrderForEmail,
@@ -341,10 +360,16 @@ export async function sendOrderStatusEmail(
   const copy = await getTemplate(status);
   if (!copy) return false;
 
+  // Send the QR as a CID inline attachment (data: URIs are blocked in email).
+  const attachments = extra?.qrBuffer
+    ? [{ filename: 'platba-qr.png', content: extra.qrBuffer, cid: QR_CID, contentType: 'image/png' }]
+    : undefined;
+
   return sendMail({
     to: order.customerEmail,
     subject: copy.subject,
     html: renderHtml(order, copy, status, extra),
     text: `${copy.headline}\n\n${copy.body}\n\nObjednávka #${order.id}, celkem ${order.totalPrice.toFixed(0)} Kč.`,
+    attachments,
   });
 }

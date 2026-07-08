@@ -135,7 +135,7 @@ const selectedOrder = ref<any>(null)
           </thead>
           <tbody>
             <tr v-for="o in filteredOrders" :key="o.id">
-              <td class="mono">#{{ o.id }}</td>
+              <td class="mono">#{{ o.orderNumber || o.id }}</td>
               <td>
                 <div class="customer-cell">
                   <span class="customer-name">{{ o.customerName }}</span>
@@ -197,7 +197,7 @@ const selectedOrder = ref<any>(null)
         <div v-if="selectedOrder" class="admin-modal-overlay" @click.self="selectedOrder = null">
           <div class="admin-modal modal-lg">
             <div class="modal-header">
-              <h3 class="modal-title">Objednávka #{{ selectedOrder.id }}</h3>
+              <h3 class="modal-title">Objednávka #{{ selectedOrder.orderNumber || selectedOrder.id }}</h3>
               <button @click="selectedOrder = null" class="modal-close" aria-label="Zavřít">
                 <Icon icon="lucide:x" height="18" />
               </button>

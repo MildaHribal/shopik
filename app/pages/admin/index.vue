@@ -76,7 +76,7 @@ const STATUS_CLASS: Record<string, string> = {
             </thead>
             <tbody>
               <tr v-for="o in stats.recentOrders" :key="o.id">
-                <td class="mono">#{{ o.id }}</td>
+                <td class="mono">#{{ o.orderNumber || o.id }}</td>
                 <td>
                   <div class="customer-cell">
                     <span class="customer-name">{{ o.customerName }}</span>

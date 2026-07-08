@@ -102,7 +102,7 @@ onUnmounted(() => {
     <!-- Left: Brand -->
     <NuxtLink to="/" class="brand-link" @click="isMobileMenuOpen = false">
       <NuxtImg src="/hero/logo-mushroom.png" alt="" class="brand-art" width="40" height="40" format="webp" quality="85" loading="eager" />
-      <span class="brand-text">Tynky Bordel</span>
+      <span class="brand-text">Týnky Bordel</span>
     </NuxtLink>
 
     <!-- Center: Desktop nav pill with links + inline search -->
@@ -171,6 +171,19 @@ onUnmounted(() => {
         <span v-if="cart.itemCount > 0" class="cart-badge-small">{{ cart.itemCount }}</span>
       </button>
 
+      <!-- Cart (phones) — quick access to the drawer -->
+      <button
+        type="button"
+        data-cart-anchor="true"
+        class="mobile-icon-btn md:hidden relative"
+        title="Košík"
+        aria-label="Košík"
+        @click="cart.openDrawer()"
+      >
+        <Icon icon="mdi:cart-outline" height="21" />
+        <span v-if="cart.itemCount > 0" class="cart-badge-small">{{ cart.itemCount }}</span>
+      </button>
+
       <button
         class="hamburger-btn md:hidden"
         :class="{ 'is-open': isMobileMenuOpen }"
@@ -191,7 +204,7 @@ onUnmounted(() => {
         <div class="mobile-menu-inner">
           <!-- Header with close button -->
           <div class="mobile-menu-header">
-            <NuxtLink to="/" class="mobile-menu-brand" @click="isMobileMenuOpen = false">Tynky Bordel</NuxtLink>
+            <NuxtLink to="/" class="mobile-menu-brand" @click="isMobileMenuOpen = false">Týnky Bordel</NuxtLink>
             <button class="mobile-close-btn" @click="isMobileMenuOpen = false" aria-label="Zavřít menu">
               <Icon icon="mdi:close" height="24" />
             </button>
@@ -345,15 +358,16 @@ onUnmounted(() => {
 .brand-art { width: 32px; height: 32px; object-fit: contain; }
 @media (min-width: 768px) { .brand-art { width: 38px; height: 38px; } }
 .brand-text {
-  font-family: 'Bricolage Grotesque', system-ui;
-  font-weight: 800;
-  font-size: 1rem;
+  font-family: 'Caprasimo', 'Fraunces', Georgia, serif;
+  font-weight: 400;
+  font-size: 1.3rem;
   letter-spacing: -0.01em;
-  text-transform: uppercase;
+  text-transform: none;
   line-height: 1;
   white-space: nowrap;
+  color: #2a1340;
 }
-@media (min-width: 768px) { .brand-text { font-size: 1.15rem; } }
+@media (min-width: 768px) { .brand-text { font-size: 1.5rem; } }
 
 /* ── Center pill (desktop) ────────────────────────────── */
 .navbar-main {
@@ -565,6 +579,24 @@ onUnmounted(() => {
 }
 
 /* ── Hamburger (mobile) ──────────────────────────────── */
+/* Mobile cart button — matches the hamburger so the pair reads as one control set. */
+.mobile-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  background: #1a0f28;
+  color: #fbf4ea;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(42, 19, 64, 0.2);
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.mobile-icon-btn:hover { background: #2a1340; }
+.mobile-icon-btn:active { transform: scale(0.93); }
+
 .hamburger-btn {
   display: inline-flex;
   flex-direction: column;
@@ -795,9 +827,15 @@ onUnmounted(() => {
 @media (min-width: 768px) {
   .cart-float-btn { top: 1.25rem; right: 1.5rem; width: 50px; height: 50px; }
 }
-/* Hide floating cart on mobile — user has the top hamburger anyway */
+/* Phones: keep the floating cart visible when scrolled (dark, matching the
+   navbar buttons); it stays top-right while scroll-to-top sits bottom-right. */
 @media (max-width: 767px) {
-  .cart-float-btn { display: none; }
+  .cart-float-btn {
+    background: #1a0f28;
+    color: #fbf4ea;
+    border: none;
+    box-shadow: 0 6px 18px rgba(20, 8, 36, 0.32);
+  }
 }
 .cart-float-badge {
   position: absolute;

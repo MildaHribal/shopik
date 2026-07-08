@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { authClient } from '~~/lib/auth-client'
 
-type AppUser = { id: string; name: string; email: string }
+type AppUser = { id: string; name: string; email: string; role: string }
 
 const currentUser = ref<AppUser | null>(null)
 const isAuthLoading = ref(true)
@@ -16,6 +16,7 @@ async function fetchSession() {
         id: data.user.id,
         name: data.user.name || '',
         email: data.user.email || '',
+        role: (data.user as any).role || 'user',
       }
     } else {
       currentUser.value = null

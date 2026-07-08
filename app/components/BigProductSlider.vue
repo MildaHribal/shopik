@@ -244,16 +244,6 @@ defineExpose({ next, prev });
     transform: translate(-2rem, 1.4rem);
   }
 }
-/* Phones: tighter card + smaller type so the slider isn't so tall. */
-@media (max-width: 767px) {
-  .slide-card { padding: 0.95rem 1.05rem 0.85rem; max-width: none; border-radius: 0.85rem; }
-  .slide-eyebrow { margin-bottom: 0.45rem; }
-  .slide-title { font-size: 1.2rem; margin-bottom: 0.45rem; }
-  .slide-desc { font-size: 0.83rem; line-height: 1.45; margin-bottom: 0.85rem; }
-  .slide-meta { padding-top: 0.7rem; }
-  .slide-price { font-size: 1.2rem; }
-  .slide-cta { padding: 0.55rem 0.9rem; font-size: 0.68rem; }
-}
 
 .slide-eyebrow {
   font-family: 'Manrope', system-ui;
@@ -328,6 +318,32 @@ defineExpose({ next, prev });
 .slide-cta:hover {
   background: #2a1340;
   transform: translateY(-1px);
+}
+
+/* Phones: no separate white block — info sits directly on the black slide as one
+   cohesive dark unit (product photo blends into the frame), no long description.
+   NOTE: this block MUST come after the base .slide-* rules above so it wins the
+   cascade (same specificity → later source order). */
+@media (max-width: 767px) {
+  .slide-card {
+    background: transparent;
+    box-shadow: none;
+    padding: 0.3rem 0.9rem 0.2rem;
+    max-width: none;
+    border-radius: 0;
+  }
+  .slide-eyebrow { color: #ffb3d0; margin-bottom: 0.4rem; }
+  .slide-title { color: #fbf4ea; font-size: 1.35rem; margin-bottom: 0.55rem; }
+  .slide-desc { display: none; }
+  .slide-meta { border-top-color: rgba(255, 255, 255, 0.14); padding-top: 0.8rem; }
+  .slide-price { color: #fbf4ea; font-size: 1.4rem; }
+  .slide-cta {
+    background: #fbf4ea;
+    color: #1c0d2e;
+    padding: 0.65rem 1.15rem;
+    font-size: 0.72rem;
+  }
+  .slide-cta:hover { background: #ffffff; }
 }
 
 /* Arrows */

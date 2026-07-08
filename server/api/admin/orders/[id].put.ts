@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
       .where(eq(orderItems.orderId, id));
 
     const payload = {
-      id: updated.id,
+      id: updated.orderNumber || updated.id,
       customerName: updated.customerName,
       customerEmail: updated.customerEmail,
       totalPrice: updated.totalPrice,

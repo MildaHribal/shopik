@@ -156,7 +156,7 @@ const carouselBest = ref<InstanceType<typeof ProductCarousel> | null>(null);
               vyrobený rukama.
             </p>
             <p class="about-note">
-              Platba zatím pouze na dobírku — krámek ještě není legal, takže pssst.
+              Platba zatím pouze převodem, nebo na dobírku — krámek ještě není legal, takže pssst.
             </p>
             <div class="about-actions">
               <NuxtLink to="#kolekce" class="btn-primary">
@@ -223,8 +223,8 @@ const carouselBest = ref<InstanceType<typeof ProductCarousel> | null>(null);
           </div>
         </div>
 
-        <div class="max-w-6xl mx-auto">
-          <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-5">
+        <div class="max-w-[1500px] mx-auto">
+          <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 md:gap-6">
             <ProductCard
               v-for="(prod, idx) in fullCollection"
               :key="prod.id"

@@ -3,7 +3,7 @@ import { orders, orderItems, products } from '../../database/schema';
 import { eq } from 'drizzle-orm';
 import { getOptionalSession } from '../../utils/session';
 import { sendOrderStatusEmail, type BankTransferBlock } from '../../utils/email';
-import { buildSpayd, getBankAccount, spaydToDataUrl } from '../../utils/spayd';
+import { buildSpayd, getBankAccount, spaydToDataUrl, spaydToBuffer } from '../../utils/spayd';
 
 const VALID_PAYMENT_METHODS = new Set(['cash', 'bank-transfer', 'card']);
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -12,6 +12,14 @@ const phoneRegex = /^\+?[\d\s()\-]{9,20}$/;
 
 // Cash-on-delivery surcharge — matches the client-side value displayed in checkout.
 const COD_FEE = 60;
+
+// Randomized, non-sequential identifiers so IDs don't leak order volume and the
+// variable symbol isn't guessable. Order number is 8 digits; VS is 10 (SPAYD max).
+const randDigits = (len: number) => {
+  let out = String(1 + Math.floor(Math.random() * 9)); // no leading zero
+  for (let i = 1; i < len; i++) out += Math.floor(Math.random() * 10);
+  return out;
+};
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -115,23 +123,42 @@ export default defineEventHandler(async (event) => {
   const paymentStatus = 'unpaid';
   const status = 'pending';
 
-  const [newOrder] = await db
-    .insert(orders)
-    .values({
-      customerName,
-      customerEmail,
-      customerPhone: phone ?? null,
-      shippingAddress,
-      shippingMethod: shippingMethod ?? null,
-      paymentMethod: paymentMethod ?? null,
-      packetaBranchId: packetaBranchId ?? null,
-      packetaBranchName: packetaBranchName ?? null,
-      totalPrice,
-      status,
-      paymentStatus,
-      userId: userId ?? undefined,
-    })
-    .returning();
+  // Insert with a randomized order number; retry on the (rare) unique collision.
+  let newOrder: typeof orders.$inferSelect | undefined;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const orderNumber = randDigits(8);
+    const variableSymbol = randDigits(10);
+    try {
+      [newOrder] = await db
+        .insert(orders)
+        .values({
+          orderNumber,
+          variableSymbol,
+          customerName,
+          customerEmail,
+          customerPhone: phone ?? null,
+          shippingAddress,
+          shippingMethod: shippingMethod ?? null,
+          paymentMethod: paymentMethod ?? null,
+          packetaBranchId: packetaBranchId ?? null,
+          packetaBranchName: packetaBranchName ?? null,
+          totalPrice,
+          status,
+          paymentStatus,
+          userId: userId ?? undefined,
+        })
+        .returning();
+      break;
+    } catch (err: any) {
+      // 23505 = unique_violation (duplicate order_number) — regenerate and retry.
+      if (err?.code === '23505' && attempt < 4) continue;
+      throw err;
+    }
+  }
+
+  if (!newOrder) {
+    throw createError({ statusCode: 500, statusMessage: 'Objednávku se nepodařilo vytvořit' });
+  }
 
   for (const item of orderItemsData) {
     await db.insert(orderItems).values({
@@ -147,19 +174,26 @@ export default defineEventHandler(async (event) => {
   // Bank transfer: generate SPAYD + QR + bank info to return + include in email.
   let bank: BankTransferBlock | undefined;
   if (paymentMethod === 'bank-transfer') {
-    const { iban } = getBankAccount();
+    const { iban, localFormat } = getBankAccount();
     if (iban) {
+      const variableSymbol = newOrder.variableSymbol || String(newOrder.id);
       const spayd = buildSpayd({
         amount: totalPrice,
-        variableSymbol: newOrder.id,
-        message: `Objednavka ${newOrder.id}`,
+        variableSymbol,
+        message: `Objednavka ${newOrder.orderNumber || newOrder.id}`,
       });
-      const qrDataUrl = await spaydToDataUrl(spayd);
+      // data: URL for the browser confirmation, PNG buffer for the email (CID).
+      const [qrDataUrl, qrBuffer] = await Promise.all([
+        spaydToDataUrl(spayd),
+        spaydToBuffer(spayd),
+      ]);
       bank = {
         iban,
+        accountNumber: localFormat || null,
         amount: totalPrice,
-        variableSymbol: newOrder.id,
+        variableSymbol,
         qrDataUrl,
+        qrBuffer,
       };
     }
   }
@@ -167,7 +201,7 @@ export default defineEventHandler(async (event) => {
   // Fire-and-forget confirmation email so we don't hang the response on SMTP.
   sendOrderStatusEmail(
     {
-      id: newOrder.id,
+      id: newOrder.orderNumber || newOrder.id,
       customerName: newOrder.customerName,
       customerEmail: newOrder.customerEmail,
       totalPrice: newOrder.totalPrice,
@@ -181,11 +215,13 @@ export default defineEventHandler(async (event) => {
   return {
     success: true,
     orderId: newOrder.id,
+    orderNumber: newOrder.orderNumber || String(newOrder.id),
     paymentMethod,
     // Only echo bank details for bank-transfer so the client can render the QR immediately.
     bank: bank
       ? {
           iban: bank.iban,
+          accountNumber: bank.accountNumber,
           holder: getBankAccount().holder,
           amount: bank.amount,
           variableSymbol: bank.variableSymbol,

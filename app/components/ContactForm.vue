@@ -31,22 +31,14 @@ const handleSubmit = async () => {
           <span class="contact-title-accent">domovskou planetu</span>
         </h2>
         <p class="contact-desc">
-          Máš dotaz ohledně objednávky? Chceš originál na míru? Nebo jen dobrou vibe?
-          Napiš — odpovídám ráno u kafe.
+          Máš dotaz ohledně objednávky? Chceš originál na míru?
+          Napiš — odpovídám ráno u čaje.
         </p>
 
         <ul class="contact-list">
           <li class="contact-item">
             <span class="contact-icon"><Icon icon="mdi:account-outline" height="18" /></span>
             <span class="contact-item-text">Kristýna Egnerová</span>
-          </li>
-          <li class="contact-item">
-            <span class="contact-icon"><Icon icon="mdi:map-marker-outline" height="18" /></span>
-            <span class="contact-item-text">Kosmická 42, 110 00 Praha</span>
-          </li>
-          <li class="contact-item">
-            <span class="contact-icon"><Icon icon="mdi:phone-outline" height="18" /></span>
-            <a href="tel:+420777888999" class="contact-item-text contact-link">+420 777 888 999</a>
           </li>
           <li class="contact-item">
             <span class="contact-icon"><Icon icon="mdi:email-outline" height="18" /></span>

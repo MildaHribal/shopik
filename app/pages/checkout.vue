@@ -15,7 +15,7 @@ useSeoMeta({
 });
 
 const step = ref<'form' | 'success'>('form');
-const orderId = ref<number | null>(null);
+const orderId = ref<number | string | null>(null);
 const isSubmitting = ref(false);
 const agreedToTerms = ref(false);
 const paymentMethod = ref<'cash' | 'bank-transfer'>('cash');
@@ -136,7 +136,7 @@ async function placeOrder() {
         items: cart.items.map((item) => ({ id: item.id, quantity: item.quantity })),
       },
     });
-    orderId.value = response.orderId;
+    orderId.value = response.orderNumber || response.orderId;
     successPaymentMethod.value = paymentMethod.value;
     successBank.value = response.bank || null;
     cart.clearCart();
@@ -345,6 +345,7 @@ async function placeOrder() {
         </div>
 
         <div v-if="successBank" class="bank-details">
+          <div v-if="successBank.accountNumber" class="bank-row"><span>Číslo účtu</span><strong>{{ successBank.accountNumber }}</strong></div>
           <div class="bank-row"><span>IBAN</span><strong>{{ successBank.iban }}</strong></div>
           <div class="bank-row"><span>Částka</span><strong>{{ successBank.amount.toLocaleString('cs-CZ') }} Kč</strong></div>
           <div class="bank-row"><span>Variabilní symbol</span><strong>{{ successBank.variableSymbol }}</strong></div>

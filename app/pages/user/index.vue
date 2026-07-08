@@ -224,7 +224,7 @@ const statusClass = (status: string) => {
             <div v-for="order in orders" :key="order.id" class="p-5 rounded-xl border border-white/10 bg-white/5 transition-all hover:bg-white/10">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div>
-                  <div class="font-mono text-primary-400 font-bold mb-1">Objednávka #{{ order.id }}</div>
+                  <div class="font-mono text-primary-400 font-bold mb-1">Objednávka #{{ order.orderNumber || order.id }}</div>
                   <div class="text-sm text-white/50">{{ order.createdAt ? new Date(order.createdAt).toLocaleDateString('cs-CZ') : '' }}</div>
                 </div>
                 <div class="flex items-center gap-3">

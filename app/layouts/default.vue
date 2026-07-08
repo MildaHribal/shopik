@@ -21,7 +21,7 @@ import { Icon } from "@iconify/vue";
           <div class="footer-brand-row">
             <NuxtLink to="/" class="footer-brand">
               <NuxtImg src="/hero/logo-mushroom.png" alt="" class="footer-brand-logo" width="72" height="72" format="webp" quality="85" loading="lazy" />
-              <span class="footer-brand-name">Tynky Bordel</span>
+              <span class="footer-brand-name">Týnky Bordel</span>
             </NuxtLink>
             <p class="footer-tagline">
               Ručně dělané originály — obrazy, sochy, klíčenky.<br />
@@ -53,15 +53,15 @@ import { Icon } from "@iconify/vue";
             <div class="footer-col">
               <h4 class="footer-heading">Sleduj</h4>
               <div class="footer-socials">
-                <a href="https://www.instagram.com/_kristyna_aaa/" target="_blank" rel="noopener noreferrer" class="footer-social" aria-label="Instagram Kristýna">
+                <a href="https://www.instagram.com/_kristyna_aaa/" target="_blank" rel="noopener noreferrer" class="footer-social footer-social--instagram" aria-label="Instagram Kristýna">
                   <Icon icon="mdi:instagram" height="18" />
                   <span>Instagram</span>
                 </a>
-                <a href="https://www.instagram.com/tynky_bordel/" target="_blank" rel="noopener noreferrer" class="footer-social" aria-label="Instagram Tynky Bordel">
+                <a href="https://www.instagram.com/tynky_bordel/" target="_blank" rel="noopener noreferrer" class="footer-social footer-social--instagram" aria-label="Instagram Tynky Bordel">
                   <Icon icon="mdi:instagram" height="18" />
                   <span>Instagram (Tynky Bordel)</span>
                 </a>
-                <a href="https://www.tiktok.com/@_kristyna_aaa" target="_blank" rel="noopener noreferrer" class="footer-social" aria-label="TikTok">
+                <a href="https://www.tiktok.com/@_kristyna_aaa" target="_blank" rel="noopener noreferrer" class="footer-social footer-social--tiktok" aria-label="TikTok">
                   <Icon icon="ic:baseline-tiktok" height="18" />
                   <span>TikTok</span>
                 </a>
@@ -234,6 +234,19 @@ import { Icon } from "@iconify/vue";
   border-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
   color: #ffffff;
+}
+/* Brand-coloured hovers — the buttons light up in each app's own colours. */
+.footer-social--instagram:hover {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 22%, #dc2743 46%, #cc2366 70%, #bc1888 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(220, 39, 67, 0.35);
+}
+.footer-social--tiktok:hover {
+  background: #010101;
+  border-color: #25f4ee;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(37, 244, 238, 0.45), 0 6px 18px rgba(254, 44, 85, 0.35);
 }
 
 /* Bottom bar */

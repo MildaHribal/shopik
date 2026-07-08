@@ -27,6 +27,18 @@ const productUrl = computed(() => {
   return slug ? `/product/${slug}` : `/product/${props.product.id}`
 })
 
+// Second product photo, revealed with a crossfade on hover (if the product has
+// more than one image).
+const secondImageSrc = computed(() => {
+  const imgs = props.product.images
+  if (!Array.isArray(imgs) || imgs.length === 0) return null
+  const resolved = imgs
+    .filter(Boolean)
+    .map((i) => (i.startsWith('http') || i.startsWith('/') ? i : `/${i}`))
+  const second = resolved.find((i) => i !== imageSrc.value)
+  return second || null
+})
+
 const isImageLoading = ref(true)
 const isImageError = ref(false)
 const isAddedToCart = ref(false)
@@ -90,17 +102,38 @@ const handleAddToCart = (event: MouseEvent) => {
     imageSrc: imageSrc.value,
   })
 }
+
+// ── Favorites (optimistic toggle; grid doesn't pre-fetch state to save requests)
+const toast = useCosmicToast()
+const isFavorite = ref(false)
+const favLoading = ref(false)
+
+const toggleFavorite = async () => {
+  if (favLoading.value) return
+  favLoading.value = true
+  const prev = isFavorite.value
+  isFavorite.value = !prev
+  try {
+    const res = await $fetch<{ isFavorite: boolean }>(`/api/products/${props.product.id}/favorite`, { method: 'POST' })
+    isFavorite.value = res.isFavorite
+  } catch (e) {
+    isFavorite.value = prev
+    toast.error('Oblíbené', 'Pro ukládání oblíbených se přihlas.')
+  } finally {
+    favLoading.value = false
+  }
+}
 </script>
 
 <template>
   <NuxtLink :to="productUrl" class="product-card group relative flex w-full flex-col h-full" :aria-label="product.title">
     <!-- Image frame -->
-    <div ref="imageWrapRef" class="card-image relative w-full aspect-[4/5] overflow-hidden rounded-xl">
+    <div ref="imageWrapRef" class="card-image relative w-full aspect-[4/3] overflow-hidden rounded-xl">
       <NuxtImg
         v-if="imageSrc && !isImageError"
         :src="imageSrc"
         :alt="product.title"
-        class="card-img w-full h-full object-cover"
+        class="card-img w-full h-full object-contain"
         :class="[ isImageLoading ? 'is-loading' : '' ]"
         width="500"
         height="625"
@@ -112,6 +145,21 @@ const handleAddToCart = (event: MouseEvent) => {
         :fetchpriority="isPriority ? 'high' : 'auto'"
         @load="onImageLoaded"
         @error="onImageError"
+      />
+
+      <!-- Second photo, cross-faded in on hover -->
+      <NuxtImg
+        v-if="secondImageSrc && !isImageError"
+        :src="secondImageSrc"
+        :alt="product.title"
+        class="card-img card-img--hover w-full h-full object-contain"
+        width="500"
+        height="625"
+        format="webp"
+        quality="72"
+        sizes="sm:50vw md:33vw lg:25vw xl:20vw"
+        loading="lazy"
+        aria-hidden="true"
       />
 
       <div
@@ -140,11 +188,11 @@ const handleAddToCart = (event: MouseEvent) => {
 
     <!-- Info block -->
     <div class="card-info">
-      <div class="card-info-eyebrow">— No. {{ String((product.id ?? 0)).slice(-2).padStart(2, '0') }}</div>
-
       <h3 class="card-title">
         {{ product.title }}
       </h3>
+
+      <p v-if="product.description" class="card-desc">{{ product.description }}</p>
 
       <!-- Add-to-cart on the card is desktop-only (the hover pill over the image).
            On mobile the whole card links to the product detail. -->
@@ -153,6 +201,16 @@ const handleAddToCart = (event: MouseEvent) => {
           <span class="psy-display price-num">{{ product.price }}</span>
           <span class="price-currency">Kč</span>
         </div>
+
+        <button
+          class="fav-btn"
+          :class="{ 'is-fav': isFavorite, 'is-loading': favLoading }"
+          @click.prevent.stop="toggleFavorite"
+          :aria-label="isFavorite ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'"
+          :title="isFavorite ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'"
+        >
+          <Icon :icon="isFavorite ? 'mdi:heart' : 'mdi:heart-outline'" height="20" />
+        </button>
       </div>
     </div>
   </NuxtLink>
@@ -197,6 +255,16 @@ const handleAddToCart = (event: MouseEvent) => {
 }
 .product-card:hover .card-img {
   transform: scale(1.06);
+}
+
+/* Second photo overlays the first and cross-fades in on hover. */
+.card-img--hover {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+.product-card:hover .card-img--hover {
+  opacity: 1;
 }
 
 /* Add-to-cart button (desktop) — floating pill */
@@ -262,14 +330,50 @@ const handleAddToCart = (event: MouseEvent) => {
   letter-spacing: -0.005em;
   color: #ffffff;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 2.3em;
 }
 @media (min-width: 768px) {
   .card-title { font-size: 1.22rem; }
 }
+
+/* Short description in the space freed up by the shorter landscape image. */
+.card-desc {
+  font-family: 'Manrope', system-ui;
+  font-weight: 500;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+@media (max-width: 639px) {
+  .card-desc { display: none; }
+}
+
+/* Favorites (heart) button */
+.fav-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+.fav-btn:hover { color: #ff6bb5; border-color: rgba(255, 107, 181, 0.5); background: rgba(255, 107, 181, 0.1); }
+.fav-btn:active { transform: scale(0.9); }
+.fav-btn.is-fav { color: #ff5c8a; border-color: rgba(255, 92, 138, 0.55); background: rgba(255, 92, 138, 0.14); }
+.fav-btn.is-loading { opacity: 0.6; }
 /* Phones: tighter card so the image dominates; show the title (not the number),
    price underneath, no add button. */
 @media (max-width: 639px) {
@@ -287,9 +391,9 @@ const handleAddToCart = (event: MouseEvent) => {
 
 .card-info-bottom {
   margin-top: auto;
-  padding-top: 0.3rem;
+  padding-top: 0.5rem;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);

@@ -87,6 +87,10 @@ export const products = pgTable('products', {
 // ── Orders ──────────────────────────────────────────────────────────────────────
 export const orders = pgTable('orders', {
   id: serial('id').primaryKey(),
+  // Customer-facing, randomized so sequential IDs don't leak order volume.
+  orderNumber: text('order_number').unique(),
+  // Bank-transfer variable symbol (randomized, numeric, ≤ 10 digits per SPAYD spec).
+  variableSymbol: text('variable_symbol'),
   userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
   customerName: text('customer_name').notNull(),
   customerEmail: text('customer_email').notNull(),
