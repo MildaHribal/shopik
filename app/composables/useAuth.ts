@@ -78,6 +78,33 @@ export function useAuth() {
     currentUser.value = null
   }
 
+  // Sends a reset link to the given email. Always resolves without error to the
+  // caller (we don't reveal whether an account exists).
+  const requestPasswordReset = async (email: string) => {
+    try {
+      const res = await client.requestPasswordReset({ email, redirectTo: '/user/reset-password' })
+      if ((res as any)?.error) {
+        return { error: (res as any).error.message || 'Nepodařilo se odeslat email.' }
+      }
+      return { error: null }
+    } catch (e: any) {
+      return { error: 'Nepodařilo se odeslat email. Zkuste to prosím znovu.' }
+    }
+  }
+
+  // Completes the reset using the token from the email link.
+  const resetPassword = async (token: string, newPassword: string) => {
+    try {
+      const res = await client.resetPassword({ token, newPassword })
+      if ((res as any)?.error) {
+        return { error: (res as any).error.message || 'Odkaz je neplatný nebo vypršel.' }
+      }
+      return { error: null }
+    } catch (e: any) {
+      return { error: 'Odkaz je neplatný nebo vypršel. Požádejte o nový.' }
+    }
+  }
+
   return {
     currentUser,
     isAuthLoading,
@@ -85,6 +112,8 @@ export function useAuth() {
     signUpWithPassword,
     signInWithGoogle,
     signOut,
+    requestPasswordReset,
+    resetPassword,
     refreshSession: fetchSession,
   }
 }

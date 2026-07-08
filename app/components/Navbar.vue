@@ -166,10 +166,10 @@ onUnmounted(() => {
         <Icon icon="mdi:account" height="20" />
       </NuxtLink>
 
-      <NuxtLink to="/cart" data-cart-anchor="true" class="nav-avatar-btn relative hidden md:flex" title="Košík" aria-label="Košík">
+      <button type="button" data-cart-anchor="true" class="nav-avatar-btn relative hidden md:flex" title="Košík" aria-label="Košík" @click="cart.openDrawer()">
         <Icon icon="mdi:cart" height="20" />
         <span v-if="cart.itemCount > 0" class="cart-badge-small">{{ cart.itemCount }}</span>
-      </NuxtLink>
+      </button>
 
       <button
         class="hamburger-btn md:hidden"
@@ -189,6 +189,14 @@ onUnmounted(() => {
     <Transition name="mobile-menu">
       <div v-if="isMobileMenuOpen" class="mobile-menu">
         <div class="mobile-menu-inner">
+          <!-- Header with close button -->
+          <div class="mobile-menu-header">
+            <NuxtLink to="/" class="mobile-menu-brand" @click="isMobileMenuOpen = false">Tynky Bordel</NuxtLink>
+            <button class="mobile-close-btn" @click="isMobileMenuOpen = false" aria-label="Zavřít menu">
+              <Icon icon="mdi:close" height="24" />
+            </button>
+          </div>
+
           <!-- Mobile search -->
           <div class="mobile-search" ref="searchWrapRef">
             <Icon icon="iconamoon:search-fill" height="18" class="mobile-search-icon" />
@@ -289,17 +297,18 @@ onUnmounted(() => {
   <!-- ─── Floating cart (top-right when navbar out of view) ────────────── -->
   <Teleport to="body">
     <Transition name="cart-float">
-      <NuxtLink
+      <button
         v-if="isScrolled && !isMobileMenuOpen"
-        to="/cart"
+        type="button"
         data-cart-anchor="true"
         class="cart-float-btn"
         title="Košík"
         aria-label="Košík"
+        @click="cart.openDrawer()"
       >
         <Icon icon="mdi:cart" height="20" />
         <span v-if="cart.itemCount > 0" class="cart-float-badge">{{ cart.itemCount }}</span>
-      </NuxtLink>
+      </button>
     </Transition>
   </Teleport>
 </template>
@@ -510,8 +519,11 @@ onUnmounted(() => {
 }
 @media (min-width: 768px) { .navbar-right { gap: 0.75rem; } }
 
+/* Desktop-only top-bar icons. Scoped styles outrank Tailwind's `hidden md:flex`
+   utilities (higher specificity via the [data-v] attribute), so the mobile-hidden
+   / desktop-shown behaviour is enforced here with a media query instead. */
 .nav-avatar-btn {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   width: 42px;
@@ -524,7 +536,7 @@ onUnmounted(() => {
   text-decoration: none;
   position: relative;
 }
-@media (min-width: 768px) { .nav-avatar-btn { width: 46px; height: 46px; } }
+@media (min-width: 768px) { .nav-avatar-btn { display: flex; width: 46px; height: 46px; } }
 .nav-avatar-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(42, 19, 64, 0.14);
@@ -566,6 +578,8 @@ onUnmounted(() => {
   padding: 0;
 }
 .hamburger-btn:hover { background: #2a1340; }
+/* Phones only — hidden from tablet/desktop up (scoped rule outranks `md:hidden`). */
+@media (min-width: 768px) { .hamburger-btn { display: none; } }
 
 .hamburger-line {
   display: block;
@@ -595,10 +609,41 @@ onUnmounted(() => {
 }
 .mobile-menu-inner {
   min-height: 100%;
-  padding: 5.5rem 1.25rem 2rem;
+  padding: 1.25rem 1.25rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.mobile-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+.mobile-menu-brand {
+  font-family: 'Berkshire Swash', cursive;
+  font-size: 1.5rem;
+  color: #2a1340;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+.mobile-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(42, 19, 64, 0.06);
+  color: #2a1340;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.mobile-close-btn:hover {
+  background: rgba(42, 19, 64, 0.12);
+  transform: rotate(90deg);
 }
 
 .mobile-search {

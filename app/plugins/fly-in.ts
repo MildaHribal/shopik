@@ -112,6 +112,16 @@ export default defineNuxtPlugin((nuxtApp) => {
       }
       const flyElement = el as FlyElement
       const options = flyElement[FLY_OPTIONS_KEY] ?? normalizeOptions(binding.value as FlyDirection | FlyOptions | undefined)
+
+      // Already visible on mount (above the fold)? Reveal synchronously — before
+      // the browser paints — so there's no hide-then-reveal flicker on load.
+      const rect = el.getBoundingClientRect()
+      const vh = window.innerHeight || document.documentElement.clientHeight
+      if (rect.top < vh * 0.92 && rect.bottom > 0) {
+        el.classList.add('fly-in--visible')
+        if (options.once) return
+      }
+
       const observer = getSharedObserver({ threshold: options.threshold, rootMargin: options.rootMargin })
       observer?.observe(flyElement)
     },

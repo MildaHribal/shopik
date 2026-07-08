@@ -141,28 +141,32 @@ defineExpose({ next, prev });
   border: 1px solid rgba(42, 19, 64, 0.1);
 }
 
+/* Mobile: image fills the frame, the white card floats over the bottom with a
+   scrim. (The old single-column grid squashed the image to nothing.) */
 .slide {
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr;
+  display: block;
   aspect-ratio: 4 / 5;
   overflow: hidden;
   background: #000000;
 }
 @media (min-width: 768px) {
   .slide {
+    display: grid;
     grid-template-columns: 1.6fr 1fr;
     aspect-ratio: 16 / 9;
   }
 }
 
 .slide-image-link {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: block;
-  height: 100%;
-  min-height: 0;
   background: #000000;
   overflow: hidden;
+}
+@media (min-width: 768px) {
+  .slide-image-link { position: relative; inset: auto; height: 100%; min-height: 0; }
 }
 .slide-image {
   display: block;
@@ -183,14 +187,23 @@ defineExpose({ next, prev });
 /* Right-side description column — card sits toward the LEFT so the next arrow
    has room to breathe against the outer edge. */
 .slide-side {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  align-items: flex-end;
   padding: 1rem;
-  background: #000000;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0) 80%);
 }
 @media (min-width: 768px) {
-  .slide-side { padding: 2rem 4rem 2rem 1rem; }
+  .slide-side {
+    position: static;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 2rem 4rem 2rem 1rem;
+    background: #000000;
+  }
 }
 
 .slide-card {
@@ -237,9 +250,12 @@ defineExpose({ next, prev });
   color: rgba(42, 19, 64, 0.78);
   margin: 0 0 1.25rem;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+@media (min-width: 768px) {
+  .slide-desc { -webkit-line-clamp: 4; }
 }
 
 .slide-meta {

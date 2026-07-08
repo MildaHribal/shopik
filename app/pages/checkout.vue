@@ -10,7 +10,7 @@ const router = useRouter();
 
 useSeoMeta({
   title: 'Pokladna',
-  description: 'Dokončení objednávky v Shopik.',
+  description: 'Dokončení objednávky v Tynky Bordel.',
   robots: 'noindex,nofollow',
 });
 

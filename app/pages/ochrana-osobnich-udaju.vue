@@ -2,13 +2,13 @@
 import { Icon } from "@iconify/vue";
 
 useSeoMeta({
-  title: 'Ochrana osobních údajů | Shopik',
-  description: 'Zásady zpracování osobních údajů v souladu s GDPR v internetovém obchodě Shopik.',
+  title: 'Ochrana osobních údajů | Tynky Bordel',
+  description: 'Zásady zpracování osobních údajů v souladu s GDPR v internetovém obchodě Tynky Bordel.',
 })
 
 const partners = [
-  { name: 'Dopravci', description: 'Zásilkovna, Česká pošta, Balíkovna (pro doručení zásilky).', icon: 'mdi:truck-fast-outline' },
-  { name: 'Platební brána', description: 'Stripe (pro bezpečné zpracování vaší platby).', icon: 'mdi:stripe' },
+  { name: 'Dopravci', description: 'Zásilkovna (Z-BOX) a Balíkovna (pro doručení zásilky).', icon: 'mdi:truck-fast-outline' },
+  { name: 'Platba', description: 'Platíte dobírkou nebo převodem na účet — žádnou platební kartu ani platební bránu nezpracováváme.', icon: 'mdi:cash-multiple' },
   { name: 'Technické služby', description: 'Cloudflare (pro bezpečnost webu a zrychlení načítání).', icon: 'mdi:cloud-lock-outline' },
   { name: 'Analýza', description: 'Google Search Console (pro analýzu výkonu našeho webu).', icon: 'mdi:chart-bar' },
 ];
@@ -33,7 +33,7 @@ const partners = [
             <p class="font-bold text-white mb-1">Kristýna Egnerová</p>
             <p class="text-white/60 text-sm">Sídlo: Kosmická 42, Plzeň</p>
             <p class="text-white/60 text-sm">IČO: [Doplnit po přidělení]</p>
-            <p class="text-primary-400 text-sm font-medium mt-2">hello@shopik.space</p>
+            <p class="text-primary-400 text-sm font-medium mt-2">info@tynkybordel.shop</p>
           </div>
         </div>
       </section>
@@ -81,7 +81,7 @@ const partners = [
           Podle GDPR máte právo na přístup ke svým údajům, na jejich opravu, výmaz ("právo být zapomenut"), omezení zpracování a právo vznést námitku. 
         </p>
         <p>
-          Pokud máte k ochraně údajů jakýkoliv dotaz, napište nám na <strong class="text-sky-400">hello@shopik.space</strong>.
+          Pokud máte k ochraně údajů jakýkoliv dotaz, napište nám na <strong class="text-sky-400">info@tynkybordel.shop</strong>.
         </p>
       </section>
       

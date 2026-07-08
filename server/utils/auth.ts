@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from './db'
 import * as schema from '../database/schema'
+import { sendVerificationEmail, sendPasswordResetEmail } from './email'
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID || ''
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET || ''
@@ -32,6 +33,19 @@ export const auth = betterAuth({
     enabled: true,
     autoSignIn: true,
     minPasswordLength: 8,
+    // Soft verification: we email a confirmation link but do NOT block sign-in,
+    // so a bounced/spam-filtered email can never lock a customer out.
+    requireEmailVerification: false,
+    sendResetPassword: async ({ user, url }) => {
+      await sendPasswordResetEmail({ to: user.email, name: user.name || undefined, url })
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendVerificationEmail({ to: user.email, name: user.name || undefined, url })
+    },
   },
   socialProviders: googleEnabled
     ? {

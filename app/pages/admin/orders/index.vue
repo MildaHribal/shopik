@@ -20,6 +20,11 @@ const PAYMENT_LABELS: Record<string, string> = {
   paid: 'Zaplaceno',
   refunded: 'Vráceno',
 }
+const PAYMENTS = [
+  { value: 'unpaid',   label: 'Nezaplaceno' },
+  { value: 'paid',     label: 'Zaplaceno' },
+  { value: 'refunded', label: 'Vráceno' },
+] as const
 const PAYMENT_CLASS: Record<string, string> = {
   unpaid: 'badge-unpaid',
   paid: 'badge-paid',
@@ -56,6 +61,26 @@ async function changeStatus(orderId: number, newStatus: string) {
       toast.success('Aktualizováno', `Status změněn, email zákazníkovi odeslán.`)
     } else {
       toast.success('Aktualizováno', 'Status objednávky změněn.')
+    }
+  } catch (e: any) {
+    toast.error('Chyba', e?.data?.statusMessage || e?.message || 'Nepodařilo se uložit.')
+  } finally {
+    updatingId.value = null
+  }
+}
+
+async function changePayment(orderId: number, newPayment: string) {
+  updatingId.value = orderId
+  try {
+    await $fetch(`/api/admin/orders/${orderId}`, {
+      method: 'PUT',
+      body: { paymentStatus: newPayment },
+    })
+    await refresh()
+    if (newPayment === 'paid') {
+      toast.success('Zaplaceno', 'Platba označena, potvrzovací email zákazníkovi odeslán.')
+    } else {
+      toast.success('Aktualizováno', 'Stav platby změněn.')
     }
   } catch (e: any) {
     toast.error('Chyba', e?.data?.statusMessage || e?.message || 'Nepodařilo se uložit.')
@@ -141,10 +166,20 @@ const selectedOrder = ref<any>(null)
                     <Icon icon="lucide:eye" height="14" />
                   </button>
                   <select
+                    :value="o.paymentStatus"
+                    @change="changePayment(o.id, ($event.target as HTMLSelectElement).value)"
+                    class="status-select payment-select"
+                    :disabled="updatingId === o.id"
+                    title="Stav platby"
+                  >
+                    <option v-for="p in PAYMENTS" :key="p.value" :value="p.value">{{ p.label }}</option>
+                  </select>
+                  <select
                     :value="o.status"
                     @change="changeStatus(o.id, ($event.target as HTMLSelectElement).value)"
                     class="status-select"
                     :disabled="updatingId === o.id"
+                    title="Stav objednávky"
                   >
                     <option v-for="s in STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
                   </select>
@@ -229,6 +264,14 @@ const selectedOrder = ref<any>(null)
   font-style: italic;
   font-family: 'Petrona', Georgia, serif;
   padding: 2rem 0;
+}
+
+/* Payment dropdown sits next to the status dropdown; tint it pink so the two
+   controls read as distinct at a glance. */
+.actions-cell :deep(.payment-select),
+.actions-cell .payment-select {
+  border-color: rgba(255, 92, 138, 0.4);
+  color: #b3305f;
 }
 .spin { animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

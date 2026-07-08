@@ -15,9 +15,9 @@ const currentSlug = computed(() => route.params.slug as string || 'vsechny')
 const config = useRuntimeConfig()
 const siteUrl = config.public.siteUrl || useRequestURL().origin
 useSeoMeta({
-  title: 'Produkty — Shopik',
+  title: 'Produkty — Tynky Bordel',
   description: 'Nejlepší kousky v našem kosmickém obchodě. Vyberte si podle kategorie.',
-  ogTitle: 'Produkty — Shopik',
+  ogTitle: 'Produkty — Tynky Bordel',
   ogType: 'website',
   ogUrl: `${siteUrl}/category/${currentSlug.value}`,
 })
@@ -154,14 +154,11 @@ const currentCategoryName = computed(() => {
           <p class="text-xl">V této kategorii zatím žádné neobjevené poklady. 🪐</p>
         </div>
 
-        <div v-else class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-          <NuxtLink
+        <div v-else class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <div
             v-for="(product, productIndex) in filteredProducts"
             :key="product.id"
-            :to="`/product/${product.slug || product.id}`"
-            :prefetch="false"
             class="block h-full transform hover:-translate-y-2 transition-transform duration-300"
-            :aria-label="product.title"
             v-fly="{
               direction: productIndex % 2 === 0 ? 'up' : 'zoom',
               distance: 26,
@@ -171,7 +168,7 @@ const currentCategoryName = computed(() => {
             }"
           >
             <ProductCard :product="product"/>
-          </NuxtLink>
+          </div>
         </div>
       </div>
     </div>

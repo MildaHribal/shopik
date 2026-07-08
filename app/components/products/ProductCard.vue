@@ -266,6 +266,10 @@ const handleAddToCart = (event: MouseEvent) => {
 @media (min-width: 768px) {
   .card-title { font-size: 1.3rem; }
 }
+/* Phones: hide product name to keep the grid compact (image + price only). */
+@media (max-width: 639px) {
+  .card-title { display: none; }
+}
 
 .card-info-bottom {
   margin-top: auto;

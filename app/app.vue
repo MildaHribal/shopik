@@ -6,7 +6,7 @@ useHead({
         lang: 'cs',
     },
     titleTemplate: (titleChunk) => {
-      return titleChunk ? `${titleChunk} · Shopik` : 'Shopik — Kosmický e-shop';
+      return titleChunk ? `${titleChunk} · Tynky Bordel` : 'Tynky Bordel — ručně dělané originály';
     },
     meta: [
         { name: 'theme-color', content: '#0d0020' },

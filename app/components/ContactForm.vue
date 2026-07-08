@@ -50,7 +50,7 @@ const handleSubmit = async () => {
           </li>
           <li class="contact-item">
             <span class="contact-icon"><Icon icon="mdi:email-outline" height="18" /></span>
-            <a href="mailto:hello@shopik.space" class="contact-item-text contact-link">hello@shopik.space</a>
+            <a href="mailto:info@tynkybordel.shop" class="contact-item-text contact-link">info@tynkybordel.shop</a>
           </li>
         </ul>
       </div>

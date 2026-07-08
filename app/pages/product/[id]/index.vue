@@ -7,19 +7,18 @@ const route = useRoute();
 const router = useRouter();
 
 const goBack = () => {
-  if (process.client) {
-    // If the previous history exists, it will try to go back to restore scroll position
-    const previousPath = window.history.state?.back;
-    if (previousPath && (previousPath === '/' || previousPath === '/#')) {
-      router.back();
-    } else {
-      router.push('/');
-    }
+  // Go back to wherever the user came from (category, catalog, homepage…) so the
+  // browser restores the exact scroll position of that page. Fall back to the
+  // homepage only when there's no in-app history to return to.
+  if (import.meta.client && window.history.state?.back) {
+    router.back();
   } else {
     router.push('/');
   }
 };
-const { data: asyncProduct, pending, error } = useLazyAsyncData(`product-${route.params.id}`, () =>
+// Blocking fetch (not lazy): navigation waits for the product so the page fades
+// straight into real content instead of flashing a loading skeleton first.
+const { data: asyncProduct, pending, error } = useAsyncData(`product-${route.params.id}`, () =>
   Promise.all([
     $fetch<any>(`/api/products/${route.params.id}`)
   ])
@@ -190,17 +189,17 @@ const canonicalUrl = computed(() => {
 })
 
 useSeoMeta({
-  title: () => (product.value ? `${(product.value as any).title || (product.value as any).name} | Shopik` : 'Produkt | Shopik'),
+  title: () => (product.value ? `${(product.value as any).title || (product.value as any).name} | Tynky Bordel` : 'Produkt | Tynky Bordel'),
   description: () => {
     const p: any = product.value
     const desc = p?.shortDescription || p?.description || ''
-    return desc ? String(desc).slice(0, 160) : 'Detail produktu v Shopik.'
+    return desc ? String(desc).slice(0, 160) : 'Detail produktu v Tynky Bordel.'
   },
-  ogTitle: () => (product.value ? `${(product.value as any).title || (product.value as any).name} | Shopik` : 'Produkt | Shopik'),
+  ogTitle: () => (product.value ? `${(product.value as any).title || (product.value as any).name} | Tynky Bordel` : 'Produkt | Tynky Bordel'),
   ogDescription: () => {
     const p: any = product.value
     const desc = p?.shortDescription || p?.description || ''
-    return desc ? String(desc).slice(0, 200) : 'Detail produktu v Shopik.'
+    return desc ? String(desc).slice(0, 200) : 'Detail produktu v Tynky Bordel.'
   },
   ogType: 'website',
   ogUrl: () => canonicalUrl.value,
@@ -221,7 +220,7 @@ const jsonLd = computed(() => {
     sku: p.id,
     brand: {
       '@type': 'Brand',
-      name: p.brand || 'Shopik'
+      name: p.brand || 'Tynky Bordel'
     },
     offers: {
       '@type': 'Offer',
@@ -232,7 +231,7 @@ const jsonLd = computed(() => {
       url: canonicalUrl.value,
       seller: {
         '@type': 'Organization',
-        name: 'Shopik'
+        name: 'Tynky Bordel'
       }
     }
   };
@@ -342,7 +341,7 @@ const submitReview = async () => {
     <div v-if="pending" class="relative">
       <div class="inline-flex items-center gap-2 text-white/40 mb-4 md:mb-8">
         <Icon icon="ep:arrow-left-bold" height="16" />
-        <span class="text-sm">Zpět na úvod</span>
+        <span class="text-sm">Zpět</span>
       </div>
 
       <div class="glass-card-strong overflow-hidden animate-pulse">
@@ -400,7 +399,7 @@ const submitReview = async () => {
         class="relative z-[100] inline-flex items-center gap-2 text-white/50 hover:text-white transition-all mb-6 md:mb-10 group cursor-pointer px-4 py-2 -ml-4"
       >
         <Icon icon="ep:arrow-left-bold" height="16" class="transition-transform group-hover:-translate-x-1" />
-        <span class="text-xs md:text-sm font-semibold tracking-wide uppercase">Zpět na úvod</span>
+        <span class="text-xs md:text-sm font-semibold tracking-wide uppercase">Zpět</span>
       </NuxtLink>
 
       <div class="glass-card-strong overflow-hidden" v-fly="{ direction: 'up', distance: 42 }">
@@ -671,7 +670,7 @@ const submitReview = async () => {
       <p class="text-white/40 mb-6 md:mb-8 text-sm md:text-base">Tento produkt se ztratil ve vesmíru...</p>
       <NuxtLink to="/" class="btn-cosmic-outline inline-flex items-center gap-2 text-sm md:text-base">
         <Icon icon="ep:arrow-left-bold" height="16" />
-        Zpět na úvod
+        Zpět
       </NuxtLink>
     </div>
   </div>

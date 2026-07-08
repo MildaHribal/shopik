@@ -9,7 +9,7 @@ const toast = useCosmicToast()
 
 useSeoMeta({
   title: 'Přihlášení',
-  description: 'Přihlaste se ke svému účtu v Shopik.',
+  description: 'Přihlaste se ke svému účtu v Tynky Bordel.',
   robots: 'noindex,nofollow',
 })
 
@@ -95,6 +95,12 @@ const handleGoogleLogin = async () => {
               class="input-cosmic"
               placeholder="••••••••"
             >
+          </div>
+
+          <div class="-mt-2 text-right">
+            <NuxtLink to="/user/forgot-password" class="text-sm text-white/70 hover:text-primary-200 transition-colors">
+              Zapomenuté heslo?
+            </NuxtLink>
           </div>
 
           <div v-if="error" class="glass-card p-3 border-red-500/40 text-center">

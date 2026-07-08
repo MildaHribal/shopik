@@ -39,8 +39,16 @@
   background: #1a0f28;
   aspect-ratio: 24 / 9;
 }
-@media (max-width: 640px) {
-  .hero-wrap { aspect-ratio: 16 / 10; }
+
+/* Phones: full-bleed hero, edge to edge, no rounded corners. */
+@media (max-width: 767px) {
+  .hero { padding-top: 0; padding-inline: 0; }
+  .hero-wrap {
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    aspect-ratio: 16 / 10;
+  }
 }
 
 .hero-img {

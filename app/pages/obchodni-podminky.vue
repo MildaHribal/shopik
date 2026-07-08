@@ -2,8 +2,8 @@
 import { Icon } from "@iconify/vue";
 
 useSeoMeta({
-  title: 'Obchodní podmínky | Shopik',
-  description: 'Všeobecné obchodní podmínky internetového obchodu Shopik.',
+  title: 'Obchodní podmínky | Tynky Bordel',
+  description: 'Všeobecné obchodní podmínky internetového obchodu Tynky Bordel.',
 })
 </script>
 
@@ -21,7 +21,7 @@ useSeoMeta({
           1. Úvodní ustanovení
         </h2>
         <p>
-          Tyto obchodní podmínky platí pro nákup v internetovém obchodě <strong>shop.hribal.site</strong>, který provozuje 
+          Tyto obchodní podmínky platí pro nákup v internetovém obchodě <strong>tynkybordel.shop</strong>, který provozuje
           <strong>Kristýna Egnerová</strong>, se sídlem Kosmická 42, Plzeň, PSČ 301 00, IČO: [Doplnit po přidělení] 
           (dále jen „Prodávající“). Prodávající není plátcem DPH.
         </p>
@@ -46,8 +46,8 @@ useSeoMeta({
         </h2>
         <ul class="list-disc list-inside space-y-2 ml-4">
           <li>Všechny ceny na e-shopu jsou konečné.</li>
-          <li>Platba probíhá online prostřednictvím platební brány <strong>Stripe</strong> (platební karty, Google Pay).</li>
-          <li>Zboží je odesíláno až po připsání platby na účet prodávajícího.</li>
+          <li>Platit lze <strong>dobírkou</strong> (platba při převzetí) nebo <strong>převodem na bankovní účet</strong> předem (včetně QR platby).</li>
+          <li>U platby převodem je zboží odesíláno až po připsání částky na účet prodávajícího; u dobírky odesíláme rovnou a platíte při převzetí.</li>
         </ul>
       </section>
 
@@ -57,8 +57,8 @@ useSeoMeta({
           4. Doprava a doručení
         </h2>
         <ul class="list-disc list-inside space-y-2 ml-4">
-          <li>Zboží odesíláme obvykle do 2 pracovních dnů, nejpozději však do 7 dnů od zaplacení.</li>
-          <li>Způsoby dopravy: <strong>Zásilkovna, Česká pošta, Balíkovna</strong>.</li>
+          <li>Zboží odesíláme obvykle do 2 pracovních dnů, nejpozději však do 7 dnů (u platby převodem od připsání platby).</li>
+          <li>Způsoby dopravy: <strong>Zásilkovna (Z-BOX)</strong> a <strong>Balíkovna</strong>.</li>
           <li>Osobní odběr: Možný v Plzni po předchozí domluvě e-mailem.</li>
         </ul>
       </section>
@@ -79,7 +79,7 @@ useSeoMeta({
       <div class="cosmic-divider opacity-10"></div>
       
       <p class="text-xs text-white/30 text-center">
-        Tyto podmínky jsou platné pro všechny transakce v rámci e-shopu Shopik.
+        Tyto podmínky jsou platné pro všechny transakce v rámci e-shopu Tynky Bordel.
       </p>
     </div>
 

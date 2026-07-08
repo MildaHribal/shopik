@@ -57,6 +57,23 @@ export default defineEventHandler(async (event) => {
           updatedAt: new Date(),
         })
         .where(eq(orders.id, orderId))
+
+      if (paid) {
+        const ph = usePosthogServer()
+        if (ph) {
+          ph.capture({
+            distinctId: session.customer_details?.email || `order_${orderId}`,
+            event: 'order_completed',
+            properties: {
+              orderId,
+              amount: session.amount_total != null ? session.amount_total / 100 : undefined,
+              currency: session.currency,
+              email: session.customer_details?.email,
+            },
+          })
+          await ph.shutdown()
+        }
+      }
       break
     }
 

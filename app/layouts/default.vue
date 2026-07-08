@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Navbar from "~/components/Navbar.vue";
+import CartDrawer from "~/components/CartDrawer.vue";
 import { Icon } from "@iconify/vue";
 </script>
 
@@ -8,6 +9,7 @@ import { Icon } from "@iconify/vue";
     <!-- Main content -->
     <div class="relative z-10">
       <Navbar />
+      <CartDrawer />
       <main>
         <slot />
       </main>
@@ -51,9 +53,13 @@ import { Icon } from "@iconify/vue";
             <div class="footer-col">
               <h4 class="footer-heading">Sleduj</h4>
               <div class="footer-socials">
-                <a href="https://www.instagram.com/_kristyna_aaa/" target="_blank" rel="noopener noreferrer" class="footer-social" aria-label="Instagram">
+                <a href="https://www.instagram.com/_kristyna_aaa/" target="_blank" rel="noopener noreferrer" class="footer-social" aria-label="Instagram Kristýna">
                   <Icon icon="mdi:instagram" height="18" />
                   <span>Instagram</span>
+                </a>
+                <a href="https://www.instagram.com/tynky_bordel/" target="_blank" rel="noopener noreferrer" class="footer-social" aria-label="Instagram Tynky Bordel">
+                  <Icon icon="mdi:instagram" height="18" />
+                  <span>Instagram (Tynky Bordel)</span>
                 </a>
                 <a href="https://www.tiktok.com/@_kristyna_aaa" target="_blank" rel="noopener noreferrer" class="footer-social" aria-label="TikTok">
                   <Icon icon="ic:baseline-tiktok" height="18" />

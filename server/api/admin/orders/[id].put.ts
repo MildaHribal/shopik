@@ -5,7 +5,7 @@ import { sendOrderStatusEmail } from '../../../utils/email';
 import { requireAdmin } from '../../../utils/session';
 
 const VALID_STATUSES = ['pending', 'shipped', 'delivered'] as const;
-type OrderStatus = typeof VALID_STATUSES[number];
+const VALID_PAYMENTS = ['unpaid', 'paid', 'refunded'] as const;
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
@@ -16,26 +16,32 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'ID objednávky je povinné' });
   }
 
-  if (!VALID_STATUSES.includes(body.status)) {
+  // Status and payment can be updated independently — an order can be marked
+  // "zaplaceno" without touching its fulfillment status, and vice versa.
+  const hasStatus = body.status !== undefined && body.status !== null;
+  const hasPayment = body.paymentStatus !== undefined && body.paymentStatus !== null;
+
+  if (!hasStatus && !hasPayment) {
+    throw createError({ statusCode: 400, statusMessage: 'Není co aktualizovat' });
+  }
+  if (hasStatus && !VALID_STATUSES.includes(body.status)) {
     throw createError({ statusCode: 400, statusMessage: 'Neplatný stav objednávky' });
   }
+  if (hasPayment && !VALID_PAYMENTS.includes(body.paymentStatus)) {
+    throw createError({ statusCode: 400, statusMessage: 'Neplatný stav platby' });
+  }
 
-  const newStatus = body.status as OrderStatus;
-
-  // Read current status so we only email on real transitions.
+  // Read current values so we only email on real transitions.
   const existing = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
   if (existing.length === 0) {
     throw createError({ statusCode: 404, statusMessage: 'Objednávka nenalezena' });
   }
   const prevStatus = existing[0].status as string;
+  const prevPaymentStatus = existing[0].paymentStatus as string;
 
-  const updateData: Record<string, any> = {
-    status: newStatus,
-    updatedAt: new Date(),
-  };
-  if (body.paymentStatus) {
-    updateData.paymentStatus = body.paymentStatus;
-  }
+  const updateData: Record<string, any> = { updatedAt: new Date() };
+  if (hasStatus) updateData.status = body.status;
+  if (hasPayment) updateData.paymentStatus = body.paymentStatus;
 
   const result = await db
     .update(orders)
@@ -44,15 +50,13 @@ export default defineEventHandler(async (event) => {
     .returning();
 
   const updated = result[0];
-
-  const prevPaymentStatus = existing[0].paymentStatus as string;
-  const paymentStatusChanged =
-    body.paymentStatus && body.paymentStatus !== prevPaymentStatus;
+  const newStatus = updated.status as string;
 
   // Load items once if we might send any email.
   const willEmailStatus =
-    (newStatus === 'shipped' || newStatus === 'delivered') && prevStatus !== newStatus;
-  const willEmailPaid = paymentStatusChanged && body.paymentStatus === 'paid';
+    hasStatus && (newStatus === 'shipped' || newStatus === 'delivered') && prevStatus !== newStatus;
+  const willEmailPaid =
+    hasPayment && body.paymentStatus === 'paid' && prevPaymentStatus !== 'paid';
 
   if ((willEmailStatus || willEmailPaid) && updated.customerEmail) {
     const items = await db
@@ -75,7 +79,7 @@ export default defineEventHandler(async (event) => {
       );
     }
     if (willEmailStatus) {
-      sendOrderStatusEmail(payload, newStatus).catch((err) =>
+      sendOrderStatusEmail(payload, newStatus as 'shipped' | 'delivered').catch((err) =>
         console.error('[orders] status email failed:', err),
       );
     }

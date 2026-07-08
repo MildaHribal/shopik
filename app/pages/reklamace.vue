@@ -2,8 +2,8 @@
 import { Icon } from "@iconify/vue";
 
 useSeoMeta({
-  title: 'Doprava a reklamace | Shopik',
-  description: 'Informace o přepravě a Postup pro vrácení zboží a reklamace v e-shopu Shopik.',
+  title: 'Doprava a reklamace | Tynky Bordel',
+  description: 'Informace o přepravě a postup pro vrácení zboží a reklamace v e-shopu Tynky Bordel.',
 })
 
 const shippingMethods = [
@@ -43,23 +43,26 @@ const shippingMethods = [
       <!-- Payment Info -->
       <div class="glass-card-strong p-6 md:p-8 flex flex-col items-center text-center">
         <div class="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mb-6 border border-emerald-500/30">
-          <Icon icon="mdi:credit-card-outline" height="32" class="text-emerald-400" />
+          <Icon icon="mdi:cash-multiple" height="32" class="text-emerald-400" />
         </div>
         <h2 class="text-xl font-bold text-white mb-4">Platba</h2>
-        <p class="text-sm mb-6">Bezpečná online platba přes bránu Stripe.</p>
-        <div class="space-y-4 w-full">
-          <div class="p-4 bg-white/5 rounded-lg border border-white/5 flex flex-col items-center gap-3">
-            <div class="flex gap-4 items-center">
-              <Icon icon="logos:stripe" height="20" />
-              <div class="flex gap-1">
-                <Icon icon="logos:visa" height="12" />
-                <Icon icon="logos:mastercard" height="12" />
-                <Icon icon="logos:google-pay" height="12" />
-              </div>
+        <p class="text-sm mb-6">Žádné karty online — zaplatíš jednoduše dobírkou nebo předem převodem na účet.</p>
+        <ul class="w-full space-y-3">
+          <li class="flex justify-between items-center text-sm p-3 bg-white/5 rounded-lg border border-white/5">
+            <div class="flex items-center gap-2">
+              <Icon icon="mdi:cash" class="text-emerald-300" />
+              <span>Dobírka</span>
             </div>
-            <p class="text-xs text-white/40 italic">Zpracováváme platby kartou, Apple Pay i Google Pay pro váš maximální komfort.</p>
-          </div>
-        </div>
+            <span class="text-white/50 text-xs">platba při převzetí</span>
+          </li>
+          <li class="flex justify-between items-center text-sm p-3 bg-white/5 rounded-lg border border-white/5">
+            <div class="flex items-center gap-2">
+              <Icon icon="mdi:bank-transfer" class="text-emerald-300" />
+              <span>Převod na účet</span>
+            </div>
+            <span class="text-white/50 text-xs">s QR platbou předem</span>
+          </li>
+        </ul>
       </div>
     </div>
 
@@ -73,12 +76,12 @@ const shippingMethods = [
           <div class="p-5 bg-white/5 border-l-4 border-primary-500 rounded-r-xl">
             <h3 class="font-bold text-white mb-2">Postup pro vrácení:</h3>
             <ol class="list-decimal list-inside space-y-2 ml-2">
-              <li>Kontaktujte nás e-mailem na <strong class="text-primary-300">hello@shopik.space</strong></li>
+              <li>Kontaktujte nás e-mailem na <strong class="text-primary-300">info@tynkybordel.shop</strong></li>
               <li>Zboží pečlivě zabalte do původního obalu.</li>
               <li>Odešlete na adresu: Kristýna Egnerová, Kosmická 42, 110 00 Praha.</li>
             </ol>
           </div>
-          <p class="text-sm text-white/40 italic">Peníze vracíme stejným způsobem, jakým byla platba přijata (přes Stripe), a to do 14 dnů od převzetí vráceného zboží.</p>
+          <p class="text-sm text-white/40 italic">Peníze vracíme převodem na tvůj bankovní účet, a to do 14 dnů od převzetí vráceného zboží.</p>
         </div>
       </section>
 

@@ -8,7 +8,13 @@ export interface CartItem extends Product {
 
 export const useCartStore = defineStore('cart', () => {
     const items = ref<CartItem[]>([])
-    
+
+    // Desktop cart drawer visibility (opened from the navbar cart icon).
+    const isDrawerOpen = ref(false)
+    function openDrawer() { isDrawerOpen.value = true }
+    function closeDrawer() { isDrawerOpen.value = false }
+    function toggleDrawer() { isDrawerOpen.value = !isDrawerOpen.value }
+
     const totalPrice = computed(() => {
         return items.value.reduce((sum, item) => sum + (item.price * item.quantity), 0)
     })
@@ -52,5 +58,5 @@ export const useCartStore = defineStore('cart', () => {
         items.value = []
     }
     
-    return { items, totalPrice, itemCount, addToCart, updateQuantity, removeFromCart, clearCart }
+    return { items, totalPrice, itemCount, isDrawerOpen, openDrawer, closeDrawer, toggleDrawer, addToCart, updateQuantity, removeFromCart, clearCart }
 })

@@ -719,28 +719,22 @@ html.is-scrolling-smooth {
 /* ══════════════════════════════════════════════════════════════
    PAGE & LAYOUT TRANSITIONS (Vue Fallback)
    ══════════════════════════════════════════════════════════════ */
+/* Simple, fast, reliable cross-page fade (no transforms → no scroll jump). */
 .page-enter-active,
-.page-leave-active,
-.layout-enter-active,
-.layout-leave-active {
-  transition:
-    opacity 0.38s var(--ease-fluid),
-    
-    transform 0.44s var(--ease-fluid);
+.page-leave-active {
+  transition: opacity 0.16s ease;
 }
 
 .page-enter-from,
-.layout-enter-from {
+.page-leave-to {
   opacity: 0;
-  
-  transform: translateY(18px) scale(0.985);
 }
 
-.page-leave-to,
-.layout-leave-to {
-  opacity: 0;
-  
-  transform: translateY(-12px) scale(1.01);
+@media (prefers-reduced-motion: reduce) {
+  .page-enter-active,
+  .page-leave-active {
+    transition: none;
+  }
 }
 
 .slide-left-enter-active,

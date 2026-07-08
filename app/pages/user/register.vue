@@ -9,7 +9,7 @@ const toast = useCosmicToast()
 
 useSeoMeta({
   title: 'Registrace',
-  description: 'Vytvořte si účet v Shopik.',
+  description: 'Vytvořte si účet v Tynky Bordel.',
   robots: 'noindex,nofollow',
 })
 
@@ -40,7 +40,7 @@ const handleRegister = async () => {
     if (result.error) {
       error.value = result.error
     } else {
-      toast.success('Registrace', 'Vítejte v naší kosmické komunitě! ✨')
+      toast.success('Registrace', 'Vítejte v naší kosmické komunitě! Na email jsme poslali ověřovací odkaz ✨')
       await router.push('/')
     }
   } catch (e: any) {

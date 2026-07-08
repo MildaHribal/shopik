@@ -16,18 +16,21 @@ export default defineNuxtConfig({
     app: {
         head: {
             htmlAttrs: { lang: 'cs' },
-            titleTemplate: '%s · Shopik',
+            titleTemplate: '%s · Tynky Bordel',
             meta: [
                 { charset: 'utf-8' },
                 { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-                { name: 'theme-color', content: '#0d0020' },
-                { name: 'description', content: 'Shopik — kosmické zboží, gadgety a doplňky.' },
+                { name: 'theme-color', content: '#faf5ef' },
+                { name: 'description', content: 'Tynky Bordel — ručně dělané originály: obrazy, sochy, klíčenky. Každý kousek je unikát.' },
                 { name: 'robots', content: 'index,follow,max-image-preview:large' },
             ],
         },
+        // Simple, reliable fade between pages. Native View Transitions were
+        // disabled: they snapshotted loading skeletons, causing a "blank page
+        // then content pops in" flash on product navigation.
         pageTransition: { name: 'page', mode: 'out-in' },
-        layoutTransition: { name: 'layout', mode: 'out-in' },
-        viewTransition: true,
+        layoutTransition: false,
+        viewTransition: false,
     },
 
     experimental: {
@@ -37,7 +40,7 @@ export default defineNuxtConfig({
             }
         },
         restoreState: true,
-        viewTransition: true,
+        viewTransition: false,
     },
 
     router: {
@@ -54,6 +57,8 @@ export default defineNuxtConfig({
             siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
             stripePublishableKey: process.env.NUXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.STRIPE_PUBLISHABLE_KEY || '',
             packetaApiKey: process.env.NUXT_PUBLIC_PACKETA_API_KEY || '',
+            posthogKey: process.env.NUXT_PUBLIC_POSTHOG_KEY || '',
+            posthogHost: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
         }
     },
 

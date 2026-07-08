@@ -156,7 +156,7 @@ const carouselBest = ref<InstanceType<typeof ProductCarousel> | null>(null);
               vyrobený rukama.
             </p>
             <p class="about-note">
-              Platba zatím pouze na dobírku — shopik ještě není legal, takže pssst.
+              Platba zatím pouze na dobírku — krámek ještě není legal, takže pssst.
             </p>
             <div class="about-actions">
               <NuxtLink to="#kolekce" class="btn-primary">
@@ -218,7 +218,7 @@ const carouselBest = ref<InstanceType<typeof ProductCarousel> | null>(null);
         </div>
 
         <div class="max-w-6xl mx-auto">
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5 md:gap-7">
+          <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 md:gap-7">
             <ProductCard
               v-for="(prod, idx) in fullCollection"
               :key="prod.id"
@@ -428,6 +428,10 @@ const carouselBest = ref<InstanceType<typeof ProductCarousel> | null>(null);
   position: relative;
   display: flex;
   justify-content: center;
+}
+/* Phones: hide the artwork, keep just the copy. */
+@media (max-width: 767px) {
+  .about-visual { display: none; }
 }
 .about-img {
   width: 100%;
