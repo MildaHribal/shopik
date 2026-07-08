@@ -43,29 +43,13 @@ const fullCollection = computed(() => {
 
 const jsonLd = computed(() => {
   if (!allProducts.value) return [];
-  const websiteSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Tynky Bordel',
-    url: siteUrl,
-    description: 'Autorský eshop s ručně dělanými originály — obrazy, sochy, klíčenky.',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: `${siteUrl}/?search={search_term_string}`,
-      'query-input': 'required name=search_term_string'
-    }
-  };
-  const orgSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Tynky Bordel',
-    url: siteUrl,
-    logo: `${siteUrl}/hero/logo-mushroom.png`,
-    description: 'Malý autorský eshop — ruční tvorba, originály'
-  };
+  // Organization + WebSite are injected globally in app.vue. Here we only add the
+  // catalog ItemList — the products actually shown on the homepage.
   const itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
+    name: 'Katalog — Tynky Bordel',
+    numberOfItems: allProducts.value.length,
     itemListElement: allProducts.value.map((p, index) => ({
       '@type': 'ListItem',
       position: index + 1,
@@ -83,7 +67,7 @@ const jsonLd = computed(() => {
       }
     }))
   };
-  return [websiteSchema, orgSchema, itemListSchema];
+  return [itemListSchema];
 });
 
 useHead(() => ({

@@ -1,8 +1,35 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { customSession } from 'better-auth/plugins'
 import { db } from './db'
 import * as schema from '../database/schema'
 import { sendVerificationEmail, sendPasswordResetEmail } from './email'
+
+// Admin allowlist — emails here are treated as admins on every session,
+// regardless of their stored DB role. This grants admin WITHOUT any database
+// access, and is applied live so it also covers accounts created after deploy.
+//
+// Two sources, merged:
+//   1. BUILTIN_ADMIN_EMAILS — committed to code, so a plain `git push` deploy
+//      grants admin even when you can't edit env vars on the VPS.
+//   2. ADMIN_EMAILS env var (comma-separated) — for adding admins without a code
+//      change, when you do have env access.
+//
+// NOTE: listing an email here is NOT a security hole — admin access still
+// requires logging into that account (password / Google). It only elevates the
+// role of someone who has already authenticated as that email.
+const BUILTIN_ADMIN_EMAILS = ['kikizaj12@gmail.com']
+
+const adminEmails = Array.from(
+  new Set(
+    [
+      ...BUILTIN_ADMIN_EMAILS,
+      ...(process.env.ADMIN_EMAILS || '').split(','),
+    ]
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean),
+  ),
+)
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID || ''
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET || ''
@@ -64,6 +91,16 @@ export const auth = betterAuth({
       role: { type: 'string', required: false, defaultValue: 'user', input: false },
     },
   },
+  plugins: [
+    // Promote allowlisted emails to admin on the returned session. Runs for both
+    // client getSession() and server auth.api.getSession(), so the /admin route
+    // gate and every requireAdmin() check see the elevated role consistently.
+    customSession(async ({ user, session }) => {
+      const email = (user.email || '').toLowerCase()
+      const role = adminEmails.includes(email) ? 'admin' : ((user as any).role || 'user')
+      return { user: { ...user, role }, session }
+    }),
+  ],
   session: {
     expiresIn: 60 * 60 * 24 * 30, // 30 days
     updateAge: 60 * 60 * 24,       // refresh every day

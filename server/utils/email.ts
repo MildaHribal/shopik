@@ -42,16 +42,44 @@ async function getTransport() {
   // Dynamic import so the lib only loads when actually needed.
   const nodemailer = (await import('nodemailer')).default;
 
+  const port = Number(process.env.SMTP_PORT || 587);
+  // Port 465 is implicit TLS and MUST be `secure: true`. Auto-derive it from the
+  // port so a missing/incorrect SMTP_SECURE doesn't silently break sending
+  // (the #1 Seznam footgun: 465 with secure=false connects in plaintext and fails).
+  const secure = process.env.SMTP_SECURE
+    ? process.env.SMTP_SECURE === 'true'
+    : port === 465;
+
   cachedTransport = nodemailer.createTransport({
     host,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === 'true',
+    port,
+    secure,
     auth: process.env.SMTP_USER
       ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
       : undefined,
+    // Give slow/handshaking SMTP servers room, but don't hang a request forever.
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   });
 
   return cachedTransport;
+}
+
+/**
+ * Verify the SMTP connection + credentials without sending mail.
+ * Returns { ok, configured, error } so a diagnostic endpoint/script can report
+ * exactly why production email is failing (bad password, blocked port, etc.).
+ */
+export async function verifyMail(): Promise<{ ok: boolean; configured: boolean; error?: string }> {
+  const transport = await getTransport();
+  if (!transport) return { ok: false, configured: false };
+  try {
+    await transport.verify();
+    return { ok: true, configured: true };
+  } catch (err: any) {
+    return { ok: false, configured: true, error: err?.message || String(err) };
+  }
 }
 
 export async function sendMail({ to, subject, html, text, attachments }: SendArgs): Promise<boolean> {

@@ -207,17 +207,26 @@ useSeoMeta({
   twitterCard: 'summary_large_image',
 })
 const jsonLd = computed(() => {
-  if (!product.value) return null;
+  if (!product.value) return [];
   const p: any = product.value;
   const reviews = productReviews.value || [];
-  
+  const img = selectedImage.value?.startsWith('http') ? selectedImage.value : `${siteUrl}${selectedImage.value || ''}`;
+
+  // Keep prices "valid" a year out so Google doesn't flag a stale/expired offer.
+  const validUntil = new Date();
+  validUntil.setFullYear(validUntil.getFullYear() + 1);
+  const priceValidUntil = validUntil.toISOString().split('T')[0];
+
   const schema: any = {
     '@context': 'https://schema.org',
     '@type': 'Product',
+    '@id': `${canonicalUrl.value}#product`,
     name: p.title || p.name,
     description: p.shortDescription || p.description,
-    image: selectedImage.value?.startsWith('http') ? selectedImage.value : `${siteUrl}${selectedImage.value || ''}`,
-    sku: p.id,
+    image: img,
+    sku: String(p.id),
+    mpn: String(p.id),
+    category: p.category || undefined,
     brand: {
       '@type': 'Brand',
       name: p.brand || 'Tynky Bordel'
@@ -226,12 +235,29 @@ const jsonLd = computed(() => {
       '@type': 'Offer',
       price: p.price,
       priceCurrency: 'CZK',
+      priceValidUntil,
       itemCondition: 'https://schema.org/NewCondition',
       availability: p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       url: canonicalUrl.value,
-      seller: {
-        '@type': 'Organization',
-        name: 'Tynky Bordel'
+      seller: { '@id': `${siteUrl}/#organization` },
+      // Return policy — 14 days per Czech distance-selling law.
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        applicableCountry: 'CZ',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+        merchantReturnDays: 14,
+        returnMethod: 'https://schema.org/ReturnByMail',
+        returnFees: 'https://schema.org/FreeReturn'
+      },
+      // Shipping — dispatched from Czechia via Zásilkovna/Balíkovna.
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'CZ' },
+        deliveryTime: {
+          '@type': 'ShippingDeliveryTime',
+          handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' },
+          transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' }
+        }
       }
     }
   };
@@ -241,13 +267,17 @@ const jsonLd = computed(() => {
     schema.aggregateRating = {
       '@type': 'AggregateRating',
       ratingValue: avgRating.toFixed(1),
-      reviewCount: reviews.length
+      reviewCount: reviews.length,
+      bestRating: 5,
+      worstRating: 1
     };
     schema.review = reviews.map((r: any) => ({
       '@type': 'Review',
       reviewRating: {
         '@type': 'Rating',
-        ratingValue: r.rating
+        ratingValue: r.rating,
+        bestRating: 5,
+        worstRating: 1
       },
       author: {
         '@type': 'Person',
@@ -260,21 +290,33 @@ const jsonLd = computed(() => {
     schema.aggregateRating = {
       '@type': 'AggregateRating',
       ratingValue: p.rating,
-      reviewCount: p.reviewsCount || 1
+      reviewCount: p.reviewsCount || 1,
+      bestRating: 5,
+      worstRating: 1
     };
   }
 
-  return schema;
+  // Breadcrumb: Domů › (kategorie) › produkt
+  const crumbs: any[] = [{ '@type': 'ListItem', position: 1, name: 'Domů', item: `${siteUrl}/` }];
+  if (p.category) {
+    crumbs.push({ '@type': 'ListItem', position: 2, name: p.category, item: `${siteUrl}/category/${encodeURIComponent(p.category)}` });
+  }
+  crumbs.push({ '@type': 'ListItem', position: crumbs.length + 1, name: p.title || p.name, item: canonicalUrl.value });
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: crumbs
+  };
+
+  return [schema, breadcrumbSchema];
 });
 
 useHead(() => ({
   link: [{ rel: 'canonical', href: canonicalUrl.value }],
-  script: jsonLd.value ? [
-    {
-      type: 'application/ld+json',
-      innerHTML: JSON.stringify(jsonLd.value)
-    }
-  ] : []
+  script: jsonLd.value.map((s) => ({
+    type: 'application/ld+json',
+    innerHTML: JSON.stringify(s)
+  }))
 }))
 
 const addToCart = (event?: MouseEvent) => {

@@ -94,6 +94,52 @@ const currentCategoryName = computed(() => {
   const found = categoriesData.value?.find(c => c.slug === currentSlug.value)
   return found ? found.name : 'Kategorie'
 })
+
+// ── Structured data: breadcrumb + product ItemList for this category ─────────
+const categoryUrl = computed(() => `${siteUrl}/category/${currentSlug.value}`)
+const jsonLd = computed(() => {
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Domů', item: `${siteUrl}/` },
+      { '@type': 'ListItem', position: 2, name: currentCategoryName.value, item: categoryUrl.value },
+    ],
+  }
+  const collection = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `${currentCategoryName.value} — Tynky Bordel`,
+    url: categoryUrl.value,
+    isPartOf: { '@id': `${siteUrl}/#website` },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: filteredProducts.value.length,
+      itemListElement: filteredProducts.value.map((p: any, index: number) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Product',
+          url: `${siteUrl}/product/${p.slug || p.id}`,
+          name: p.title || p.name,
+          image: p.image?.startsWith('http') ? p.image : `${siteUrl}${p.image?.startsWith('/') ? '' : '/'}${p.image || ''}`,
+          offers: {
+            '@type': 'Offer',
+            price: p.price,
+            priceCurrency: 'CZK',
+            availability: (p.stock ?? 0) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+          },
+        },
+      })),
+    },
+  }
+  return [breadcrumb, collection]
+})
+
+useHead(() => ({
+  link: [{ rel: 'canonical', href: categoryUrl.value }],
+  script: jsonLd.value.map((s) => ({ type: 'application/ld+json', innerHTML: JSON.stringify(s) })),
+}))
 </script>
 
 <template>
