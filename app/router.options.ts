@@ -1,37 +1,38 @@
 import type { RouterConfig } from '@nuxt/schema'
+import { scrollPositions } from './utils/scrollStore'
 
 // Restoring scroll on back-navigation is timing-sensitive: the out-in page fade
-// delays the incoming page's mount, and list pages load data lazily, so the
-// document isn't tall enough immediately. Instead of a fixed delay we poll a few
-// frames until the page is tall enough for the saved position, then restore.
+// delays the incoming page's mount and list pages load lazily, so the document
+// isn't tall enough immediately. We use our own recorded scroll offset (see
+// plugins/scroll-memory.client.ts) and poll a few frames until the page is tall
+// enough before restoring — this lands the user exactly where they left off.
 export default <RouterConfig> {
   scrollBehavior(to, from, savedPosition) {
     if (to.hash) {
       return { el: to.hash, top: 80, behavior: 'smooth' }
     }
 
-    const target = savedPosition ?? { top: 0 }
-    if (import.meta.client) console.log('[scrollDbg] saved=', JSON.stringify(savedPosition), 'to=', to.fullPath)
+    const remembered = import.meta.client ? scrollPositions.get(to.fullPath) : undefined
+    const targetTop = remembered ?? savedPosition?.top ?? 0
 
-    // Fresh forward navigations just go to the top — no need to wait.
-    if (!savedPosition) {
-      return target
+    // Fresh forward navigations (nothing remembered) just go to the top.
+    if (!targetTop) {
+      return { top: 0 }
     }
 
     return new Promise((resolve) => {
       let frames = 0
-      const maxFrames = 45 // ~750ms cap
+      const maxFrames = 60 // ~1s cap
       const attempt = () => {
         frames++
-        const needed = (target.top || 0) + (window.innerHeight || 0)
+        const needed = targetTop + (window.innerHeight || 0)
         const tallEnough = document.documentElement.scrollHeight >= needed
         if (tallEnough || frames >= maxFrames) {
-          resolve(target)
+          resolve({ top: targetTop, left: 0 })
         } else {
           requestAnimationFrame(attempt)
         }
       }
-      // Let the incoming page begin mounting after the fade, then poll.
       setTimeout(() => requestAnimationFrame(attempt), 60)
     })
   },
