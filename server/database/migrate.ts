@@ -34,8 +34,11 @@ async function main() {
     .filter((f) => f.endsWith('.sql'))
     .sort();
 
-  const { rows: appliedRows } = (await sql`SELECT name FROM _migrations`) as any;
-  const applied = new Set((appliedRows ?? []).map((r: any) => r.name));
+  // postgres-js returns the rows array directly (no `.rows` wrapper) — reading
+  // `.rows` here left `applied` empty, so re-runs re-applied every file (and blew
+  // up on the non-idempotent 0000). Read the array directly.
+  const appliedRows = (await sql`SELECT name FROM _migrations`) as unknown as Array<{ name: string }>;
+  const applied = new Set((appliedRows ?? []).map((r) => r.name));
 
   let count = 0;
   for (const file of files) {

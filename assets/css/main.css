@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..125,400..800&family=Manrope:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Gloock&family=Maname&family=Petrona:ital,wght@0,300..700;1,300..700&family=Berkshire+Swash&family=Caprasimo&display=swap');
+/* Fonts are self-hosted & optimized by @nuxt/fonts (see nuxt.config `fonts`).
+   The old render-blocking Google Fonts @import (9 families, full variable ranges,
+   ~700 KiB on the critical path) was removed — it was the #1 perf killer. */
 
 @theme {
   /* ── Cosmic Purple (Primary) ──────────────────────────────── */

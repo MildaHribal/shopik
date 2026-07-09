@@ -207,13 +207,13 @@ const carouselBest = ref<InstanceType<typeof ProductCarousel> | null>(null);
           </div>
         </div>
 
-        <div class="max-w-[1500px] mx-auto">
+        <div class="max-w-[1340px] mx-auto">
           <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 md:gap-6">
             <ProductCard
               v-for="(prod, idx) in fullCollection"
               :key="prod.id"
               :product="prod"
-              :is-priority="idx < 4"
+              :is-priority="false"
             />
           </div>
         </div>

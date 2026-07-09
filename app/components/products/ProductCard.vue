@@ -128,7 +128,7 @@ const toggleFavorite = async () => {
 <template>
   <NuxtLink :to="productUrl" class="product-card group relative flex w-full flex-col h-full" :aria-label="product.title">
     <!-- Image frame -->
-    <div ref="imageWrapRef" class="card-image relative w-full aspect-[4/3] overflow-hidden rounded-xl">
+    <div ref="imageWrapRef" class="card-image relative w-full aspect-[5/4] overflow-hidden rounded-xl">
       <NuxtImg
         v-if="imageSrc && !isImageError"
         :src="imageSrc"

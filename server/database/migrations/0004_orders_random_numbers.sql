@@ -13,4 +13,10 @@ UPDATE "orders"
 SET "variable_symbol" = "order_number"
 WHERE "variable_symbol" IS NULL;
 
-ALTER TABLE "orders" ADD CONSTRAINT "orders_order_number_unique" UNIQUE("order_number");
+-- Idempotent: swallow "already exists" so the migration can safely re-run.
+DO $$ BEGIN
+  ALTER TABLE "orders" ADD CONSTRAINT "orders_order_number_unique" UNIQUE("order_number");
+EXCEPTION
+  WHEN duplicate_table THEN NULL;
+  WHEN duplicate_object THEN NULL;
+END $$;

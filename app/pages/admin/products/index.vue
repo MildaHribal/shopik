@@ -191,7 +191,10 @@ async function deleteProduct(id: number) {
 
 function getImageSrc(image: string) {
   if (!image) return ''
-  if (image.startsWith('http')) return image
+  // Absolute URLs and root-relative paths ("/uploads/…") are already valid.
+  // Only bare paths need a leading slash — prepending it to "/uploads/…" made
+  // "//uploads/…", which the browser reads as the host "uploads" → broken image.
+  if (image.startsWith('http') || image.startsWith('/')) return image
   return `/${image}`
 }
 </script>

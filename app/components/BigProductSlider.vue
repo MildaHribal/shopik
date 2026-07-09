@@ -91,12 +91,13 @@ defineExpose({ next, prev });
             v-if="resolveImage(current.image)"
             :src="resolveImage(current.image)!"
             :alt="current.title || current.name"
-            width="1200"
-            height="1200"
+            width="1000"
+            height="1000"
             format="webp"
-            quality="85"
+            quality="74"
             sizes="sm:100vw md:60vw lg:900px"
             loading="eager"
+            fetchpriority="high"
             class="slide-image"
           />
         </NuxtLink>

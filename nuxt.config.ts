@@ -59,6 +59,9 @@ export default defineNuxtConfig({
             packetaApiKey: process.env.NUXT_PUBLIC_PACKETA_API_KEY || '',
             posthogKey: process.env.NUXT_PUBLIC_POSTHOG_KEY || '',
             posthogHost: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
+            // Public client id loads the PayPal JS SDK in the browser (safe to expose).
+            paypalClientId: process.env.NUXT_PUBLIC_PAYPAL_CLIENT_ID || process.env.PAYPAL_CLIENT_ID || '',
+            paypalEnv: process.env.PAYPAL_ENV || 'sandbox',
         }
     },
 
@@ -75,10 +78,40 @@ export default defineNuxtConfig({
 
     css: ['~~/assets/css/main.css'],
 
+    // Self-host + optimize webfonts (replaces the removed render-blocking Google
+    // Fonts @import). Only the weights actually used are fetched, with latin-ext
+    // for Czech diacritics and font-display: swap so text never blocks paint.
+    fonts: {
+        // Default to NORMAL only — italic is added per-family below. This alone
+        // halves the payload (previously every family also pulled an italic file
+        // it never used). latin-ext is required for Czech diacritics.
+        defaults: {
+            weights: [400, 600, 700],
+            styles: ['normal'],
+            subsets: ['latin', 'latin-ext'],
+        },
+        // Declared explicitly so families referenced via CSS var() (e.g.
+        // font-family: var(--psy-display)) are always fetched, with weights/styles
+        // pinned to only what the design actually uses.
+        families: [
+            { name: 'Manrope', provider: 'google', weights: [400, 600, 700] },              // body / UI
+            { name: 'Fraunces', provider: 'google', weights: [400, 600], styles: ['normal', 'italic'] }, // serif, italic tagline
+            { name: 'Petrona', provider: 'google', weights: [400], styles: ['normal', 'italic'] },       // italic card titles
+            { name: 'Gloock', provider: 'google', weights: [400] },                          // display headings
+            { name: 'Maname', provider: 'google', weights: [400] },
+            { name: 'Bricolage Grotesque', provider: 'google', weights: [700] },             // footer brand
+            { name: 'Berkshire Swash', provider: 'google', weights: [400] },
+            { name: 'Caprasimo', provider: 'google', weights: [400] },                       // navbar brand
+        ],
+    },
+
     image: {
         provider: 'ipx',
         format: ['webp'],
-        quality: 80,
+        quality: 72,
+        // Serve 1x — avoids shipping 2× pixels to retina phones (big byte saving,
+        // negligible visual difference for these photos). Bumps the perf score.
+        densities: [1],
         domains: ['picsum.photos', 'fastly.picsum.photos'],
         screens: {
             xs: 320,
@@ -116,6 +149,14 @@ export default defineNuxtConfig({
         '/my-account': { swr: false },
         '/user/**': { swr: false },
         '/admin/**': { ssr: false },
+        // Long-lived caching for immutable/content-stable assets (was ~1 min,
+        // which Lighthouse flagged — costs repeat-view performance).
+        '/hero/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
+        '/_fonts/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
+        // Derived/uploaded images: long but not immutable (a product image can be
+        // re-uploaded under the same name), so 30 days is the safe sweet spot.
+        '/_ipx/**': { headers: { 'cache-control': 'public, max-age=2592000' } },
+        '/uploads/**': { headers: { 'cache-control': 'public, max-age=2592000' } },
     },
 
     linkChecker: {

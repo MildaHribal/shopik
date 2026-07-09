@@ -6,11 +6,11 @@
       <NuxtImg
         src="/hero/frog-forest-hero.png"
         alt="Ilustrace kouzelného lesa s žabkami a muchomůrkami — signature artwork Tynky Bordel"
-        width="2000"
-        height="1140"
-        sizes="sm:100vw md:100vw lg:100vw"
+        width="1600"
+        height="912"
+        sizes="sm:100vw md:100vw lg:1400px"
         format="webp"
-        quality="82"
+        quality="70"
         loading="eager"
         fetchpriority="high"
         preload
