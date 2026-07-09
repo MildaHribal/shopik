@@ -62,9 +62,13 @@ const logout = async () => {
 };
 
 // ── Scroll behaviors ────────────────────────────────────────────────────────
+// The main navbar scrolls away with the page. The floating cart should appear
+// only AFTER the navbar (~100px tall) is gone — otherwise both carts show at once.
+const navbarGone = ref(false);
 const handleScroll = () => {
   const y = window.scrollY;
   isScrolled.value = y > 20;
+  navbarGone.value = y > 110;
   showBackToTop.value = y > 400;
 };
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -311,7 +315,7 @@ onUnmounted(() => {
   <Teleport to="body">
     <Transition name="cart-float">
       <button
-        v-if="isScrolled && !isMobileMenuOpen"
+        v-if="navbarGone && !isMobileMenuOpen"
         type="button"
         data-cart-anchor="true"
         class="cart-float-btn"
@@ -596,6 +600,9 @@ onUnmounted(() => {
 }
 .mobile-icon-btn:hover { background: #2a1340; }
 .mobile-icon-btn:active { transform: scale(0.93); }
+/* Scoped display above outranks Tailwind's `md:hidden`, so enforce hide on
+   desktop explicitly — otherwise the mobile cart shows next to the desktop one. */
+@media (min-width: 768px) { .mobile-icon-btn { display: none; } }
 
 .hamburger-btn {
   display: inline-flex;

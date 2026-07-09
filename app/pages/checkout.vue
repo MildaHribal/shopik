@@ -18,7 +18,11 @@ const step = ref<'form' | 'success'>('form');
 const orderId = ref<number | string | null>(null);
 const isSubmitting = ref(false);
 const agreedToTerms = ref(false);
-const paymentMethod = ref<'cash' | 'bank-transfer'>('cash');
+const paymentMethod = ref<'cash' | 'bank-transfer' | 'card'>('cash');
+
+// PayPal card payment is only offered when a client id is configured.
+const paypalClientId = useRuntimeConfig().public.paypalClientId as string;
+const cardEnabled = computed(() => Boolean(paypalClientId));
 
 type BankInfo = {
   iban: string;
@@ -28,10 +32,17 @@ type BankInfo = {
   qrDataUrl: string | null;
 };
 const successBank = ref<BankInfo | null>(null);
-const successPaymentMethod = ref<'cash' | 'bank-transfer'>('cash');
+const successPaymentMethod = ref<'cash' | 'bank-transfer' | 'card'>('cash');
 
-type ZBox = { id: string; name: string; address: string };
-const zbox = ref<ZBox | null>(null);
+// A chosen pickup point (Zásilkovna Z-BOX or Balíkovna). `method` decides which
+// widget picked it and which shipping method is sent to the server.
+type PickupPoint = { id: string; name: string; address: string };
+const shippingMethod = ref<'packeta-zbox' | 'balikovna'>('packeta-zbox');
+const pickupPoint = ref<PickupPoint | null>(null);
+const balikovnaOpen = ref(false);
+
+// Switching the carrier invalidates a previously picked point.
+watch(shippingMethod, () => { pickupPoint.value = null; });
 
 const form = ref({
   customerName: '',
@@ -62,7 +73,7 @@ const openPacketaWidget = () => {
     (point: any) => {
       if (!point) return;
       const address = [point.street, point.city, point.zip].filter(Boolean).join(', ');
-      zbox.value = {
+      pickupPoint.value = {
         id: String(point.id),
         name: point.name || point.nameStreet || `Z-BOX ${point.id}`,
         address,
@@ -76,6 +87,30 @@ const openPacketaWidget = () => {
     },
   );
 };
+
+// ── Balíkovna widget (Česká pošta) — iframe + postMessage ───────────
+// Docs: https://b2c.cpost.cz/locations/?type=BALIKOVNY. The iframe posts back a
+// { message: 'pickerResult', point: {...} } event when a point is picked.
+function openBalikovnaWidget() {
+  balikovnaOpen.value = true;
+}
+
+function onBalikovnaMessage(event: MessageEvent) {
+  // Only trust messages from the Balíkovna origin.
+  if (typeof event.origin === 'string' && !event.origin.includes('cpost.cz')) return;
+  const data: any = event.data;
+  if (!data || data.message !== 'pickerResult' || !data.point) return;
+  const p = data.point;
+  pickupPoint.value = {
+    id: String(p.id),
+    name: p.name || 'Balíkovna',
+    address: p.address || [p.zip, p.municipality_name].filter(Boolean).join(' '),
+  };
+  balikovnaOpen.value = false;
+}
+
+onMounted(() => window.addEventListener('message', onBalikovnaMessage));
+onBeforeUnmount(() => window.removeEventListener('message', onBalikovnaMessage));
 
 // ── Prefill from user profile ───────────────────────────────────────
 const { data: userProfile } = await useFetch(
@@ -106,36 +141,39 @@ const totalWithShipping = computed(() => cart.totalPrice + SHIPPING_PRICE + codF
 
 const formValid = computed(() => {
   return (
+    cart.items.length > 0 &&
     form.value.customerName.trim().length > 1 &&
     emailRegex.test(form.value.customerEmail) &&
     phoneRegex.test(form.value.phone.trim()) &&
-    !!zbox.value &&
+    !!pickupPoint.value &&
     agreedToTerms.value
   );
 });
 
-// ── Submit ──────────────────────────────────────────────────────────
+// Shared order payload (used by the bank/COD flow and the PayPal capture).
+function orderBody() {
+  const shippingAddressText = pickupPoint.value ? `${pickupPoint.value.name} — ${pickupPoint.value.address}` : '';
+  return {
+    customerName: form.value.customerName,
+    customerEmail: form.value.customerEmail,
+    phone: form.value.phone,
+    street: shippingAddressText,
+    city: shippingMethod.value === 'balikovna' ? 'Balíkovna' : 'Z-BOX',
+    zip: '',
+    paymentMethod: paymentMethod.value,
+    shippingMethod: shippingMethod.value,
+    packetaBranchId: pickupPoint.value?.id,
+    packetaBranchName: shippingAddressText,
+    items: cart.items.map((item) => ({ id: item.id, quantity: item.quantity })),
+  };
+}
+
+// ── Submit (cash / bank transfer) ───────────────────────────────────
 async function placeOrder() {
-  if (!formValid.value || cart.items.length === 0 || !zbox.value) return;
+  if (!formValid.value || cart.items.length === 0 || !pickupPoint.value) return;
   isSubmitting.value = true;
   try {
-    const shippingAddressText = `${zbox.value.name} — ${zbox.value.address}`;
-    const response: any = await $fetch('/api/orders', {
-      method: 'POST',
-      body: {
-        customerName: form.value.customerName,
-        customerEmail: form.value.customerEmail,
-        phone: form.value.phone,
-        street: shippingAddressText,
-        city: 'Z-BOX',
-        zip: '',
-        paymentMethod: paymentMethod.value,
-        shippingMethod: 'packeta-zbox',
-        packetaBranchId: zbox.value.id,
-        packetaBranchName: shippingAddressText,
-        items: cart.items.map((item) => ({ id: item.id, quantity: item.quantity })),
-      },
-    });
+    const response: any = await $fetch('/api/orders', { method: 'POST', body: orderBody() });
     orderId.value = response.orderNumber || response.orderId;
     successPaymentMethod.value = paymentMethod.value;
     successBank.value = response.bank || null;
@@ -150,6 +188,77 @@ async function placeOrder() {
     isSubmitting.value = false;
   }
 }
+
+// ── PayPal card payment ─────────────────────────────────────────────
+let paypalSdkPromise: Promise<any> | null = null;
+const paypalRendered = ref(false);
+
+function loadPaypalSdk(): Promise<any> {
+  if (!import.meta.client || !paypalClientId) return Promise.resolve(null);
+  if ((window as any).paypal) return Promise.resolve((window as any).paypal);
+  if (paypalSdkPromise) return paypalSdkPromise;
+  paypalSdkPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(paypalClientId)}&currency=CZK&intent=capture&enable-funding=card`;
+    s.onload = () => resolve((window as any).paypal);
+    s.onerror = () => reject(new Error('PayPal SDK se nepodařilo načíst'));
+    document.head.appendChild(s);
+  });
+  return paypalSdkPromise;
+}
+
+async function renderPaypalButtons() {
+  if (paypalRendered.value) return;
+  const paypal = await loadPaypalSdk().catch(() => null);
+  const container = document.getElementById('paypal-buttons');
+  if (!paypal || !container) return;
+  paypalRendered.value = true;
+  container.innerHTML = '';
+  paypal.Buttons({
+    style: { layout: 'vertical', shape: 'pill', color: 'black', label: 'pay' },
+    // Block payment until the form is valid.
+    onClick: (_data: any, actions: any) => {
+      if (!formValid.value) {
+        toast.error('Nejdřív vyplň objednávku', 'Zkontroluj jméno, e-mail, telefon, výdejní místo a souhlas.');
+        return actions.reject();
+      }
+      return actions.resolve();
+    },
+    createOrder: async () => {
+      const r: any = await $fetch('/api/paypal/create-order', {
+        method: 'POST',
+        body: { items: cart.items.map((i) => ({ id: i.id, quantity: i.quantity })) },
+      });
+      return r.id;
+    },
+    onApprove: async (data: any) => {
+      try {
+        const r: any = await $fetch('/api/paypal/capture-order', {
+          method: 'POST',
+          body: { paypalOrderId: data.orderID, ...orderBody() },
+        });
+        orderId.value = r.orderNumber || r.orderId;
+        successPaymentMethod.value = 'card';
+        successBank.value = null;
+        cart.clearCart();
+        step.value = 'success';
+      } catch (err: any) {
+        toast.error('Platba selhala', err?.data?.statusMessage || 'Zkus to prosím znovu.');
+      }
+    },
+    onError: () => {
+      toast.error('Platba kartou selhala', 'Zkus to prosím znovu nebo zvol jiný způsob platby.');
+    },
+  }).render('#paypal-buttons');
+}
+
+// Render the PayPal buttons the first time the card method is chosen.
+watch(paymentMethod, async (m) => {
+  if (m === 'card' && cardEnabled.value) {
+    await nextTick();
+    renderPaypalButtons();
+  }
+});
 </script>
 
 <template>
@@ -190,35 +299,74 @@ async function placeOrder() {
         <section class="checkout-card mb-4">
           <h2 class="checkout-section-title">
             <Icon icon="mdi:package-variant-closed" class="checkout-section-icon" height="18" />
-            Doručení do Z-BOXu
+            Doprava
           </h2>
-          <p class="checkout-note">
-            Doručení Zásilkovnou do samoobslužného Z-BOXu. Balík si vyzvednete pomocí PIN kódu 24/7.
-          </p>
 
+          <!-- Carrier choice -->
+          <div class="payment-options mb-4">
+            <label class="payment-option" :class="{ 'is-active': shippingMethod === 'packeta-zbox' }">
+              <input type="radio" v-model="shippingMethod" value="packeta-zbox" class="payment-radio" />
+              <div class="payment-icon payment-icon--bank"><Icon icon="mdi:archive-outline" height="22" /></div>
+              <div class="flex-grow">
+                <div class="payment-title">Zásilkovna — Z-BOX</div>
+                <div class="payment-note">Samoobslužný box, vyzvednutí PIN kódem 24/7.</div>
+              </div>
+            </label>
+            <label class="payment-option" :class="{ 'is-active': shippingMethod === 'balikovna' }">
+              <input type="radio" v-model="shippingMethod" value="balikovna" class="payment-radio" />
+              <div class="payment-icon payment-icon--card"><Icon icon="mdi:mailbox-outline" height="22" /></div>
+              <div class="flex-grow">
+                <div class="payment-title">Balíkovna (Česká pošta)</div>
+                <div class="payment-note">Výdejní místo na poště, mimo poštu i AlzaBox.</div>
+              </div>
+            </label>
+          </div>
+
+          <!-- Selected pickup point -->
           <div class="zbox-row">
             <div class="flex items-center gap-3 min-w-0">
               <div class="zbox-icon">
-                <Icon icon="mdi:archive-outline" height="24" />
+                <Icon :icon="shippingMethod === 'balikovna' ? 'mdi:mailbox-outline' : 'mdi:archive-outline'" height="24" />
               </div>
               <div class="min-w-0">
-                <div class="checkout-caption">Vybraný Z-BOX</div>
-                <template v-if="zbox">
+                <div class="checkout-caption">{{ shippingMethod === 'balikovna' ? 'Vybraná Balíkovna' : 'Vybraný Z-BOX' }}</div>
+                <template v-if="pickupPoint">
                   <div class="zbox-name">
                     <Icon icon="mdi:check-decagram" class="zbox-check" />
-                    {{ zbox.name }}
+                    {{ pickupPoint.name }}
                   </div>
-                  <div class="zbox-address">{{ zbox.address }}</div>
+                  <div class="zbox-address">{{ pickupPoint.address }}</div>
                 </template>
                 <div v-else class="zbox-empty">Ještě není vybráno</div>
               </div>
             </div>
-            <button @click.prevent="openPacketaWidget" class="btn-primary-pop whitespace-nowrap">
+            <button
+              @click.prevent="shippingMethod === 'balikovna' ? openBalikovnaWidget() : openPacketaWidget()"
+              class="btn-primary-pop whitespace-nowrap"
+            >
               <Icon icon="mdi:map-marker" height="18" />
-              {{ zbox ? 'Změnit' : 'Vybrat Z-BOX' }}
+              {{ pickupPoint ? 'Změnit' : (shippingMethod === 'balikovna' ? 'Vybrat Balíkovnu' : 'Vybrat Z-BOX') }}
             </button>
           </div>
         </section>
+
+        <!-- Balíkovna picker modal (iframe from Česká pošta) -->
+        <Teleport to="body">
+          <div v-if="balikovnaOpen" class="balikovna-overlay" @click.self="balikovnaOpen = false">
+            <div class="balikovna-modal">
+              <div class="balikovna-modal-head">
+                <span>Vyber Balíkovnu</span>
+                <button class="balikovna-close" @click="balikovnaOpen = false" aria-label="Zavřít">✕</button>
+              </div>
+              <iframe
+                title="Výběr Balíkovny"
+                src="https://b2c.cpost.cz/locations/?type=BALIKOVNY"
+                allow="geolocation"
+                class="balikovna-iframe"
+              ></iframe>
+            </div>
+          </div>
+        </Teleport>
 
         <!-- Platba -->
         <section class="checkout-card mb-4">
@@ -250,6 +398,16 @@ async function placeOrder() {
                 <div class="payment-note">Zobrazí se QR kód pro rychlou platbu. Objednávka se odešle po přijetí platby.</div>
               </div>
             </label>
+            <label v-if="cardEnabled" class="payment-option" :class="{ 'is-active': paymentMethod === 'card' }">
+              <input type="radio" v-model="paymentMethod" value="card" class="payment-radio" />
+              <div class="payment-icon payment-icon--card">
+                <Icon icon="mdi:credit-card-outline" height="22" />
+              </div>
+              <div class="flex-grow">
+                <div class="payment-title">Platba kartou</div>
+                <div class="payment-note">Zaplať online kartou přes PayPal. Objednávka se rovnou potvrdí.</div>
+              </div>
+            </label>
           </div>
         </section>
 
@@ -266,7 +424,15 @@ async function placeOrder() {
           </label>
         </div>
 
+        <!-- Card (PayPal) → PayPal buttons; otherwise the normal submit button. -->
+        <template v-if="paymentMethod === 'card'">
+          <div v-if="!formValid" class="paypal-hint">
+            Vyplň prosím jméno, e-mail, telefon, výdejní místo a odsouhlas podmínky — pak se objeví platební tlačítko.
+          </div>
+          <div id="paypal-buttons" class="paypal-buttons" :class="{ 'is-disabled': !formValid }"></div>
+        </template>
         <button
+          v-else
           @click="placeOrder"
           :disabled="!formValid || isSubmitting"
           class="btn-primary-pop w-full justify-center py-4 text-lg"
@@ -309,7 +475,7 @@ async function placeOrder() {
               <span>Mezisoučet</span><span>{{ cart.totalPrice }} Kč</span>
             </div>
             <div class="summary-row">
-              <span>Doprava (Zásilkovna Z-BOX)</span><span>{{ SHIPPING_PRICE }} Kč</span>
+              <span>Doprava ({{ shippingMethod === 'balikovna' ? 'Balíkovna' : 'Zásilkovna Z-BOX' }})</span><span>{{ SHIPPING_PRICE }} Kč</span>
             </div>
             <div v-if="codFee > 0" class="summary-row">
               <span>Dobírka</span><span>{{ codFee }} Kč</span>
@@ -359,6 +525,15 @@ async function placeOrder() {
         <div class="bank-footer">
           Potvrzení objednávky ti dorazí na e-mail. Po přijetí platby přijde další potvrzení.
         </div>
+      </div>
+
+      <!-- Card: paid instantly -->
+      <div v-else-if="successPaymentMethod === 'card'" class="success-panel">
+        ✅ Platba kartou proběhla úspěšně — objednávka je zaplacená. Potvrzení ti dorazí na e-mail.
+        <template v-if="currentUser">
+          Najdeš ji i v
+          <NuxtLink to="/user" class="terms-link">Můj profil → Objednávky</NuxtLink>.
+        </template>
       </div>
 
       <div v-else class="success-panel">
@@ -470,6 +645,53 @@ async function placeOrder() {
   margin-bottom: 0.15rem;
 }
 
+/* ── Balíkovna picker modal ── */
+.balikovna-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(20, 8, 36, 0.6);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.balikovna-modal {
+  width: min(760px, 100%);
+  height: min(85vh, 820px);
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+.balikovna-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  color: #2a1340;
+  border-bottom: 1px solid rgba(42, 19, 64, 0.1);
+}
+.balikovna-close {
+  border: 0;
+  background: transparent;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: rgba(42, 19, 64, 0.6);
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+.balikovna-close:hover { background: rgba(42, 19, 64, 0.08); }
+.balikovna-iframe {
+  flex-grow: 1;
+  width: 100%;
+  border: 0;
+}
+
 /* ── Z-BOX row ── */
 .zbox-row {
   display: flex;
@@ -562,6 +784,28 @@ async function placeOrder() {
 .payment-icon--bank {
   background: rgba(107, 78, 167, 0.15);
   color: #6b4ea7;
+}
+.payment-icon--card {
+  background: rgba(0, 112, 186, 0.15);
+  color: #0070ba;
+}
+.paypal-hint {
+  font-size: 0.85rem;
+  color: rgba(42, 19, 64, 0.6);
+  background: rgba(42, 19, 64, 0.05);
+  border: 1px solid rgba(42, 19, 64, 0.1);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+.paypal-buttons {
+  min-height: 48px;
+  transition: opacity 0.2s ease;
+}
+.paypal-buttons.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 .payment-title {
   font-weight: 700;

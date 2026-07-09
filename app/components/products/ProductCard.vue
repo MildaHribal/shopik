@@ -377,16 +377,18 @@ const toggleFavorite = async () => {
 /* Phones: tighter card so the image dominates; show the title (not the number),
    price underneath, no add button. */
 @media (max-width: 639px) {
-  .product-card { padding: 0.3rem 0.3rem 0.55rem; border-radius: 0.85rem; }
-  .card-info { margin-top: 0.5rem; gap: 0.25rem; padding: 0 0.1rem; }
+  .product-card { padding: 0.45rem 0.45rem 0.7rem; border-radius: 1rem; }
+  .card-info { margin-top: 0.6rem; gap: 0.3rem; padding: 0 0.15rem; }
   .card-info-eyebrow { display: none; }
   .card-title {
-    font-size: 0.95rem;
-    line-height: 1.22;
+    font-size: 1.08rem;
+    line-height: 1.25;
     min-height: 0;
     -webkit-line-clamp: 2;
   }
-  .card-info-bottom { padding-top: 0.35rem; }
+  .card-info-bottom { padding-top: 0.45rem; }
+  .price-num { font-size: 1.9rem; }
+  .fav-btn { width: 38px; height: 38px; }
 }
 
 .card-info-bottom {

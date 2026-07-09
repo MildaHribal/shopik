@@ -6,7 +6,11 @@ export interface CartItem extends Product {
     quantity: number;
 }
 
+export const CART_STORAGE_KEY = 'tynky-cart';
+
 export const useCartStore = defineStore('cart', () => {
+    // Persistence (localStorage load/save) is wired in plugins/cart-persist.client.ts,
+    // which runs AFTER Pinia's SSR hydration — doing it here got clobbered by it.
     const items = ref<CartItem[]>([])
 
     // Desktop cart drawer visibility (opened from the navbar cart icon).

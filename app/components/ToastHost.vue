@@ -1,14 +1,16 @@
 <script setup lang="ts">
 const { toasts, remove } = useCosmicToast()
 
+// Opaque backgrounds + white text so toasts are readable on ANY page background
+// (the light checkout/pastel pages made the old translucent variants invisible).
 const variantClasses = (variant: string) => {
   switch (variant) {
     case 'success':
-      return 'border-green-400/30 bg-green-500/10 text-green-100'
+      return 'border-green-400/40 bg-green-600 text-white'
     case 'error':
-      return 'border-red-400/30 bg-red-500/10 text-red-100'
+      return 'border-red-400/40 bg-red-600 text-white'
     default:
-      return 'border-white/15 bg-white/10 text-white'
+      return 'border-white/15 bg-[#2a1340] text-white'
   }
 }
 </script>

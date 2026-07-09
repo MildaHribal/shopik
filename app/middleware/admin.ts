@@ -8,9 +8,12 @@ import { useAuth } from "~/composables/useAuth";
 export default defineNuxtRouteMiddleware(async () => {
   const { currentUser, refreshSession, isAuthLoading } = useAuth();
 
-  // Refresh session client-side if we don't yet have a user.
-  if (!currentUser.value && import.meta.client) {
-    if (isAuthLoading.value) await refreshSession();
+  // /admin is client-rendered (ssr:false). ALWAYS resolve the session before
+  // deciding — the old code only awaited when isAuthLoading was still true, so on
+  // slower connections (typically mobile) the middleware ran after loading had
+  // flipped to false but before currentUser was populated, and bounced to login.
+  if (import.meta.client && (isAuthLoading.value || !currentUser.value)) {
+    await refreshSession();
   }
 
   const user = currentUser.value as any;
